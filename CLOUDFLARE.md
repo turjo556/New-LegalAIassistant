@@ -47,3 +47,5 @@ The Cloudflare runtime tests cover accounts/login, shared search, fare calculati
 - Wrangler is pinned by `package-lock.json`. Cloudflare usage and billing depend on the account plan. No paid plan, custom domain, or subscription was purchased by this setup.
 
 This code has been validated locally, not deployed to your Cloudflare account by the assistant. Confirm the hosted deployment using two accounts once Cloudflare reports success.
+
+Custom pickup is added by migration `0002_custom_pickup.sql`. Keep using `npm run deploy`: it applies the additive migration before Worker upload. Existing accounts/rides/bookings are preserved; old rides default to no custom pickups. Native preview URLs are explicitly disabled in `wrangler.json`, in addition to the recommendation to disable preview builds.

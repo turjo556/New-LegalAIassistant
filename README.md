@@ -77,3 +77,19 @@ The earlier mobile demo remains available via `npm run mobile`; its sessions, da
 ## Cloudflare Workers + D1
 
 A separate Cloudflare-compatible API is now implemented in `apps/worker/index.js`, with D1 schema and database-level capacity protection in `migrations/`. See [CLOUDFLARE.md](CLOUDFLARE.md) for the dashboard fields, required D1 database ID, local validation, and deployment commands. Cloudflare local runtime validation is distinct from deployment to a Cloudflare account.
+
+## Nearby custom pickup
+
+Drivers may enable 0, 1, or 2 custom-pickup passengers (never more than the ride's total capacity, capped at four). When enabled, they enter a public standard pickup point and choose its map pin within 25 km of the departure city's centre. Passengers may request a home address/pin within a **3 km straight-line radius** of that standard point. This is a circular eligibility zone, not an along-route pickup service or road-distance estimate.
+
+- Pending and approved custom requests both consume the custom-passenger quota. A two-person booking at one address uses two quota places, not one. SQL triggers enforce the quota atomically.
+- The optional fee is chosen by the driver ($0–$50 CAD per passenger). It is included in the quoted reservation total, with no online charge.
+- Seats are held immediately while the pickup request is pending. The driver checks address accuracy, road access, timing, and combined detours before approving.
+- If declined, seats stay reserved at the standard point, the pickup supplement is removed, and the passenger can cancel. Both sides see the status in their dashboards; no email/push alert is sent.
+- Custom addresses and coordinates are visible only in that passenger's booking and the listing owner's passenger list. They are not included in public ride listings.
+- Maps use Leaflet and OpenStreetMap tiles with attribution. Users can also enter coordinates if tiles are unavailable. No address geocoder or road-routing provider is connected. The pin must be placed accurately; the app does not verify that an address matches a pin.
+- A passenger cannot request custom pickup after the custom quota is full. Standard-point bookings can still use remaining normal seats.
+
+Node SQLite applies the additive local schema upgrade automatically. Cloudflare deployment applies `0002_custom_pickup.sql` through the existing deploy script. Old rides remain standard-pickup-only. Driver editing of existing ride pickup settings is not implemented yet; publish a new listing to enable custom pickup.
+
+Validation: `npm test` includes custom pickup tests. With a locally migrated Cloudflare Worker running on port 8788, run `npm run cf:test:pickup` for the equivalent D1 checks. Local browser validation covers publishing the standard pin, requesting custom pickup for two passengers, driver approval, refreshed passenger status, and phone layout.
