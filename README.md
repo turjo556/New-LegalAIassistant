@@ -78,18 +78,22 @@ The earlier mobile demo remains available via `npm run mobile`; its sessions, da
 
 A separate Cloudflare-compatible API is now implemented in `apps/worker/index.js`, with D1 schema and database-level capacity protection in `migrations/`. See [CLOUDFLARE.md](CLOUDFLARE.md) for the dashboard fields, required D1 database ID, local validation, and deployment commands. Cloudflare local runtime validation is distinct from deployment to a Cloudflare account.
 
-## Nearby custom pickup
+## Driver-controlled custom stops
 
-Drivers may enable 0, 1, or 2 custom-pickup passengers (never more than the ride's total capacity, capped at four). When enabled, they enter a public standard pickup point and choose its map pin within 25 km of the departure city's centre. Passengers may request a home address/pin within a **3 km straight-line radius** of that standard point. This is a circular eligibility zone, not an along-route pickup service or road-distance estimate.
+The homepage has prominent Riders and Drivers tabs, a rider search workflow, and a driver posting workflow. The visual palette uses navy, electric blue, and orange.
 
-- Pending and approved custom requests both consume the custom-passenger quota. A two-person booking at one address uses two quota places, not one. SQL triggers enforce the quota atomically.
-- The optional fee is chosen by the driver ($0–$50 CAD per passenger). It is included in the quoted reservation total, with no online charge.
-- Seats are held immediately while the pickup request is pending. The driver checks address accuracy, road access, timing, and combined detours before approving.
-- If declined, seats stay reserved at the standard point, the pickup supplement is removed, and the passenger can cancel. Both sides see the status in their dashboards; no email/push alert is sent.
-- Custom addresses and coordinates are visible only in that passenger's booking and the listing owner's passenger list. They are not included in public ride listings.
-- Maps use Leaflet and OpenStreetMap tiles with attribution. Users can also enter coordinates if tiles are unavailable. No address geocoder or road-routing provider is connected. The pin must be placed accurately; the app does not verify that an address matches a pin.
-- A passenger cannot request custom pickup after the custom quota is full. Standard-point bookings can still use remaining normal seats.
+Drivers separately choose whether to allow custom pickup and custom drop-off on each new listing. Both are off by default. Enabling either requires a map pin for its corresponding standard point and a per-person supplement ($0–$50 CAD). The driver must place the standard pin within 25 km of the corresponding supported city centre.
 
-Node SQLite applies the additive local schema upgrade automatically. Cloudflare deployment applies `0002_custom_pickup.sql` through the existing deploy script. Old rides remain standard-pickup-only. Driver editing of existing ride pickup settings is not implemented yet; publish a new listing to enable custom pickup.
+Passengers **book the standard pickup and drop-off first**. Only a passenger with an active booking may submit a custom request from My trips, and only for options that the listing owner enabled. A pin must be within a **3 km straight-line radius** of the corresponding standard location. All passengers can request; the former two-passenger restriction no longer applies to new listings.
 
-Validation: `npm test` includes custom pickup tests. With a locally migrated Cloudflare Worker running on port 8788, run `npm run cf:test:pickup` for the equivalent D1 checks. Local browser validation covers publishing the standard pin, requesting custom pickup for two passengers, driver approval, refreshed passenger status, and phone layout.
+Requests are pending until the driver approves. Supplements are added to the booking total only after approval. Declined requests leave the standard booking unchanged. Cancellation invalidates custom approvals, so rebooking cannot reactivate them or bypass the shared budget.
+
+A shared **15-minute driver-estimated detour allowance** covers all approved custom stops on a ride. Drivers must enter additional minutes for each approval, including stopping and boarding. SQL triggers reject concurrent approvals that would exceed 15 minutes. This enforces the entered estimates, not measured driving time. Live road routing, traffic prediction, automatic stop optimization, and third-party address verification are not connected. The driver must review road access, all existing commitments, and actual timing before approving. Do not present this as a guarantee against traffic delays.
+
+Ride cards expose a privacy-safe itinerary before booking: standard points, approximate approved stop labels, added minutes, standard departure/arrival, and the total extra time. Exact home addresses/pins are restricted to the requesting passenger and driver. The public order groups pickup stops before the standard drop-off and then custom drop-offs; it is an indicative sequence rather than a navigation route. Individual stop ETAs and an automatically calculated route map remain future routing work. Updates appear on refresh; external notifications are not connected.
+
+Maps use Leaflet and attributed OpenStreetMap tiles. Users may enter coordinates if tiles are unavailable. Pins are not automatically checked against typed addresses. Home addresses and request data are stored in the database; production retention/deletion policies still need implementation.
+
+Node applies local migrations automatically. Cloudflare's existing deploy script applies additive migrations `0003_custom_stops.sql` and `0004_cancel_stop_requests.sql`. Old listings retain their previous settings; create a new listing to use the new driver permissions. Legacy pickup requests remain visible through their existing review flow.
+
+`npm test` and the local Cloudflare test `npm run cf:test:pickup` cover booking-first enforcement, permissions, both 3 km zones, private data, pending/approved fees, and simultaneous approvals against the shared 15-minute budget.

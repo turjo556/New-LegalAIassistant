@@ -49,3 +49,5 @@ The Cloudflare runtime tests cover accounts/login, shared search, fare calculati
 This code has been validated locally, not deployed to your Cloudflare account by the assistant. Confirm the hosted deployment using two accounts once Cloudflare reports success.
 
 Custom pickup is added by migration `0002_custom_pickup.sql`. Keep using `npm run deploy`: it applies the additive migration before Worker upload. Existing accounts/rides/bookings are preserved; old rides default to no custom pickups. Native preview URLs are explicitly disabled in `wrangler.json`, in addition to the recommendation to disable preview builds.
+
+The latest release adds Riders/Drivers tabs and driver-controlled pickup/drop-off requests. Deployment also applies migrations 0003 and 0004. New requests require a standard booking first. The 15-minute budget applies to driver-entered detour estimates; live routing is not integrated. Existing records are preserved.
