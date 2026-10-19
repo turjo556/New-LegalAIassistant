@@ -1,0 +1,24 @@
+{
+  "name": "ridemyway",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "npm run build -w @nearway/web",
+    "test": "node --test packages/core/*.test.js apps/server/*.test.js",
+    "mobile": "npm run start -w @nearway/mobile",
+    "start": "node apps/server/index.js"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  }
+}

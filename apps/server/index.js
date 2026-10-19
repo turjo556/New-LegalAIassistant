@@ -1,0 +1,72 @@
+import http from 'node:http';
+import {DatabaseSync} from 'node:sqlite';
+import {randomBytes,randomUUID,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
+import {mkdirSync,existsSync,statSync,createReadStream} from 'node:fs';
+import {resolve,dirname,extname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+function easternNow(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k).value;return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`}
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
+const hash=s=>createHash('sha256').update(s).digest('hex');
+export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/ridemyway.sqlite'),secure=process.env.NODE_ENV==='production'}={}){
+ if(dbPath!==':memory:')mkdirSync(dirname(dbPath),{recursive:true,mode:0o700});
+ const db=new DatabaseSync(dbPath);db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;
+ CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL);
+ CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),expires INTEGER);
+ CREATE TABLE IF NOT EXISTS rides(id TEXT PRIMARY KEY,owner TEXT REFERENCES users(id),origin TEXT,destination_city TEXT,date TEXT,time TEXT,arrival TEXT,price INTEGER,capacity INTEGER,car TEXT,pickup TEXT,destination TEXT,cancelled INTEGER DEFAULT 0);
+ CREATE TABLE IF NOT EXISTS bookings(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),ride_id TEXT REFERENCES rides(id),seats INTEGER,total INTEGER,cancelled INTEGER DEFAULT 0,UNIQUE(user_id,ride_id));
+ CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY,booking_id TEXT REFERENCES bookings(id),sender TEXT REFERENCES users(id),body TEXT,created INTEGER);
+ CREATE INDEX IF NOT EXISTS booking_ride_index ON bookings(ride_id,cancelled);
+ CREATE INDEX IF NOT EXISTS messages_booking_index ON messages(booking_id,created);
+ CREATE TABLE IF NOT EXISTS favorites(user_id TEXT REFERENCES users(id),ride_id TEXT REFERENCES rides(id),PRIMARY KEY(user_id,ride_id));`);
+ const attempts=new Map();
+ function fail(status,message){throw Object.assign(new Error(message),{status})}
+ function text(v,name,min=1,max=150){if(typeof v!=='string'||v.trim().length<min||v.trim().length>max)fail(400,`Enter a valid ${name}.`);return v.trim()}
+ function integer(v,min,max,name){if(!Number.isInteger(v)||v<min||v>max)fail(400,`Invalid ${name}.`);return v}
+ const cities=['Montréal','Québec City','Ottawa','Toronto'];
+ function list(){return db.prepare(`SELECT r.*,u.name AS driver, r.capacity-COALESCE((SELECT SUM(b.seats) FROM bookings b WHERE b.ride_id=r.id AND b.cancelled=0),0) AS seats FROM rides r JOIN users u ON u.id=r.owner ORDER BY r.date,r.time`).all().map(r=>({id:r.id,owner:r.owner,from:r.origin,to:r.destination_city,date:r.date,time:r.time,arrival:r.arrival,driver:r.driver,initials:r.driver.slice(0,2).toUpperCase(),price:r.price/100,seats:r.seats,capacity:r.capacity,car:r.car,pickup:r.pickup,destination:r.destination,home:false,tags:[],color:'sage',cancelled:!!r.cancelled}));}
+ function state(user){const all=list();return {user:user?{id:user.id,name:user.name,email:user.email}:null,rides:all.filter(r=>!r.cancelled),saved:user?db.prepare('SELECT ride_id FROM favorites WHERE user_id=?').all(user.id).map(r=>r.ride_id):[],bookings:user?db.prepare('SELECT * FROM bookings WHERE user_id=? AND cancelled=0').all(user.id).map(b=>({id:b.id,seats:b.seats,total:b.total/100,mode:'meeting',ride:all.find(r=>r.id===b.ride_id)})):[],hosting:user?all.filter(r=>r.owner===user.id).map(r=>({...r,passengers:db.prepare('SELECT b.id,b.seats,u.name FROM bookings b JOIN users u ON u.id=b.user_id WHERE b.ride_id=? AND b.cancelled=0').all(r.id)})):[]};}
+ const server=http.createServer(async(req,res)=>{
+ const send=(code,data)=>{res.writeHead(code,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data))};
+ res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
+ try{const url=new URL(req.url,'http://local');
+ if(!url.pathname.startsWith('/api/')){const base=resolve(root,'apps/web/dist');let file=resolve(base,'.'+decodeURIComponent(url.pathname));if(!file.startsWith(base+'/'))file=resolve(base,'index.html');if(!existsSync(file)||!statSync(file).isFile()){if(extname(url.pathname)){res.writeHead(404);res.end('Not found');return}file=resolve(base,'index.html')}if(!existsSync(file)){res.writeHead(503);res.end('Build the website with npm run build first.');return}res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[extname(file)]||'application/octet-stream');createReadStream(file).pipe(res);return}
+ if(req.method!=='GET'&&req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail(403,'Request origin is not allowed.');
+ const raw=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rmw_session='))?.slice(12);
+ const user=raw?db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').get(hash(raw),Date.now()):null;
+ if(req.method==='GET'&&url.pathname==='/api/state'){send(200,state(user));return}
+ if(req.method==='GET'&&url.pathname==='/api/health'){send(200,{status:'ok'});return}
+ if(req.method!=='POST')fail(405,'Method not allowed.');
+ if(!req.headers['content-type']?.startsWith('application/json'))fail(415,'JSON required.');
+ let body='';for await(const chunk of req){body+=chunk;if(body.length>16000)fail(413,'Request too large.')}let b;try{b=JSON.parse(body||'{}')}catch{fail(400,'Invalid JSON.')}if(!b||typeof b!=='object'||Array.isArray(b))fail(400,'Invalid request.');
+ if(['/api/register','/api/login'].includes(url.pathname)){
+ const key=req.socket.remoteAddress;const limit=attempts.get(key)||{n:0,until:Date.now()+600000};if(limit.until<Date.now()){limit.n=0;limit.until=Date.now()+600000}limit.n++;attempts.set(key,limit);if(attempts.size>10000)for(const [k,v] of attempts)if(v.until<Date.now())attempts.delete(k);if(limit.n>40)fail(429,'Too many attempts. Try again in ten minutes.');
+ const email=text(b.email,'email',3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fail(400,'Enter a valid email.');const password=text(b.password,'password',10,128);let account;
+ if(url.pathname==='/api/register'){const name=text(b.name,'name',2,50);if(db.prepare('SELECT id FROM users WHERE email=?').get(email))fail(409,'An account already exists with that email.');const salt=randomBytes(16).toString('hex');const encoded=salt+':'+scryptSync(password,salt,64).toString('hex');const id=randomUUID();db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id,name,email,encoded);account={id,name,email}}
+ else{account=db.prepare('SELECT * FROM users WHERE email=?').get(email);const [salt,digest]=(account?.password||'missing:'+scryptSync('dummy','missing',64).toString('hex')).split(':');const matches=timingSafeEqual(scryptSync(password,salt,64),Buffer.from(digest,'hex'));if(!account||!matches)fail(401,'Email or password is incorrect.');}
+ const token=randomBytes(32).toString('hex');db.prepare('DELETE FROM sessions WHERE expires<?').run(Date.now());db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(hash(token),account.id,Date.now()+7*86400000);res.setHeader('Set-Cookie',`rmw_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${secure?'; Secure':''}`);send(200,state(account));return;
+ }
+ if(url.pathname==='/api/logout'){if(raw)db.prepare('DELETE FROM sessions WHERE token=?').run(hash(raw));res.setHeader('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure?'; Secure':''}`);send(200,state(null));return}
+ if(!user)fail(401,'Sign in to continue.');
+ if(url.pathname==='/api/messages'||url.pathname==='/api/messages/send'){
+ const id=text(b.id,'booking');const booking=db.prepare('SELECT b.*,r.owner,r.cancelled AS ride_cancelled FROM bookings b JOIN rides r ON r.id=b.ride_id WHERE b.id=?').get(id);if(!booking||(booking.user_id!==user.id&&booking.owner!==user.id))fail(404,'Booking not found.');
+ if(url.pathname.endsWith('/send')){if(booking.cancelled||booking.ride_cancelled)fail(400,'This trip is cancelled.');const message=text(b.message,'message',1,2000);db.prepare('INSERT INTO messages VALUES(?,?,?,?,?)').run(randomUUID(),id,user.id,message,Date.now());}
+ send(200,{messages:db.prepare('SELECT m.id,m.body,m.created,u.name AS sender FROM messages m JOIN users u ON u.id=m.sender WHERE m.booking_id=? ORDER BY m.created,m.rowid LIMIT 500').all(id)});return;
+ }
+ if(url.pathname==='/api/rides'){
+ const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');
+ const date=text(b.date,'date');const time=text(b.time,'departure time');const arrival=text(b.arrival,'arrival time');if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(arrival)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)fail(400,'Enter valid trip dates and times.');if(date+'T'+time<=easternNow()||arrival<=time)fail(400,'Choose a future date and an arrival after departure (same day).');
+ const cents=Math.round(Number(b.price)*100);integer(cents,500,50000,'price');const seats=integer(b.seats,1,4,'seat count');const car=text(b.car,'vehicle',2,60),pickup=text(b.pickup,'pickup point',3),destination=text(b.destination,'drop-off point',3);
+ db.prepare('INSERT INTO rides(id,owner,origin,destination_city,date,time,arrival,price,capacity,car,pickup,destination) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(randomUUID(),user.id,from,to,date,time,arrival,cents,seats,car,pickup,destination);send(201,state(user));return;
+ }
+ if(url.pathname==='/api/bookings'){
+ const seats=integer(b.seats,1,4,'seat count');const ride=db.prepare('SELECT * FROM rides WHERE id=?').get(text(b.rideId,'ride'));if(!ride||ride.cancelled)fail(404,'This ride is unavailable.');if(ride.owner===user.id)fail(400,'You cannot book your own ride.');if(ride.date+'T'+ride.time<=easternNow())fail(400,'This ride has departed.');if(b.mode&&b.mode!=='meeting')fail(400,'Home drop-off is not available yet.');
+ db.exec('BEGIN IMMEDIATE');try{const used=db.prepare('SELECT COALESCE(SUM(seats),0) AS n FROM bookings WHERE ride_id=? AND cancelled=0').get(ride.id).n;if(used+seats>ride.capacity)fail(409,'Not enough seats left. Refresh and choose another ride.');const existing=db.prepare('SELECT * FROM bookings WHERE user_id=? AND ride_id=?').get(user.id,ride.id);if(existing&&!existing.cancelled)fail(409,'You already booked this ride.');if(existing)db.prepare('UPDATE bookings SET seats=?,total=?,cancelled=0 WHERE id=?').run(seats,seats*ride.price,existing.id);else db.prepare('INSERT INTO bookings(id,user_id,ride_id,seats,total) VALUES(?,?,?,?,?)').run(randomUUID(),user.id,ride.id,seats,seats*ride.price);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}send(201,state(user));return;
+ }
+ if(url.pathname==='/api/bookings/cancel'){const result=db.prepare('UPDATE bookings SET cancelled=1 WHERE id=? AND user_id=? AND cancelled=0').run(text(b.id,'booking'),user.id);if(!result.changes)fail(404,'Booking not found.');send(200,state(user));return}
+ if(url.pathname==='/api/rides/cancel'){const result=db.prepare('UPDATE rides SET cancelled=1 WHERE id=? AND owner=? AND cancelled=0').run(text(b.id,'ride'),user.id);if(!result.changes)fail(404,'Ride not found.');send(200,state(user));return}
+ if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!db.prepare('SELECT id FROM rides WHERE id=? AND cancelled=0').get(id))fail(404,'Ride not found.');const exists=db.prepare('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?').get(user.id,id);if(exists)db.prepare('DELETE FROM favorites WHERE user_id=? AND ride_id=?').run(user.id,id);else db.prepare('INSERT INTO favorites VALUES(?,?)').run(user.id,id);send(200,state(user));return}
+ fail(404,'Endpoint not found.');
+ }catch(e){if(!e.status)console.error('Request failed:',e.message);if(!res.headersSent)send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'});else res.end()}
+ });server.on('close',()=>db.close());return server;
+}
+if(process.argv[1]===fileURLToPath(import.meta.url)){createApp().listen(Number(process.env.PORT)||3000,'0.0.0.0',()=>console.log('RideMyWay server listening on port '+(process.env.PORT||3000)));}
