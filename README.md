@@ -73,3 +73,7 @@ Browser validation uses independent driver and passenger sessions to exercise ac
 - RideMyWay trademark and domain availability are unconfirmed.
 
 The earlier mobile demo remains available via `npm run mobile`; its sessions, data, and Nearway branding are separate from this website.
+
+## Cloudflare Workers + D1
+
+A separate Cloudflare-compatible API is now implemented in `apps/worker/index.js`, with D1 schema and database-level capacity protection in `migrations/`. See [CLOUDFLARE.md](CLOUDFLARE.md) for the dashboard fields, required D1 database ID, local validation, and deployment commands. Cloudflare local runtime validation is distinct from deployment to a Cloudflare account.

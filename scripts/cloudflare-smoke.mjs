@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+const base=process.env.TEST_BASE_URL||'http://127.0.0.1:8788';
+if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('This smoke test creates sample accounts and rides. Run against a local test Worker only.');
+const suffix=Date.now(),cookies={};
+async function req(path,body,who='guest',expected=200,origin){const response=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookies[who]?{Cookie:cookies[who]}:{}),...(origin?{Origin:origin}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json();assert.equal(response.status,expected,JSON.stringify(data));if(response.headers.get('set-cookie'))cookies[who]=response.headers.get('set-cookie').split(';')[0];return data}
+await req('health');await req('rides',{},'guest',401);
+for(const who of ['driver','passenger','other'])await req('register',{name:who,email:`${who}-${suffix}@example.com`,password:'safe-local-test-password'},who);
+await req('login',{email:`driver-${suffix}@example.com`,password:'wrong-password'},'guest',401);
+await req('logout',{},'driver');await req('login',{email:`driver-${suffix}@example.com`,password:'safe-local-test-password'},'driver');
+const payload={from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:2,car:'Test vehicle',pickup:'Test station',destination:'Test destination'};
+await req('rides',{...payload,seats:-1},'driver',400);await req('rides',{...payload,date:'2099-02-30'},'driver',400);
+const published=await req('rides',payload,'driver',201);const id=published.hosting.at(-1).id;
+await req('bookings',{rideId:id,seats:1},'driver',400);await req('bookings',{rideId:id,seats:1,mode:'home'},'passenger',400);
+await req('favorites',{id},'passenger');assert.ok((await req('state',null,'passenger')).saved.includes(id));
+const races=await Promise.all(['passenger','other'].map(async who=>{const response=await fetch(base+'/api/bookings',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookies[who]},body:JSON.stringify({rideId:id,seats:2})});return {who,status:response.status,data:await response.json()}}));
+assert.deepEqual(races.map(r=>r.status).sort(),[201,409]);const winner=races.find(r=>r.status===201),loser=races.find(r=>r.status===409),booking=winner.data.bookings[0];assert.equal(booking.total,70);
+assert.equal((await req('state')).rides.find(r=>r.id===id).seats,0);
+await req('bookings/cancel',{id:booking.id},loser.who,404);await req('rides/cancel',{id},loser.who,404);
+await req('messages/send',{id:booking.id,message:'Test pickup question'},winner.who);assert.equal((await req('messages',{id:booking.id},'driver')).messages[0].body,'Test pickup question');await req('messages',{id:booking.id},loser.who,404);
+await req('favorites',{id},winner.who,403,'https://evil.example');
+await req('bookings/cancel',{id:booking.id},winner.who);assert.equal((await req('state')).rides.find(r=>r.id===id).seats,2);
+await req('bookings',{rideId:id,seats:1},winner.who,201);await req('bookings',{rideId:id,seats:1},winner.who,409);
+await req('rides/cancel',{id},'driver');assert.equal((await req('state',null,winner.who)).bookings[0].ride.cancelled,true);
+await req('logout',{},winner.who);assert.equal((await req('state',null,winner.who)).user,null);
+console.log('PASS: Cloudflare runtime + D1 accounts/login, listings, concurrent capacity enforcement, fares, favorites, private messages, authorization, CSRF, cancellations, rebooking, sessions, and logout.');
