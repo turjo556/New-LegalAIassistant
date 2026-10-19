@@ -1,0 +1,8 @@
+export function createApi({baseUrl,storage,fetchImpl=fetch}){
+ const base=new URL(baseUrl);if(base.protocol!=='https:'&&!['localhost','127.0.0.1'].includes(base.hostname))throw Error('The API must use HTTPS.');const key='ridemyway.session.v1';let cookie=null,initialized=false;
+ return {async request(path,body){if(!initialized){cookie=await storage.getItem(key);initialized=true}const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),20000);let response;try{response=await fetchImpl(new URL('/api/'+path,base).href,{method:body===undefined?'GET':'POST',credentials:'omit',signal:controller.signal,headers:{Accept:'application/json',...(body!==undefined?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{})},body:body===undefined?undefined:JSON.stringify(body)});}catch(e){if(e.name==='AbortError')throw Error('Connection timed out. Check your internet connection and try again.');throw e}finally{clearTimeout(timeout)}let data;try{data=await response.json()}catch{throw Error('The server returned an unexpected response. Please try again.')}
+ if(!response.ok)throw Object.assign(new Error(data.error||'Request failed.'),{status:response.status});
+ const received=response.headers.get('set-cookie');if(received){const session=received.match(/(?:^|,\s*)rmw_session=([^;]*)/);if(session){cookie=session[1]?'rmw_session='+session[1]:null;if(cookie)await storage.setItem(key,cookie);else await storage.deleteItem(key)}}
+ if(['login','register'].includes(path)&&!cookie)throw Error('Unable to save your sign-in session. Please try again.');
+ if(path==='logout'){cookie=null;await storage.deleteItem(key)}return data;},async clear(){cookie=null;initialized=true;await storage.deleteItem(key)}};
+}

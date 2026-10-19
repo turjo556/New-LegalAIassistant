@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node scripts/dev.js",
     "build": "npm run build -w @nearway/web",
-    "test": "node --test packages/core/*.test.js apps/server/*.test.js",
+    "test": "node --test packages/core/*.test.js apps/server/*.test.js apps/mobile/lib/*.test.js",
     "mobile": "npm run start -w @nearway/mobile",
     "start": "node apps/server/index.js",
     "cf:dev": "wrangler dev --ip 0.0.0.0",

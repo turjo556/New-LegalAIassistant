@@ -1,1 +1,29 @@
-{"expo":{"name":"Nearway","slug":"nearway","version":"1.0.0","orientation":"portrait","userInterfaceStyle":"light","ios":{"supportsTablet":true,"bundleIdentifier":"com.nearway.app"},"android":{"package":"com.nearway.app"},"splash":{"backgroundColor":"#fafbf7"}}}
+{
+  "expo": {
+    "name": "RideMyWay",
+    "slug": "ridemyway",
+    "scheme": "ridemyway",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ridemyway.app",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.ridemyway.app"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
+    ],
+    "splash": {
+      "backgroundColor": "#0b1d3b"
+    },
+    "icon": "./assets/icon.png"
+  }
+}

@@ -1,6 +1,6 @@
 # RideMyWay — Your route. Your ride.
 
-A working intercity ridesharing website with a React frontend, Node.js API, and a persistent SQLite database. Mobile development is paused; `apps/mobile` remains the earlier concept app and is not connected to this backend.
+A working intercity ridesharing website with a React frontend, Node.js API, and a persistent SQLite database. The iOS app in `apps/mobile` now uses this backend; see [the mobile guide](apps/mobile/README.md) for setup, supported flows, and TestFlight prerequisites.
 
 ## Requirements
 
@@ -72,7 +72,7 @@ Browser validation uses independent driver and passenger sessions to exercise ac
 - The server has been tested in this cloud workspace. A public domain, TLS hosting, and a persistent production deployment have not been provisioned.
 - RideMyWay trademark and domain availability are unconfirmed.
 
-The earlier mobile demo remains available via `npm run mobile`; its sessions, data, and Nearway branding are separate from this website.
+The native RideMyWay app is available via `npm run mobile` and shares server data with the website. Its sign-in session is stored separately on the device.
 
 ## Cloudflare Workers + D1
 
