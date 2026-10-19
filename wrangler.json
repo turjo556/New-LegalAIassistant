@@ -3,8 +3,24 @@
   "name": "ridemyway",
   "main": "apps/worker/index.js",
   "compatibility_date": "2026-10-19",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": true,
-  "assets": {"directory": "apps/web/dist", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"]},
-  "d1_databases": [{"binding": "DB", "database_name": "ridemyway", "migrations_dir": "migrations"}]
+  "assets": {
+    "directory": "apps/web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ridemyway",
+      "migrations_dir": "migrations",
+      "database_id": "68ba6751-3f4e-43ee-849e-7b9af7cdc68d"
+    }
+  ]
 }
