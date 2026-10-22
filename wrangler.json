@@ -31,5 +31,15 @@
   },
   "vars": {
     "SUPPORT_EMAIL": "support@ridely.ca"
-  }
+  },
+  "routes": [
+    {
+      "pattern": "ridely.ca",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.ridely.ca",
+      "custom_domain": true
+    }
+  ]
 }
