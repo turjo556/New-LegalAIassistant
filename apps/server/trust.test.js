@@ -1,3 +1,4 @@
+import {approveTestDriver} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -20,6 +21,7 @@ test('contact verification, notifications, support, moderation and real-route qu
  await req('verification/send',{kind:'email'},'rider');const riderCode=emails.at(-1).html.match(/<strong>(\d{6})/)[1];for(let i=0;i<5;i++)await req('verification/confirm',{kind:'email',code:'bad'},'rider',400);await req('verification/confirm',{kind:'email',code:riderCode},'rider',400);
  await req('verification/send',{kind:'email'},'stranger');const expiredCode=emails.at(-1).html.match(/<strong>(\d{6})/)[1];const clockDb=new DatabaseSync(dbPath);clockDb.prepare('UPDATE verification_challenges SET expires=0 WHERE target=?').run('stranger@example.com');clockDb.close();await req('verification/confirm',{kind:'email',code:expiredCode},'stranger',400);
  const ticket=await req('support/create',{email:'guest@example.com',subject:'Trip question',body:'Please help with my booking.'});assert.ok(ticket.ticketId);assert.equal((await req('admin/queue',{},'driver')).tickets.length,1);await req('admin/queue',{},'rider',403);
+ approveTestDriver(dbPath);
  const published=await req('rides',{from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Main station',destination:'City station',allowPickup:true,allowDropoff:true,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:46.8139,dropoffLng:-71.208,pickupFee:5,dropoffFee:5,luggage:'large',vehicleNotes:'Pet friendly'},'driver',201);const ride=published.hosting[0];assert.equal(ride.luggage,'large');assert.equal(ride.emailVerified,true);
  assert.equal((await req('places/search',{query:'123 Test Street'},'rider')).places[0].lat,45.505);
  const booking=(await req('bookings',{rideId:ride.id,seats:1},'rider',201)).bookings[0];assert.ok((await req('state',null,'driver')).notifications.some(n=>n.title.includes('reserved')));

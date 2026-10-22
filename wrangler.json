@@ -30,7 +30,8 @@
     ]
   },
   "vars": {
-    "SUPPORT_EMAIL": "support@ridely.ca"
+    "SUPPORT_EMAIL": "support@ridely.ca",
+    "RIDELY_PUBLIC_URL": "https://ridely.ca"
   },
   "routes": [
     {

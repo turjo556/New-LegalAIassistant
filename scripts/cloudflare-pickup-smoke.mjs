@@ -1,3 +1,4 @@
+import {approveLocalDriver} from './local-worker-driver-fixture.mjs';
 import assert from 'node:assert/strict';
 const base=process.env.TEST_BASE_URL||'http://127.0.0.1:8788',cookies={};
  async function req(path,body,who='guest',status=200){const res=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:body?JSON.stringify(body):undefined});const data=await res.json();assert.equal(res.status,status,JSON.stringify(data));if(res.headers.get('set-cookie'))cookies[who]=res.headers.get('set-cookie').split(';')[0];return data}
@@ -5,6 +6,7 @@ const base=process.env.TEST_BASE_URL||'http://127.0.0.1:8788',cookies={};
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local test only.');
 for(const name of ['driver','first','second','third'])await req('register',{name,email:name+'-'+Date.now()+'@example.com',password:'safe-password-for-tests'},name);
  const ride={from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:46.8139,dropoffLng:-71.208};
+ approveLocalDriver((await req('state',null,'driver')).user.id,'Toyota');
  await req('rides',{...ride,pickupLat:null},'driver',400);
  const id=(await req('rides',ride,'driver',201)).hosting[0].id;
  await req('bookings',{rideId:id,seats:2,pickupMode:'custom'},'first',400);

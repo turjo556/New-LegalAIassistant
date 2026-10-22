@@ -1,0 +1,37 @@
+import {serviceBudget} from './providers.js';
+const fail=(status,message)=>{throw Object.assign(new Error(message),{status})};
+export const identityAvailable=env=>!!(env.STRIPE_SECRET_KEY&&env.RIDELY_PUBLIC_URL);
+export function driverBookable(d,date,vehicle){return !!(d?.identity_status==='verified'&&d.licence_status==='approved'&&d.insurance_status==='approved'&&d.licence_expires>=date&&d.insurance_expires>=date&&d.vehicle===vehicle&&d.reviewed_at>=Date.now()-30*86400000)}
+export async function driverState(db,user,env){const d=user?await db.get('SELECT * FROM driver_checks WHERE user_id=?',user.id):null;return {available:identityAvailable(env),identity:d?.identity_status||'not_started',licence:d?.licence_status||'pending',insurance:d?.insurance_status||'pending',licenceExpires:d?.licence_expires||null,insuranceExpires:d?.insurance_expires||null,vehicle:d?.vehicle||'',reviewedAt:d?.reviewed_at||null,approved:driverBookable(d,new Date().toISOString().slice(0,10),d?.vehicle)}}
+async function stripe(env,path,body,key){let response;try{response=await fetch('https://api.stripe.com/v1/identity/verification_sessions'+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+env.STRIPE_SECRET_KEY,'Stripe-Version':'2024-06-20',...(body?{'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':key}:{})},body:body?new URLSearchParams(body):undefined,signal:AbortSignal.timeout(12000)})}catch{fail(502,'Identity service is unavailable. Please try again.')}if(!response.ok)fail(502,'Identity service is unavailable. Check provider setup or try again later.');return response.json()}
+function validateSession(s,user,env){if(!s.id?.startsWith('vs_')||s.type!=='document'||s.metadata?.ridely_user_id!==user.id||s.livemode!==env.STRIPE_SECRET_KEY.startsWith('sk_live_'))fail(502,'Identity session could not be validated.');}
+async function updateSession(db,s,user,env){validateSession(s,user,env);if(!['requires_input','processing','verified','canceled'].includes(s.status))fail(502,'Unexpected identity status.');await db.run('UPDATE driver_checks SET identity_status=?,identity_checked=? WHERE user_id=? AND session_id=?',s.status==='verified'&&!s.livemode?'test_verified':s.status,Date.now(),user.id,s.id)}
+export async function driverApi(path,b,user,db,env={}){
+ if(!path.startsWith('/api/driver/')&&path!=='/api/admin/drivers'&&path!=='/api/admin/driver-review')return null;
+ if(!user)fail(401,'Sign in to continue.');
+ if(path.startsWith('/api/admin/')){
+ if(!user.email_verified||!env.RIDELY_ADMIN_EMAIL||user.email!==env.RIDELY_ADMIN_EMAIL.toLowerCase())fail(403,'Verified operator access is required.');
+ if(path==='/api/admin/drivers')return {drivers:await db.all('SELECT u.id,u.name,u.email,d.identity_status,d.licence_status,d.insurance_status,d.licence_expires,d.insurance_expires,d.vehicle,d.reviewed_at FROM driver_checks d JOIN users u ON u.id=d.user_id ORDER BY d.identity_checked DESC LIMIT 100')};
+ const target=typeof b.id==='string'?await db.get('SELECT * FROM driver_checks WHERE user_id=?',b.id):null;if(!target)fail(404,'Driver not found.');if(b.id===user.id)fail(403,'You cannot review your own driver eligibility.');
+ const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T12:00:00Z'))&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v;
+ if(!['approved','rejected'].includes(b.licence)||!['approved','rejected'].includes(b.insurance)||!validDate(b.licenceExpires)||!validDate(b.insuranceExpires)||typeof b.vehicle!=='string'||b.vehicle.trim().length<2||b.vehicle.length>60||typeof b.evidence!=='string'||b.evidence.trim().length<10||b.evidence.length>300)fail(400,'Complete the review, expiry dates, vehicle, and secure evidence reference. Do not enter document numbers.');
+ if((b.licence==='approved'||b.insurance==='approved')&&b.confirmed!==true)fail(400,'Confirm the checks were completed outside Ridely.');
+ if((b.licence==='approved'&&b.licenceExpires<new Date().toISOString().slice(0,10))||(b.insurance==='approved'&&b.insuranceExpires<new Date().toISOString().slice(0,10)))fail(400,'Expired evidence cannot be approved.');
+ const now=Date.now();await db.run('INSERT INTO driver_review_log VALUES(?,?,?,?,?,?,?,?,?,?)',crypto.randomUUID(),b.id,user.id,b.licence,b.insurance,b.licenceExpires,b.insuranceExpires,b.vehicle.trim(),b.evidence.trim(),now);
+ await db.run('UPDATE driver_checks SET licence_status=?,insurance_status=?,licence_expires=?,insurance_expires=?,vehicle=?,reviewed_by=?,reviewed_at=? WHERE user_id=?',b.licence,b.insurance,b.licenceExpires,b.insuranceExpires,b.vehicle.trim(),user.id,now,b.id);return {refresh:true};
+ }
+ if(path==='/api/driver/enrol'){await db.run('INSERT INTO driver_checks(user_id,attempt) VALUES(?,?) ON CONFLICT(user_id) DO NOTHING',user.id,crypto.randomUUID());return {refresh:true}}
+ if(!['/api/driver/identity/start','/api/driver/identity/refresh'].includes(path))fail(404,'Endpoint not found.');
+ if(!identityAvailable(env))fail(503,'Stripe Identity is awaiting setup. No verification has been started.');
+ if(path.endsWith('/start')&&b.consent!==true)fail(400,'Consent to Stripe identity processing is required.');
+ if(!user.email_verified)fail(403,'Verify your email before starting identity verification.');
+ await serviceBudget(db,'identity:'+user.id,path.endsWith('/start')?5:30,86400000);
+ await db.run('INSERT INTO driver_checks(user_id,attempt) VALUES(?,?) ON CONFLICT(user_id) DO NOTHING',user.id,crypto.randomUUID());
+ let d=await db.get('SELECT * FROM driver_checks WHERE user_id=?',user.id);
+ if(d.session_id){const s=await stripe(env,'/'+encodeURIComponent(d.session_id));await updateSession(db,s,user,env);if(path.endsWith('/refresh')||s.status!=='requires_input')return {refresh:true};if(!s.url||new URL(s.url).hostname!=='verify.stripe.com')fail(502,'No valid verification link is available.');return {url:s.url}}
+ if(path.endsWith('/refresh'))return {refresh:true};
+ let base;try{base=new URL(env.RIDELY_PUBLIC_URL);if(base.protocol!=='https:'||base.username||base.password)throw Error()}catch{fail(503,'The public verification return URL must use HTTPS.');}
+ const s=await stripe(env,'',{type:'document','options[document][allowed_types][]':'driving_license','options[document][require_matching_selfie]':'true','options[document][require_live_capture]':'true','metadata[ridely_user_id]':user.id,return_url:base.origin+'/?driver-verification=return'},'ridely-identity-'+d.attempt);validateSession(s,user,env);
+ if(!s.url||new URL(s.url).hostname!=='verify.stripe.com')fail(502,'No valid verification link is available.');
+ await db.run('UPDATE driver_checks SET session_id=?,identity_status=?,identity_checked=? WHERE user_id=? AND session_id IS NULL',s.id,'requires_input',Date.now(),user.id);return {url:s.url};
+}

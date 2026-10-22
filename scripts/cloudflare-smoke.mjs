@@ -1,3 +1,4 @@
+import {approveLocalDriver} from './local-worker-driver-fixture.mjs';
 import assert from 'node:assert/strict';
 const base=process.env.TEST_BASE_URL||'http://127.0.0.1:8788';
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('This smoke test creates sample accounts and rides. Run against a local test Worker only.');
@@ -10,6 +11,8 @@ await req('logout',{},'driver');await req('login',{email:`driver-${suffix}@examp
 const payload={from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:2,car:'Test vehicle',pickup:'Test station',destination:'Test destination'};
 await req('rides',{...payload,seats:-1},'driver',400);await req('rides',{...payload,date:'2099-02-30'},'driver',400);
 const published=await req('rides',payload,'driver',201);const id=published.hosting.at(-1).id;
+await req('bookings',{rideId:id,seats:1},'passenger',403);
+approveLocalDriver(published.user.id,'Test vehicle');
 await req('bookings',{rideId:id,seats:1},'driver',400);await req('bookings',{rideId:id,seats:1,mode:'home'},'passenger',400);
 await req('favorites',{id},'passenger');assert.ok((await req('state',null,'passenger')).saved.includes(id));
 const races=await Promise.all(['passenger','other'].map(async who=>{const response=await fetch(base+'/api/bookings',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookies[who]},body:JSON.stringify({rideId:id,seats:2})});return {who,status:response.status,data:await response.json()}}));
