@@ -30,7 +30,7 @@ test('Stripe identity is server retrieved, private, idempotent, and separate fro
  status='verified';foreign=true;await req('driver/identity/refresh',{},'driver',502);assert.equal((await req('state')).driverVerification.identity,'requires_input');foreign=false;live=false;await req('driver/identity/refresh',{},'driver',502);live=true;
  await req('driver/identity/refresh',{});assert.equal((await req('state')).driverVerification.identity,'verified');
  await req('bookings',{rideId:ride.id,seats:1},'rider',403);
- const review={id:driver.id,licence:'approved',insurance:'approved',licenceExpires:'2099-12-31',insuranceExpires:'2099-12-31',vehicle:'Toyota',evidence:'secure-case-123',confirmed:true,authoritySource:'saaq',authorityCheckedOn:new Date().toISOString().slice(0,10),authorityReference:'official-case-123',classConfirmed:true,restrictionsConfirmed:true};
+ const review={id:driver.id,licence:'approved',insurance:'approved',licenceExpires:'2099-12-31',insuranceExpires:'2099-12-31',vehicle:'Toyota',evidence:'secure-case-123',confirmed:true,holderConfirmed:true,authoritySource:'saaq',authorityCheckedOn:new Date().toISOString().slice(0,10),authorityReference:'official-case-123',classConfirmed:true,restrictionsConfirmed:true};
  await req('admin/driver-review',review,'driver',403);await req('admin/drivers',{},'rider',403);
  await req('admin/driver-review',{...review,confirmed:false},'operator',400);await req('admin/driver-review',{...review,licenceExpires:'2099-02-30'},'operator',400);
  await req('admin/driver-review',{...review,authoritySource:'ontario'},'operator',400);

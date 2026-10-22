@@ -1,3 +1,4 @@
+import {expireLicences} from '../../packages/core/licence-vault.js';
 import {driverApi,driverBookable} from '../../packages/core/driver-verification.js';
 import {extras,community,guardBlocked,deliverEmails} from '../../packages/core/community.js';
 import {quoteStop} from '../../packages/core/routing.js';
@@ -41,7 +42,7 @@ export default {async fetch(req,env){
  const token=randomBytes(32).toString('hex');await run('DELETE FROM sessions WHERE expires<?',Date.now());await run('INSERT INTO sessions VALUES(?,?,?)',hash(token),account.id,Date.now()+7*86400000);headers.set('Set-Cookie',`rmw_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${url.protocol==='https:'?'; Secure':''}`);return send(200,await state(account));
  }
  if(url.pathname==='/api/logout'){if(raw)await run('DELETE FROM sessions WHERE token=?',hash(raw));headers.set('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol==='https:'?'; Secure':''}`);return send(200,await state(null));}
- const driverResult=await driverApi(url.pathname,b,user,adapter,env);if(driverResult){return send(200,driverResult.refresh?await state(user):driverResult);}
+ const driverResult=await driverApi(url.pathname,b,user,adapter,{...env,LICENCE_REQUEST_SECURE:url.protocol==='https:'||['localhost','127.0.0.1'].includes(url.hostname)},async password=>{if(password.length<10)return false;const [salt,digest]=user.password.split(':');return timingSafeEqual(Buffer.from(await passwordDigest(password,salt),'hex'),Buffer.from(digest,'hex'))});if(driverResult){return send(200,driverResult.refresh?await state(user):driverResult);}
  const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_IP:req.headers.get('CF-Connecting-IP')||'local'});if(feature){return send(200,feature.refresh?await state(user):feature);}
  if(!user)fail(401,'Sign in to continue.'); await guardBlocked(url.pathname,b,user,adapter);if(url.pathname==='/api/stops/quote')return send(200,await quoteStop(b,user,adapter,env));
 
@@ -77,4 +78,4 @@ export default {async fetch(req,env){
  if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!await get('SELECT id FROM rides WHERE id=? AND cancelled=0',id))fail(404,'Ride not found.');const exists=await get('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);if(exists)await run('DELETE FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);else await run('INSERT INTO favorites VALUES(?,?)',user.id,id);return send(200,await state(user));}
  fail(404,'Endpoint not found.');
  }catch(e){if(!e.status)console.error('API request failed',e.message);return send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'})}
-},async scheduled(event,env,ctx){const adapter={get:(sql,...a)=>env.DB.prepare(sql).bind(...a).first(),all:async(sql,...a)=>(await env.DB.prepare(sql).bind(...a).all()).results,run:(sql,...a)=>env.DB.prepare(sql).bind(...a).run()};ctx.waitUntil(deliverEmails(adapter,env));}};
+},async scheduled(event,env,ctx){const adapter={get:(sql,...a)=>env.DB.prepare(sql).bind(...a).first(),all:async(sql,...a)=>(await env.DB.prepare(sql).bind(...a).all()).results,run:(sql,...a)=>env.DB.prepare(sql).bind(...a).run()};ctx.waitUntil(Promise.all([deliverEmails(adapter,env),expireLicences(adapter)]));}};
