@@ -97,3 +97,11 @@ Maps use Leaflet and attributed OpenStreetMap tiles. Users may enter coordinates
 Node applies local migrations automatically. Cloudflare's existing deploy script applies additive migrations `0003_custom_stops.sql` and `0004_cancel_stop_requests.sql`. Old listings retain their previous settings; create a new listing to use the new driver permissions. Legacy pickup requests remain visible through their existing review flow.
 
 `npm test` and the local Cloudflare test `npm run cf:test:pickup` cover booking-first enforcement, permissions, both 3 km zones, private data, pending/approved fees, and simultaneous approvals against the shared 15-minute budget.
+
+## Booking clarity, notifications, trust and support
+
+The website now includes luggage/vehicle details, an itemized pre-booking fare, policy acknowledgement, a shorter mobile-first rider homepage, in-app notifications for core trip events, contact verification adapters, optional email updates, reporting/blocking, and private support tickets at support@ridely.ca. Help, terms, privacy, and cancellation pages are clearly marked early-access drafts pending operator/legal review. No identity-verification badge is fabricated.
+
+See [SERVICE_SETUP.md](SERVICE_SETUP.md) to connect an existing Resend account to a separately verified Ridely sending domain, configure a verified support operator, and activate Mapbox/Twilio if desired. These external integrations are implemented and tested with simulated responses; real provider credentials and DNS/sender setup are still required. In-app notification delivery does not depend on an email provider.
+
+With Mapbox configured, custom approvals require a fresh, server-generated road-route quote. Without it, the driver-estimate workflow remains explicitly labelled. The native iOS approval screen also detects road-routing capability and requests a quote when available.
