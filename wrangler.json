@@ -31,7 +31,8 @@
   },
   "vars": {
     "SUPPORT_EMAIL": "support@ridely.ca",
-    "RIDELY_PUBLIC_URL": "https://ridely.ca"
+    "RIDELY_PUBLIC_URL": "https://ridely.ca",
+    "EMAIL_FROM": "Ridely <no-reply@ridely.ca>"
   },
   "routes": [
     {
