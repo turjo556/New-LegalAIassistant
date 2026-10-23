@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
-import {randomBytes} from 'node:crypto';
+import {randomBytes,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {createApp} from './index.js';
 import {testDatabase} from '../../scripts/test-driver-fixture.mjs';
 const number='A000000000000',password='secure-local-test-password';
-test('licence vault encrypts, isolates, reauthenticates, audits, expires and deletes submissions',async t=>{
+test('licence vault encrypts, isolates, authenticates, audits, expires and deletes submissions',async t=>{
  const dbPath=testDatabase(t),env={LICENCE_ENCRYPTION_KEY:randomBytes(32).toString('base64'),RIDELY_ADMIN_EMAIL:'operator@example.com'},server=createApp({dbPath,env});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,db=new DatabaseSync(dbPath),cookies={};
  async function req(path,b,who='driver',expected=200){const r=await fetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:b?JSON.stringify(b):undefined});const data=await r.json();assert.equal(r.status,expected,data.error||'Unexpected status');assert.equal(r.headers.get('cache-control'),'no-store');if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return data}
  try{
@@ -20,7 +20,7 @@ test('licence vault encrypts, isolates, reauthenticates, audits, expires and del
  let stored=db.prepare('SELECT * FROM licence_submissions').get();assert.ok(stored.ciphertext);assert.notEqual(stored.ciphertext,number);assert.equal(JSON.stringify(stored).includes(number),false);assert.ok(stored.expires_at>Date.now()+29*86400000);
  const before=stored;await req('driver/licence/submit',submit);stored=db.prepare('SELECT * FROM licence_submissions').get();assert.notEqual(stored.iv,before.iv);assert.notEqual(stored.ciphertext,before.ciphertext);
  assert.ok(!JSON.stringify(await req('state')).includes(number));assert.ok(!JSON.stringify(await req('state',null,'guest')).includes('ciphertext'));assert.ok(!JSON.stringify(await req('admin/drivers',{},'operator')).includes(stored.ciphertext));
- const reveal={id,password,purpose:'authority_check',confirmed:true};await req('admin/licence/reveal',reveal,'other',403);await req('admin/licence/reveal',{...reveal,password:'wrong-password'},'operator',403);await req('admin/licence/reveal',{...reveal,confirmed:false},'operator',400);
+ const reveal={id,purpose:'authority_check',confirmed:true};await req('admin/licence/reveal',reveal,'other',403);await req('admin/licence/reveal',{...reveal,confirmed:false},'operator',400);
  const opened=await req('admin/licence/reveal',reveal,'operator');assert.equal(opened.number,number);assert.equal(opened.submissionId,stored.id);
  const operator=db.prepare("SELECT id FROM users WHERE email='operator@example.com'").get();await req('admin/licence/reveal',{...reveal,id:operator.id},'operator',403);
  const audit=db.prepare('SELECT * FROM licence_access_log').all();assert.equal(audit.filter(x=>x.action==='revealed_for_authority_check').length,1);assert.ok(!JSON.stringify(audit).includes(number));
@@ -36,7 +36,10 @@ test('licence vault encrypts, isolates, reauthenticates, audits, expires and del
  await req('driver/licence/submit',submit,'driver',400);
  await req('driver/enrol',{licenceProvince:'QC',eligibilityConsent:true});await req('driver/licence/submit',submit);
  const {licenceApi}=await import('../../packages/core/licence-vault.js');const actor=db.prepare('SELECT * FROM users WHERE id=?').get(operator.id);const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
- await assert.rejects(()=>licenceApi('/api/admin/licence/reveal',reveal,actor,adapter,{...env,LICENCE_REQUEST_SECURE:true},async()=>{db.prepare("UPDATE licence_submissions SET status='withdrawn',ciphertext=NULL,iv=NULL WHERE user_id=?").run(id);return true}),e=>e.status===409);
+ const token=createHash('sha256').update(cookies.operator.slice('rmw_session='.length)).digest('hex');let checks=0;
+ const racingAdapter={...adapter,get:async(sql,...a)=>{const result=await adapter.get(sql,...a);if(sql.startsWith('SELECT expires FROM sessions')&&++checks===1)db.prepare("UPDATE licence_submissions SET status='withdrawn',ciphertext=NULL,iv=NULL WHERE user_id=?").run(id);return result}};
+ await assert.rejects(()=>licenceApi('/api/admin/licence/reveal',reveal,actor,racingAdapter,{...env,LICENCE_REQUEST_SECURE:true,LICENCE_SESSION_TOKEN:token}),e=>e.status===409);
+
  assert.equal(readFileSync(dbPath).includes(Buffer.from(number)),false);
  }finally{await new Promise(r=>server.close(r));db.close()}
 });
