@@ -288,3 +288,21 @@ credit balances in this release; track them in Stripe and resolve them with supp
 before making further credits spendable. Do not represent cancellation-credit
 restores as bank refunds. The application does not enable Stripe Connect or driver
 fare payouts.
+
+### Landing, search and top navigation
+
+The landing route `/` contains the introduction, rider/driver tabs, benefits and
+calls to action. It no longer renders the search form, ride cards or result count.
+Search rides opens `/search`; this page owns the search form and results, with no
+landing marketing sections. Search submissions preserve the four-city route,
+date and seat count in URL parameters for refresh/direct links. Browser Back and
+brand links restore the landing/search view correctly. `/my-trips`, `/my-listings`
+and `/saved` also have view paths; the posting form still opens as a full-page
+application flow after sign-in.
+
+Top navigation includes Search rides, Post a ride, Help and guest Sign up/Log in;
+member-only links remain available after authentication. Mobile gets visible
+Search/Post quick actions as well as the navigation menu. No nonfunctional daily
+rides, cart or locale controls were added. Future-feature sections remain on the
+landing page only. Search has concise booking-credit/cash-fare guidance instead of
+the repeated marketing sidebar.
