@@ -27,11 +27,10 @@ test('Stripe identity is server retrieved, private, idempotent, and separate fro
  await req('driver/identity/refresh',{status:'verified',sessionId:'vs_forged'});assert.equal((await req('state')).driverVerification.identity,'requires_input');
  completeTestRiders(dbPath);
  const rideData={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Main station',destination:'City station'};
- const ride=(await req('rides',rideData,'driver',201)).hosting[0];assert.equal(ride.bookable,false);
- await req('bookings',{rideId:ride.id,seats:1},'rider',403);
+ await req('rides',rideData,'driver',403);
  status='verified';foreign=true;await req('driver/identity/refresh',{},'driver',502);assert.equal((await req('state')).driverVerification.identity,'requires_input');foreign=false;live=false;await req('driver/identity/refresh',{},'driver',502);live=true;
  await req('driver/identity/refresh',{});assert.equal((await req('state')).driverVerification.identity,'verified');
- await req('bookings',{rideId:ride.id,seats:1},'rider',403);
+ await req('rides',rideData,'driver',403);
  const review={id:driver.id,licence:'approved',insurance:'approved',licenceExpires:'2099-12-31',insuranceExpires:'2099-12-31',vehicle:'Toyota',evidence:'secure-case-123',confirmed:true,holderConfirmed:true,authoritySource:'saaq',authorityCheckedOn:new Date().toISOString().slice(0,10),authorityReference:'official-case-123',classConfirmed:true,restrictionsConfirmed:true};
  await req('admin/driver-review',review,'driver',403);await req('admin/drivers',{},'rider',403);
  await req('admin/driver-review',{...review,confirmed:false},'operator',400);await req('admin/driver-review',{...review,licenceExpires:'2099-02-30'},'operator',400);
@@ -45,7 +44,7 @@ test('Stripe identity is server retrieved, private, idempotent, and separate fro
  const operatorId=(await req('state',null,'operator')).user.id;
  await req('admin/driver-review',{...review,id:operatorId,authoritySource:'ontario'},'operator',403);
  await req('admin/driver-review',review,'operator');assert.equal(db.prepare('SELECT COUNT(*) n FROM driver_review_log').get().n,1);
- assert.equal((await req('state')).hosting[0].bookable,true);
+ const ride=(await req('rides',rideData,'driver',201)).hosting[0];assert.equal(ride.bookable,true);
  db.prepare('UPDATE driver_checks SET authority_checked_at=0 WHERE user_id=?').run(driver.id);
  await req('bookings',{rideId:ride.id,seats:1},'rider',403);
  assert.throws(()=>db.prepare('INSERT INTO bookings(id,user_id,ride_id,seats,total) VALUES(?,?,?,?,?)').run('authority-bypass',driver.id,ride.id,1,3000),/driver_not_approved/);
