@@ -5,7 +5,7 @@ const base=process.env.TEST_BASE_URL||'http://127.0.0.1:8788',cookies={};
 
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local test only.');
 for(const name of ['driver','first','second','third'])await req('register',{name,email:name+'-'+Date.now()+'@example.com',password:'safe-password-for-tests'},name);
- const ride={from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:46.8139,dropoffLng:-71.208};
+ const ride={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:45.4215,dropoffLng:-75.6972};
  approveLocalDriver((await req('state',null,'driver')).user.id,'Toyota');
  await req('rides',{...ride,pickupLat:null},'driver',400);
  const id=(await req('rides',ride,'driver',201)).hosting[0].id;
@@ -14,7 +14,7 @@ for(const name of ['driver','first','second','third'])await req('register',{name
  const booking=(await req('bookings',{rideId:id,seats:2},'first',201)).bookings[0];assert.equal(booking.total,60);
  const pickup={bookingId:booking.id,kind:'pickup',address:'123 Private Street',lat:45.505,lng:-73.56};
  await req('stops/request',{...pickup,lat:46},'first',400);await req('stops/request',pickup,'second',404);
- await req('stops/request',pickup,'first');await req('stops/request',{bookingId:booking.id,kind:'dropoff',address:'456 Private Street',lat:46.815,lng:-71.20},'first');
+ await req('stops/request',pickup,'first');await req('stops/request',{bookingId:booking.id,kind:'dropoff',address:'456 Private Street',lat:45.423,lng:-75.69},'first');
  let own=await req('state',null,'first');assert.equal(own.bookings[0].requests.length,2);assert.equal(own.bookings[0].total,60);assert.ok(!JSON.stringify(await req('state')).includes('Private Street'));
  const requests=own.bookings[0].requests;
  await req('stops/decision',{id:requests[0].id,decision:'approve',minutes:10},'second',404);

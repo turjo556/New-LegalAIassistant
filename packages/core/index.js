@@ -1,4 +1,4 @@
-export const cities = ['Montréal', 'Québec City', 'Ottawa', 'Toronto'];
+export const cities = ['Montréal', 'Longueuil', 'Ottawa', 'Gatineau'];
 export const rides = [
  {id:'r1',from:'Montréal',to:'Québec City',time:'08:30',arrival:'11:30',driver:'Camille',initials:'CL',rating:'4.9',reviews:84,price:35,seats:3,home:true,car:'Toyota RAV4',color:'sage',pickup:'Berri-UQAM station',destination:'Sainte-Foy station',tags:['Quiet ride','Large luggage'],date:'2026-11-06'},
  {id:'r2',from:'Montréal',to:'Québec City',time:'10:00',arrival:'13:10',driver:'Alex',initials:'AM',rating:'4.8',reviews:62,price:32,seats:2,home:false,car:'Honda Civic',color:'peach',pickup:'Métro Namur',destination:'Gare du Palais',tags:['Music welcome','Carry-on'],date:'2026-11-06'},

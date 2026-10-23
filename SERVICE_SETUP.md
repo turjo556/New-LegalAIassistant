@@ -144,3 +144,31 @@ approval still use the configured routing provider. Original listed times are
 shown for standard stops; uncalculated custom-stop times require driver
 confirmation rather than fabricated ETAs. No new payment or paid-status claims
 are introduced. Online payments remain unavailable.
+
+### Pilot cities and preset meeting points
+
+Search and ride posting use the shared four-city catalogue: Montréal, Longueuil,
+Ottawa and Gatineau. Both server runtimes reject new rides outside those cities.
+Existing rides are retained. Test fixtures use pilot routes. Mobile city defaults
+also use the pilot catalogue.
+
+`packages/core/meeting-points.js` holds six owner-selected meeting points and the
+exact Google Maps short links supplied in the conversation: Longueuil taxi stand,
+Burger King Namur, Berri-UQAM Sainte-Catherine exit, Universal Grocery ByWard,
+St-Laurent Shopping Centre near Starbucks, and Walmart Saint-Joseph Gatineau.
+McDonald's is excluded. The website requires a preset in those cities. The API
+validates supplied preset IDs against the selected city and canonicalises names;
+legacy clients may still post text meeting points. Canonical presets and their
+links are returned on listings, booking review, and trip itineraries without a
+schema migration. No guess of a street address or precise coordinates is stored.
+
+Google short links could not be resolved under this environment's network policy.
+They are external location links, not a Google Maps API integration. For custom
+stops, the full-page posting form requires the driver to confirm both precise
+standard pins after consulting those links. The map explicitly starts at the city
+centre rather than claiming that it has geocoded the selected location. Presets
+are owner selections, not evidence of parking/loading permission.
+
+Offer a ride now opens a dedicated responsive page with route/date, vehicle/fare,
+optional custom-stop controls, and a live review sidebar. Publishing uses existing
+server validation and driver-approval gating. No payments are collected online.

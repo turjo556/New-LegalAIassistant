@@ -1,4 +1,4 @@
-export const pickupCities = {'Montréal':[45.5019,-73.5674],'Québec City':[46.8139,-71.208],'Ottawa':[45.4215,-75.6972],'Toronto':[43.6532,-79.3832]};
+export const pickupCities = {'Montréal':[45.5019,-73.5674],'Longueuil':[45.5312,-73.5181],'Gatineau':[45.4765,-75.7013],'Québec City':[46.8139,-71.208],'Ottawa':[45.4215,-75.6972],'Toronto':[43.6532,-79.3832]};
 export function distanceKm(a,b){const rad=n=>n*Math.PI/180;const lat=rad(b.lat-a.lat),lng=rad(b.lng-a.lng);const h=Math.sin(lat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(lng/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(Math.max(0,1-h)))}
 function invalid(message){throw Object.assign(new Error(message),{status:400})}
 export function point(lat,lng){if(typeof lat!=='number'||typeof lng!=='number'||!Number.isFinite(lat)||!Number.isFinite(lng)||lat<-90||lat>90||lng<-180||lng>180)invalid('Choose a valid location on the pickup map.');return {lat,lng}}
