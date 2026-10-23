@@ -172,3 +172,13 @@ are owner selections, not evidence of parking/loading permission.
 Offer a ride now opens a dedicated responsive page with route/date, vehicle/fare,
 optional custom-stop controls, and a live review sidebar. Publishing uses existing
 server validation and driver-approval gating. No payments are collected online.
+
+### Pilot cash payments
+
+Drivers collect the displayed booking fare and approved custom-stop fees directly
+from passengers in cash during the pilot. Listings carry a cash badge; posting,
+booking review/confirmation, driver and passenger trip pages, landing copy, footer,
+and payment policy explain the arrangement. Passenger booking totals are labelled
+"Cash due to driver" for active rides. Cancelled rides do not show collection
+instructions. This is payment-method messaging, not a payment processor or cash
+collection ledger: no booking is marked paid and no driver payout is claimed.
