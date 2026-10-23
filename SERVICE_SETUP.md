@@ -100,7 +100,7 @@ Migration 0010 stores an expiring, server-side unlock grant linked to the existi
 
 ## Landing promotions and account pages
 
-The landing page explains early-access benefits and the **planned** $25 CAD founding-driver bonus after three qualifying completed passenger trips. The displayed proposed cap is 25 qualifying drivers / $625 CAD total, awaiting owner budget confirmation; no bonus is currently earnable or payable. Final campaign dates, completion confirmation, claim deadline, payout method, and terms must be published before activation. Do not count signups or reservations as completed trips. The site does not yet track trip completion or process money. See PAYMENT_LAUNCH_PLAN.md for the remaining payment and campaign decisions.
+The landing page explains the owner-funded $25 CAD founding-driver bonus, limited to 25 eligible approved claims. See the funded founding-driver workflow below for current terms, deployment start, trip confirmation and manual Interac recording. Online ride-fare collection remains unavailable; signups and reservations alone never count as completed trips.
 
 Account access now uses full pages at `/join` and `/login`; `/join?role=driver` starts driver signup. Both use the existing secure account API and password login, with explicit password visibility and password-manager support. This change does not add passwordless login, social login, passkeys, or mandatory passenger identity checks. The driver/rider choice sets the initial flow, not a permanent role restriction. Driver signup continues to the guided checks. Guest booking selection is resumed after successful sign-in. Browser Back and the page's Back to rides return to the site; refresh/direct navigation works through the existing SPA fallback.
 
@@ -182,3 +182,46 @@ and payment policy explain the arrangement. Passenger booking totals are labelle
 "Cash due to driver" for active rides. Cancelled rides do not show collection
 instructions. This is payment-method messaging, not a payment processor or cash
 collection ledger: no booking is marked paid and no driver payout is claimed.
+
+### Funded founding-driver bonus — manual Interac workflow
+
+The owner authorised $25 CAD for up to 25 drivers ($625 maximum bonus allocation,
+excluding any bank transfer fees). Migration 0012 activates campaign `founding-25`
+at its deployment timestamp; public terms show that start in Eastern time. It is
+not backdated. Eligible departures connect Montréal/Longueuil with
+Ottawa/Gatineau after the campaign starts. Three distinct departures are needed,
+not three seats on one trip. Drivers must have current live identity, licence and
+insurance approval when marking a trip complete, after its listed arrival. A
+booked passenger with verified email/phone must separately confirm travelling.
+Sandbox identity never qualifies. Cancelled trips and duplicate departure times
+are excluded; operators must review genuine travel and duplicate-person/account
+abuse before approval. Confirmations are attestations, not GPS or cash-payment
+proof. No automatic fraud-proof eligibility claim is made.
+
+Drivers see progress in My listings and Account, accept the bonus terms and
+submit a private Interac recipient email after three qualifying trips. Only the
+claimant and verified operator can access that email. Support queue → Bonus review
+& manual payments lists claims with trip evidence and the committed budget.
+The first 25 eligible operator-approved claims reserve allocations. Pending
+claims do not reserve funds. A database trigger enforces this cap atomically;
+rejecting an unpaid claim releases its allocation. Self-review is forbidden.
+
+After approving a claim, the operator must send exactly $25 through their own bank,
+verify the recipient and bank history, and then record the unique transfer
+reference with an explicit already-sent confirmation. This website does NOT
+initiate, retry or settle Interac transfers. A recorded `paid` status means the
+operator attested that the transfer was sent, not that the recipient deposited it.
+The bank history is authoritative if a transfer was sent but its record failed to
+save. Never send another transfer merely because a record is missing. No automatic
+emails or bank calls are made by this flow. Passwords, banking credentials and
+security answers are never requested. Paid records are immutable and all status
+changes are audited. Review notes are visible to the driver; keep them free of
+other members' private data. Claims cannot be edited after submission; corrections
+and rejected-claim disputes go through support. Retain bank evidence/accounting
+records under the operating business's applicable retention requirements.
+
+Passenger ride fares remain cash paid directly to drivers, separate from this
+Ridely-funded promotion. No fee collection, Stripe Connect or automatic driver
+fare payout has been activated. Campaign closes to new approvals at 25 funded
+allocations; landing status reflects exhausted allocations. Production start and
+availability require successful Cloudflare deployment/migration, not just a push.
