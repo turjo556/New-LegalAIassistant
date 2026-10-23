@@ -1,3 +1,4 @@
+import {riderApi} from './rider-profile.js';
 import {licenceApi,licenceMetadata,vaultAvailable,expireLicences} from './licence-vault.js';
 import {serviceBudget} from './providers.js';
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status})};
@@ -8,6 +9,7 @@ async function stripe(env,path,body,key){let response;try{response=await fetch('
 function validateSession(s,user,env){if(!s.id?.startsWith('vs_')||s.type!=='document'||s.metadata?.ridely_user_id!==user.id||s.livemode!==env.STRIPE_SECRET_KEY.startsWith('sk_live_'))fail(502,'Identity session could not be validated.');}
 async function updateSession(db,s,user,env){validateSession(s,user,env);if(!['requires_input','processing','verified','canceled'].includes(s.status))fail(502,'Unexpected identity status.');await db.run('UPDATE driver_checks SET identity_status=?,identity_checked=? WHERE user_id=? AND session_id=?',s.status==='verified'&&!s.livemode?'test_verified':s.status,Date.now(),user.id,s.id)}
 export async function driverApi(path,b,user,db,env={},reauth){
+ const rider=await riderApi(path,b,user,db,env,reauth);if(rider)return rider;
  const vault=await licenceApi(path,b,user,db,env,reauth);if(vault)return vault;
  if(!path.startsWith('/api/driver/')&&path!=='/api/admin/drivers'&&path!=='/api/admin/driver-review')return null;
  if(!user)fail(401,'Sign in to continue.');

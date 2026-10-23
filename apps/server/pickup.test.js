@@ -1,4 +1,4 @@
-import {testDatabase,approveTestDriver} from '../../scripts/test-driver-fixture.mjs';
+import {testDatabase,approveTestDriver,completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createApp} from './index.js';
@@ -6,7 +6,7 @@ test('book first, driver permissions, private 3km requests and shared atomic det
  const dbPath=testDatabase(t);const server=createApp({dbPath});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,cookies={};
  async function req(path,body,who='guest',status=200){const res=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:body?JSON.stringify(body):undefined});const data=await res.json();assert.equal(res.status,status,JSON.stringify(data));if(res.headers.get('set-cookie'))cookies[who]=res.headers.get('set-cookie').split(';')[0];return data}
  try{for(const name of ['driver','first','second','third'])await req('register',{name,email:name+'@example.com',password:'safe-password-for-tests'},name);
- approveTestDriver(dbPath);
+ approveTestDriver(dbPath);completeTestRiders(dbPath);
  const ride={from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:46.8139,dropoffLng:-71.208};
  await req('rides',{...ride,pickupLat:null},'driver',400);
  const id=(await req('rides',ride,'driver',201)).hosting[0].id;

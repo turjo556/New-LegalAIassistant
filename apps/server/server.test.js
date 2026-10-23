@@ -1,4 +1,4 @@
-import {approveTestDriver} from '../../scripts/test-driver-fixture.mjs';
+import {approveTestDriver,completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -13,7 +13,7 @@ test('accounts, ownership, shared inventory, cancellation and restart persistenc
  await req('rides',{},'guest',401);
  for(const who of ['driver','passenger','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-test-password'},who);
  await req('login',{email:'driver@example.com',password:'wrong-password'},'guest',401);
- approveTestDriver(join(dir,'test.sqlite'));
+ approveTestDriver(join(dir,'test.sqlite'));completeTestRiders(join(dir,'test.sqlite'));
  const payload={from:'Montréal',to:'Québec City',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:2,car:'Toyota',pickup:'Main station',destination:'City station'};
  await req('rides',{...payload,seats:-1},'driver',400);await req('rides',{...payload,date:'2099-02-30'},'driver',400);
  const published=await req('rides',payload,'driver',201);const id=published.rides[0].id;

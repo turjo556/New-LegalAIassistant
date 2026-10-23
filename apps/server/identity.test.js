@@ -1,3 +1,4 @@
+import {completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
@@ -24,6 +25,7 @@ test('Stripe identity is server retrieved, private, idempotent, and separate fro
  const link=await req('driver/identity/start',{consent:true});assert.match(link.url,/^https:\/\/verify.stripe.com/);assert.equal(creates,1);
  await req('driver/identity/start',{consent:true});assert.equal(creates,1);
  await req('driver/identity/refresh',{status:'verified',sessionId:'vs_forged'});assert.equal((await req('state')).driverVerification.identity,'requires_input');
+ completeTestRiders(dbPath);
  const rideData={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Main station',destination:'City station'};
  const ride=(await req('rides',rideData,'driver',201)).hosting[0];assert.equal(ride.bookable,false);
  await req('bookings',{rideId:ride.id,seats:1},'rider',403);
