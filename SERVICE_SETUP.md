@@ -360,3 +360,7 @@ verified operator to cancel a ride belonging to that ticket's driver, with a rea
 Migration 0015 audits approved ride cancellations. Existing database triggers notify
 passengers in Ridely and restore any spent booking credits once; no bank refund
 or cash-fare collection occurs. A support request alone leaves the ride active.
+
+### Vehicle identification
+
+Migration `0016_vehicle_identification.sql` adds licence plate, issuing Canadian province/territory and car colour. New listings require all three; old listings remain readable and owners can add them in My listings → Update plate & colour. Existing passengers may see “Not provided yet” until the owner updates the listing. Plate numbers are normalized to uppercase without spaces or hyphens. Public search exposes colour, while plate and issuing province are returned only in the owner's hosting data and active booked passengers' trip data. Cancellation removes passenger access. Changes notify active booked passengers. These details are driver-provided and do not constitute a registration or ownership verification; changing plate/colour does not change the separately reviewed vehicle make/model.

@@ -7,7 +7,7 @@ test('book first, driver permissions, private 3km requests and shared atomic det
  async function req(path,body,who='guest',status=200){const res=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:body?JSON.stringify(body):undefined});const data=await res.json();assert.equal(res.status,status,JSON.stringify(data));if(res.headers.get('set-cookie'))cookies[who]=res.headers.get('set-cookie').split(';')[0];return data}
  try{for(const name of ['driver','first','second','third'])await req('register',{name,email:name+'@example.com',password:'safe-password-for-tests'},name);
  approveTestDriver(dbPath);completeTestRiders(dbPath);
- const ride={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:45.4215,dropoffLng:-75.6972};
+ const ride={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:45.4215,dropoffLng:-75.6972};
  await req('rides',{...ride,pickupLat:null},'driver',400);
  const id=(await req('rides',ride,'driver',201)).hosting[0].id;
  await req('bookings',{rideId:id,seats:2,pickupMode:'custom'},'first',400);

@@ -5,7 +5,7 @@ const base=process.env.TEST_BASE_URL||'http://127.0.0.1:8788',cookies={};
 
 if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('Local test only.');
 for(const name of ['driver','first','second','third'])await req('register',{name,email:name+'-'+Date.now()+'@example.com',password:'safe-password-for-tests'},name);
- const ride={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:45.4215,dropoffLng:-75.6972};
+ const ride={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Station entrance',destination:'City station',allowPickup:true,allowDropoff:true,pickupFee:5,dropoffFee:5,pickupLat:45.5019,pickupLng:-73.5674,dropoffLat:45.4215,dropoffLng:-75.6972};
  approveLocalDriver((await req('state',null,'driver')).user.id,'Toyota');
  await req('rides',{...ride,pickupLat:null},'driver',400);
  const id=(await req('rides',ride,'driver',201)).hosting[0].id;

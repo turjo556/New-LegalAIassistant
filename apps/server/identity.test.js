@@ -26,7 +26,7 @@ test('Stripe identity is server retrieved, private, idempotent, and separate fro
  await req('driver/identity/start',{consent:true});assert.equal(creates,1);
  await req('driver/identity/refresh',{status:'verified',sessionId:'vs_forged'});assert.equal((await req('state')).driverVerification.identity,'requires_input');
  completeTestRiders(dbPath);
- const rideData={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Main station',destination:'City station'};
+ const rideData={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Main station',destination:'City station'};
  const ride=(await req('rides',rideData,'driver',201)).hosting[0];assert.equal(ride.bookable,false);
  await req('bookings',{rideId:ride.id,seats:1},'rider',403);
  status='verified';foreign=true;await req('driver/identity/refresh',{},'driver',502);assert.equal((await req('state')).driverVerification.identity,'requires_input');foreign=false;live=false;await req('driver/identity/refresh',{},'driver',502);live=true;

@@ -12,7 +12,7 @@ test('private adult rider profile, real contact-code flow, booking gate, inciden
  async function req(path,b,who='rider',status=200){const r=await realFetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:b?JSON.stringify(b):undefined});const data=await r.json();assert.equal(r.status,status,data.error||'Unexpected response');if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return data}
  try{
  for(const who of ['rider','driver','operator','other'])await req('register',{name:who,email:who+'@example.com',password},who);approveTestDriver(dbPath);
- const ride=(await req('rides',{from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,car:'Toyota',pickup:'Main station',destination:'City station'},'driver',201)).hosting[0];
+ const ride=(await req('rides',{from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Main station',destination:'City station'},'driver',201)).hosting[0];
  await req('bookings',{rideId:ride.id,seats:1},'rider',403);
  const privateData={legalName:'Private Legal Person',dob:'1994-04-12',consent:true,adultPolicyAccepted:true};
  await req('rider/profile/save',privateData,'guest',401);await req('rider/profile/save',{...privateData,dob:'2020-01-01'},'rider',400);await req('rider/profile/save',{...privateData,dob:'1994-02-30'},'rider',400);await req('rider/profile/save',{...privateData,consent:false},'rider',400);

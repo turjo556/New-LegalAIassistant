@@ -8,7 +8,7 @@ await req('health');await req('rides',{},'guest',401);
 for(const who of ['driver','passenger','other'])await req('register',{name:who,email:`${who}-${suffix}@example.com`,password:'safe-local-test-password'},who);
 await req('login',{email:`driver-${suffix}@example.com`,password:'wrong-password'},'guest',401);
 await req('logout',{},'driver');await req('login',{email:`driver-${suffix}@example.com`,password:'safe-local-test-password'},'driver');
-const payload={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:2,car:'Test vehicle',pickup:'Test station',destination:'Test destination'};
+const payload={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:2,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Test vehicle',pickup:'Test station',destination:'Test destination'};
 await req('rides',{...payload,seats:-1},'driver',400);await req('rides',{...payload,date:'2099-02-30'},'driver',400);
 const published=await req('rides',payload,'driver',201);const id=published.hosting.at(-1).id;
 await req('bookings',{rideId:id,seats:1},'passenger',403);

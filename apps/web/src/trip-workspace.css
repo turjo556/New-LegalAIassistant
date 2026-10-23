@@ -102,3 +102,4 @@
 .trip-marker-group span{flex-shrink:0}
 .trip-map-canvas{background:linear-gradient(135deg,#e8f0f7,#f4f7fb)}
 .trip-policy-notice{margin:20px 0;padding:16px 20px;border:1px solid #dce5f3;border-radius:9px;background:#f8faff}.trip-policy-notice p{margin:0;font-size:12px}.trip-policy-notice h3{font-size:14px}
+.vehicle-identification{margin:18px 0;padding:16px;border:1px solid #dce5f3;border-radius:9px;background:#f7faff}.vehicle-identification p{margin:7px 0}.vehicle-identification small{display:block;margin:8px 0 12px}.vehicle-identification .auth-form{max-width:420px}
