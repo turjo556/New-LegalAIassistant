@@ -302,7 +302,21 @@ application flow after sign-in.
 
 Top navigation includes Search rides, Post a ride, Help and guest Sign up/Log in;
 member-only links remain available after authentication. Mobile gets visible
-Search/Post quick actions as well as the navigation menu. No nonfunctional daily
-rides, cart or locale controls were added. Future-feature sections remain on the
+Search/Post quick actions as well as the navigation menu. Daily rides and locale controls remain unimplemented; the booking-credit cart is
+described below. Future-feature sections remain on the
 landing page only. Search has concise booking-credit/cash-fare guidance instead of
 the repeated marketing sidebar.
+
+### Prominent search and booking-credit cart
+
+Desktop Search rides is a solid blue primary navigation button, with the matching
+mobile quick action. The always-visible cart icon/label and quantity badge open
+`/cart` for guests and members. This cart contains additional booking credits at
+$3.99 CAD each, not passenger seats or driver cash fares. It supports an empty
+state, quantities 1–10, removal, an order summary and sign-in return to the cart.
+Only the draft quantity is stored in localStorage (`ridely.credit-cart.v1`); balances
+and purchases remain server-authorised. Account's credit selector now sends the
+chosen quantity to this cart for review, using the same guarded Stripe checkout.
+Cart quantities survive refresh/login and clear on server-confirmed purchase.
+Cancelling Stripe checkout returns to `/cart` with the draft intact. Payment
+activation requirements and sandbox operator restrictions remain in force.
