@@ -11,6 +11,7 @@ test('bonus requires actual dated trips and passenger confirmation, operator rev
  // Real bookings are created through the API; only the clock/campaign is shifted
  // in this isolated fixture to test completed historical journeys without waiting.
  db.prepare('UPDATE bonus_campaign SET starts_at=?').run(Date.now()-10*86400000);
+ db.prepare("INSERT INTO promo_credit_ledger(id,user_id,amount,kind,operation_key,reason,actor,created) SELECT 'test-extra-credit',id,1,'grant','test-extra-credit','Extra booking for isolated bonus test',id,? FROM users WHERE email='rider@example.com'").run(Date.now());
  const rides=[];for(let i=0;i<3;i++){
   const published=await req('rides',{from:'Montréal',to:'Ottawa',date:`2099-11-0${i+1}`,time:'09:00',arrival:'11:30',price:35,seats:3,car:'Toyota',pickup:'Berri-UQAM',destination:'Rideau Centre'},'driver',201);const ride=published.hosting.find(r=>!rides.includes(r.id));rides.push(ride.id);await req('bookings',{rideId:ride.id,seats:2},'rider',201);
   await req('trips/complete',{rideId:ride.id,confirmed:true},'driver',409);await req('trips/complete',{rideId:ride.id,confirmed:true},'other',404);

@@ -225,3 +225,66 @@ Ridely-funded promotion. No fee collection, Stripe Connect or automatic driver
 fare payout has been activated. Campaign closes to new approvals at 25 funded
 allocations; landing status reflects exhausted allocations. Production start and
 availability require successful Cloudflare deployment/migration, not just a push.
+
+### Booking credits — two free, then $3.99 CAD each
+
+The owner superseded the free-unlimited-bookings pilot with: each account gets two
+booking credits automatically, then additional credits cost $3.99 CAD each. One
+credit covers one reservation, regardless of seat count; driver fares and approved
+custom stops remain cash paid directly to the driver. Accounts/listings stay free.
+Migration 0013 backfills existing accounts once and adds a welcome-credit trigger
+for new accounts. Existing reservations are not retroactively charged. No expiry
+is set and credits are not transferable or cash-withdrawable.
+
+The immutable integer ledger tracks welcome, operator grants/reversals, purchases,
+reservation use and cancellation restores. SQLite/D1 triggers consume a credit
+within the booking transaction and reject reservations/rebookings with no balance.
+Failed inventory/profile/driver checks consume nothing. Booking/driver cancellations
+restore a spent credit exactly once per booking cycle; cancelling/rebooking cannot
+mint extra credits. Cancellation restores a credit, not a cash refund. Welcome
+credits cannot be manually reversed. The operator can issue 1–100 additional
+complimentary credits to a verified account, with a visible reason and idempotency
+reference; own-account grants are forbidden. No automated paid-credit grant exists
+without verified checkout completion.
+
+Account → Booking credits shows the private balance, history, credit terms,
+quantity selector and $3.99 price. The booking review states the credit requirement
+separately from the driver's cash fare and opens Account if credits are exhausted.
+Support queue → Manage promotional credits supports exact verified-email lookup,
+grants and reversal of a manual grant where the balance permits. Operators cannot
+edit/delete ledger history.
+
+#### Stripe credit checkout setup
+
+Purchases are disabled by default. They use the Ridely Stripe account and dedicated
+runtime secrets (never enter these in chat or commit them):
+
+- Secret `STRIPE_CREDITS_SECRET_KEY`: start with the sandbox `sk_test_` key.
+- Secret `STRIPE_CREDITS_WEBHOOK_SECRET`: the `whsec_` signing secret for a Stripe
+  event destination at `https://ridely.ca/api/credits/webhook` subscribed to
+  `checkout.session.completed` in the same test/live mode as the key.
+- Runtime text `CREDITS_PAYMENTS_ENABLED=true` after both secrets and the event
+  destination are configured. `RIDELY_PUBLIC_URL=https://ridely.ca` is already used.
+
+The API requires HTTPS for return URLs, calculates $3.99 per credit on the server,
+accepts 1–10 per checkout and ignores client prices. Card data is collected by
+Stripe hosted Checkout. Mode is checked against the configured key. The webhook
+validates the exact raw-body HMAC signature and timestamp, then independently
+retrieves the saved Checkout session from Stripe. Session owner/order, currency,
+amount, mode and completed/paid status must match before crediting. The browser
+return does the same provider retrieval; it cannot supply a paid flag. Ledger
+purchase keys prevent duplicate credits across retries, return visits and webhook
+replays. Unknown unrelated checkout events are ignored. Confirm the webhook is
+receiving deliveries; a browser return alone is not the delivery strategy.
+
+Use sandbox test cards to verify purchase, credit consumption and cancellation
+before switching this dedicated key and webhook destination/signing secret to live
+mode. This work sent no real charges. Account shows an explicit TEST checkout label
+when using the test key. Sandbox purchases are restricted to the verified operator account; other riders
+see purchases as unavailable until a live key is activated. Only activate live
+collection after support/purchase refund/dispute procedures and business tax setup
+are settled. Card refunds and chargebacks are not automatically reconciled into
+credit balances in this release; track them in Stripe and resolve them with support
+before making further credits spendable. Do not represent cancellation-credit
+restores as bank refunds. The application does not enable Stripe Connect or driver
+fare payouts.
