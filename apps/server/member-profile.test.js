@@ -12,6 +12,7 @@ test('optional photos are reencoded, owner-only mutable, visible on trips and re
  let d=await req('profile/photo',{photo,publicConsent:true});const url=d.user.photoUrl;assert(url);const r=await fetch(base+url);assert.equal(r.headers.get('content-type'),'image/jpeg');assert.equal(r.headers.get('cache-control'),'no-store');const decoded=jpeg.decode(Buffer.from(await r.arrayBuffer()));assert.equal(decoded.width,64);
  assert.equal((await req('state',null,'rider')).user.photoUrl,null);
  const draft={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:3,car:'Toyota',vehicleColor:'Blue',licencePlate:'TEST123',plateProvince:'QC',pickup:'Main station',destination:'City station'};
+ await req('rides/draft',{draft:{...draft,time:'09:07'}},'driver',400);
  d=await req('rides/draft',{draft:{...draft,owner:'forged',approved:true}});assert.equal(d.rideDraft.car,'Toyota');assert.equal(d.rideDraft.approved,undefined);assert.equal(d.rides.length,0);assert.equal((await req('state',null,'rider')).rideDraft,null);assert.equal((await req('state',null,'guest')).rideDraft,null);
  await req('rides',draft,'driver',403);assert.equal((await req('state')).rides.length,0);
  approveTestDriver(dbPath);completeTestRiders(dbPath);d=await req('rides',draft,'driver',201);assert.equal(d.rideDraft,null);assert.equal(d.rides[0].driverPhoto,url);const id=d.rides[0].id;

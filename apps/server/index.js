@@ -1,3 +1,4 @@
+import {isTripTime} from '../../packages/core/trip-times.js';
 import {photoUrl,memberState,memberAction,readPhoto} from '../../packages/core/member-profile.js';
 import {vehicleIdentification,privateVehicles,updateVehicle} from '../../packages/core/vehicle.js';
 import {cancelBooking,cancelRide} from '../../packages/core/cancellation.js';
@@ -91,7 +92,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  }
  if(url.pathname==='/api/rides'){
  applyMeetingPoints(b);const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');
- const date=text(b.date,'date');const time=text(b.time,'departure time');const arrival=text(b.arrival,'arrival time');if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(arrival)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)fail(400,'Enter valid trip dates and times.');if(date+'T'+time<=easternNow()||arrival<=time)fail(400,'Choose a future date and an arrival after departure (same day).');
+ const date=text(b.date,'date');const time=text(b.time,'departure time');const arrival=text(b.arrival,'arrival time');if(!isTripTime(time)||!isTripTime(arrival))fail(400,'Choose departure and arrival times in 15-minute increments (:00, :15, :30 or :45).');if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(arrival)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)fail(400,'Enter valid trip dates and times.');if(date+'T'+time<=easternNow()||arrival<=time)fail(400,'Choose a future date and an arrival after departure (same day).');
  const luggage=['small','medium','large'].includes(b.luggage)?b.luggage:'Ask the driver';const vehicleNotes=b.vehicleNotes?text(b.vehicleNotes,'vehicle information',1,300):'';const cancellationPolicy='six-hour-support';
  const vehicle=vehicleIdentification(b);const custom=routeSettings(b);
  const cents=Math.round(Number(b.price)*100);integer(cents,500,50000,'price');const seats=integer(b.seats,1,4,'seat count');const car=text(b.car,'vehicle',2,60),pickup=text(b.pickup,'pickup point',3),destination=text(b.destination,'drop-off point',3);

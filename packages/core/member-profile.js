@@ -1,3 +1,4 @@
+import {isTripTime} from './trip-times.js';
 import jpeg from 'jpeg-js';
 import {cities} from './index.js';
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status})};
@@ -15,6 +16,7 @@ export async function memberAction(path,b,user,db){
  }
  if(path.endsWith('/delete')){await db.run('DELETE FROM ride_drafts WHERE user_id=?',user.id);return true}
  const source=b.draft;if(!source||typeof source!=='object'||Array.isArray(source))fail('Enter your ride details.');
+ for(const k of ['time','arrival'])if(source[k]&&!isTripTime(source[k]))fail('Choose times in 15-minute increments (:00, :15, :30 or :45).');
  const draft={};for(const k of ['from','to','date','time','arrival','seats','price','car','vehicleColor','licencePlate','plateProvince','luggage','vehicleNotes','pickup','destination','pickupLocationId','dropoffLocationId','allowPickup','allowDropoff','pickupFee','dropoffFee','pickupLat','pickupLng','dropoffLat','dropoffLng']){const v=source[k];if(v===null||['string','boolean','number'].includes(typeof v)){if(typeof v==='string'&&v.length>500)fail('Ride detail is too long.');draft[k]=v}}
  if(!cities.includes(draft.from)||!cities.includes(draft.to))fail('Choose supported pilot cities.');
  await db.run('INSERT INTO ride_drafts(user_id,payload,updated) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET payload=excluded.payload,updated=excluded.updated',user.id,JSON.stringify(draft),Date.now());return true;

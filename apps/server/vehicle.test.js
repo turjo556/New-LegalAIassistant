@@ -13,7 +13,7 @@ test('vehicle identification is required, private to booked riders, owner editab
  const db=new DatabaseSync(dbPath);t.after(()=>db.close());
  for(const sql of ["UPDATE driver_checks SET identity_status='test_verified'","UPDATE driver_checks SET licence_status='pending'","UPDATE driver_checks SET insurance_status='rejected'","UPDATE driver_checks SET insurance_expires='2099-11-05'","UPDATE driver_checks SET authority_checked_at=0"]){db.exec(sql);await req('rides',body,'driver',403);approveTestDriver(dbPath)}
  await req('rides',{...body,car:'Honda'},'driver',403);db.exec('UPDATE users SET email_verified=0');await req('rides',body,'driver',403);completeTestRiders(dbPath);
- for(const bad of [{licencePlate:''},{licencePlate:'<script>'},{plateProvince:'XX'},{vehicleColor:''}])await req('rides',{...body,...bad},'driver',400);
+ for(const bad of [{time:'09:07'},{arrival:'12:10'},{time:'24:00'},{licencePlate:''},{licencePlate:'<script>'},{plateProvince:'XX'},{vehicleColor:''}])await req('rides',{...body,...bad},'driver',400);
  let d=await req('rides',body,'driver',201);const id=d.hosting[0].id;assert.equal(d.hosting[0].vehicleDetails.licencePlate,'ABC123');
  const checkPublic=async who=>{const state=await req('state',null,who);assert.equal(state.rides[0].vehicleColor,'Blue');assert(!JSON.stringify(state).includes('ABC123'));assert.equal(state.rides[0].plateProvince,undefined)};
  await checkPublic('guest');await checkPublic('other');
