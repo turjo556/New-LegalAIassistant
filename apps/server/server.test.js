@@ -7,7 +7,7 @@ import {join} from 'node:path';
 import {createApp} from './index.js';
 test('accounts, ownership, shared inventory, cancellation and restart persistence',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'rmw-test-'));let server;
- async function start(){server=createApp({dbPath:join(dir,'test.sqlite')});await new Promise(r=>server.listen(0,'127.0.0.1',r));return 'http://127.0.0.1:'+server.address().port}
+ async function start(){server=createApp({dbPath:join(dir,'test.sqlite'),env:{RIDELY_ADMIN_EMAIL:'other@example.com'}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return 'http://127.0.0.1:'+server.address().port}
  let base=await start();const cookies={};async function req(path,body,who='guest',expected=200,origin){const response=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookies[who]?{Cookie:cookies[who]}:{}),...(origin?{Origin:origin}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json();assert.equal(response.status,expected,JSON.stringify(data));if(response.headers.get('set-cookie'))cookies[who]=response.headers.get('set-cookie').split(';')[0];return data}
  try{
  await req('rides',{},'guest',401);
@@ -33,7 +33,7 @@ test('accounts, ownership, shared inventory, cancellation and restart persistenc
  await new Promise(r=>server.close(r));base=await start();assert.equal((await req('state',null,winner.who)).bookings[0].id,booking.id);
  await req('bookings/cancel',{id:booking.id},winner.who);assert.equal((await req('state')).rides[0].seats,2);
  await req('bookings',{rideId:id,seats:1},winner.who,201);const host=await req('state',null,'driver');assert.equal(host.hosting[0].passengers.length,1);assert.equal(host.hosting[0].passengers[0].name,winner.who);
- await req('rides/cancel',{id},'driver');assert.equal((await req('state')).rides.length,0);assert.equal((await req('state',null,winner.who)).bookings[0].ride.cancelled,true);
+ await req('rides/cancel',{id},'driver',409);const ticket=await req('support/create',{subject:'Cancel driver listing',body:'Please cancel this booked ride.'},'driver');await req('admin/rides/cancel',{rideId:id,caseId:ticket.ticketId,reason:'Driver support cancellation approved.'},'other');assert.equal((await req('state')).rides.length,0);assert.equal((await req('state',null,winner.who)).bookings[0].ride.cancelled,true);
  await req('logout',{},winner.who);assert.equal((await req('state',null,winner.who)).user,null);
  }finally{if(server.listening)await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true})}
 });

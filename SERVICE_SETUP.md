@@ -343,3 +343,20 @@ that booking's rider; ordinary members cannot invoke the action. The cancellatio
 credit restoration and audit entry occur in the same database update transaction.
 Repeat approvals cannot restore extra credits. Cash already exchanged must be
 resolved separately; no automatic bank refund is made.
+
+### Drivers cancelling listings
+
+A driver can cancel their own listing at any time only if it has zero active
+(non-cancelled) passenger reservations. Once at least one active booking exists,
+My listings replaces Cancel ride with Contact support to cancel listing. The
+support form includes the ride reference and a driver-cancellation subject. If
+all passengers cancel their bookings, driver self-cancellation becomes available
+again. This does not change the passenger six-hour cancellation cutoff.
+
+Both runtimes use one conditional SQL update with NOT EXISTS(active bookings),
+so a stale browser or concurrent new booking cannot bypass the restriction.
+Support queue → driver ticket → Review a driver listing cancellation allows the
+verified operator to cancel a ride belonging to that ticket's driver, with a reason.
+Migration 0015 audits approved ride cancellations. Existing database triggers notify
+passengers in Ridely and restore any spent booking credits once; no bank refund
+or cash-fare collection occurs. A support request alone leaves the ride active.

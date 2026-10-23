@@ -1,4 +1,4 @@
-import {cancelBooking} from '../../packages/core/cancellation.js';
+import {cancelBooking,cancelRide} from '../../packages/core/cancellation.js';
 import {creditWebhook} from '../../packages/core/credits.js';
 import {applyMeetingPoints,meetingPointFor} from '../../packages/core/meeting-points.js';
 import {cities} from '../../packages/core/index.js';
@@ -42,6 +42,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0012_founding_bonus')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0012_founding_bonus.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0012_founding_bonus');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0013_promotional_credits')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0013_promotional_credits.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0013_promotional_credits');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0014_cancellation_reviews')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0014_cancellation_reviews.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0014_cancellation_reviews');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
+ if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0015_driver_cancellation_reviews')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0015_driver_cancellation_reviews.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0015_driver_cancellation_reviews');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const attempts=new Map();
  function fail(status,message){throw Object.assign(new Error(message),{status})}
@@ -103,7 +104,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!result.changes)fail(409,'This pickup request has already been reviewed.');send(200,await state(user));return;
  }
  if(url.pathname==='/api/bookings/cancel'){await cancelBooking(adapter,user,text(b.id,'booking'));send(200,await state(user));return}
- if(url.pathname==='/api/rides/cancel'){const result=db.prepare('UPDATE rides SET cancelled=1 WHERE id=? AND owner=? AND cancelled=0').run(text(b.id,'ride'),user.id);if(!result.changes)fail(404,'Ride not found.');send(200,await state(user));return}
+ if(url.pathname==='/api/rides/cancel'){await cancelRide(adapter,user,text(b.id,'ride'));send(200,await state(user));return}
  if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!db.prepare('SELECT id FROM rides WHERE id=? AND cancelled=0').get(id))fail(404,'Ride not found.');const exists=db.prepare('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?').get(user.id,id);if(exists)db.prepare('DELETE FROM favorites WHERE user_id=? AND ride_id=?').run(user.id,id);else db.prepare('INSERT INTO favorites VALUES(?,?)').run(user.id,id);send(200,await state(user));return}
  fail(404,'Endpoint not found.');
  }catch(e){if(!e.status)console.error('Request failed:',e.message);if(!res.headersSent)send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'});else res.end()}

@@ -1,4 +1,4 @@
-import {cancelBooking} from '../../packages/core/cancellation.js';
+import {cancelBooking,cancelRide} from '../../packages/core/cancellation.js';
 import {creditWebhook} from '../../packages/core/credits.js';
 import {applyMeetingPoints,meetingPointFor} from '../../packages/core/meeting-points.js';
 import {cities} from '../../packages/core/index.js';
@@ -80,7 +80,7 @@ export default {async fetch(req,env){
  if(!result.meta.changes)fail(409,'This pickup request has already been reviewed.');return send(200,await state(user));
  }
  if(url.pathname==='/api/bookings/cancel'){await cancelBooking(adapter,user,text(b.id,'booking'));return send(200,await state(user));}
- if(url.pathname==='/api/rides/cancel'){const result=await run('UPDATE rides SET cancelled=1 WHERE id=? AND owner=? AND cancelled=0',text(b.id,'ride'),user.id);if(!result.meta.changes)fail(404,'Ride not found.');return send(200,await state(user));}
+ if(url.pathname==='/api/rides/cancel'){await cancelRide(adapter,user,text(b.id,'ride'));return send(200,await state(user));}
  if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!await get('SELECT id FROM rides WHERE id=? AND cancelled=0',id))fail(404,'Ride not found.');const exists=await get('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);if(exists)await run('DELETE FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);else await run('INSERT INTO favorites VALUES(?,?)',user.id,id);return send(200,await state(user));}
  fail(404,'Endpoint not found.');
  }catch(e){if(!e.status)console.error('API request failed',e.message);return send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'})}
