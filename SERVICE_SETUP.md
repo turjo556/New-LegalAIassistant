@@ -320,3 +320,26 @@ chosen quantity to this cart for review, using the same guarded Stripe checkout.
 Cart quantities survive refresh/login and clear on server-confirmed purchase.
 Cancelling Stripe checkout returns to `/cart` with the draft intact. Payment
 activation requirements and sandbox operator restrictions remain in force.
+
+### Pickup wait and six-hour cancellation policy
+
+Drivers must wait at least ten minutes at the agreed pickup point, measured from
+the later of the agreed pickup time and the driver's arrival. This is a displayed
+operating policy; arrival/check-in timers are not implemented. No automatic no-show
+penalty is introduced. The check-in screenshot is a proposed design only.
+
+Passenger online cancellation is permitted at least six hours before the original
+listed ride departure, interpreted in America/Toronto time. At the exact six-hour
+boundary it is allowed. Later cancellation requests must go through support; they
+do not automatically cancel the booking. Driver-cancelled rides can still be
+removed by passengers without this restriction. The API enforces the cutoff and
+My trips replaces cancellation with a support link that includes the booking
+reference. Credit restoration occurs only after actual cancellation.
+
+Migration 0014 adds operator cancellation review fields and an audit trigger.
+Support queue → the rider's ticket → Review a cancellation request lets the verified
+operator approve a booking cancellation with a reason. The ticket must belong to
+that booking's rider; ordinary members cannot invoke the action. The cancellation,
+credit restoration and audit entry occur in the same database update transaction.
+Repeat approvals cannot restore extra credits. Cash already exchanged must be
+resolved separately; no automatic bank refund is made.

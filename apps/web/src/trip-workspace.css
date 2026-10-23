@@ -101,3 +101,4 @@
 .trip-marker-group{display:flex;width:max-content;gap:2px;transform:translateX(-25%)}
 .trip-marker-group span{flex-shrink:0}
 .trip-map-canvas{background:linear-gradient(135deg,#e8f0f7,#f4f7fb)}
+.trip-policy-notice{margin:20px 0;padding:16px 20px;border:1px solid #dce5f3;border-radius:9px;background:#f8faff}.trip-policy-notice p{margin:0;font-size:12px}.trip-policy-notice h3{font-size:14px}
