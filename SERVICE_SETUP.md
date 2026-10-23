@@ -119,3 +119,28 @@ SMS is required to verify a phone. Configure the existing `TWILIO_ACCOUNT_SID`, 
 Operator access to private rider details is **incident-only**, under the support operator screen. It requires the verified `RIDELY_ADMIN_EMAIL` account, current password confirmation, a booking ID, a related support-ticket/member-report ID, an allowed purpose (accident, safety report, lawful request), and an authority acknowledgement. The record is never an ordinary driver lookup or passenger directory. Each access records operator/rider/booking/case/purpose/time without the private details. The UI hides results after 60 seconds or when the tab is hidden. Licence-review unlocks do not confer incident access. The form does not automatically establish that a request is legally valid: the operator must assess access/disclosure authority. Self-reported details may be inaccurate; do not infer accountability or guarantee safety from collection alone.
 
 Local test fixtures now explicitly seed completed rider profiles and verified contacts for existing booking tests. Those placeholder records exist only in temporary/local test databases; no production bypass flag or test-approval endpoint is available. Migration 0011 adds the real booking gates, encrypted-profile storage, and incident access logs.
+
+### Driver and passenger trip workspace
+
+My listings now opens a dedicated three-column desktop dashboard (itinerary/map,
+passenger bookings, pending custom-stop decisions). My trips opens a two-column
+booking page (full itinerary/map, driver/booking/custom-stop summary). Both adapt
+to phones and have a selector when the account has multiple journeys. Marketing
+sections are excluded from these management views.
+
+The shared itinerary includes every approved active custom stop in request row
+order, grouped after the corresponding standard meeting point, matching the
+existing public itinerary. Pending, declined and cancelled requests are excluded.
+Public stops carry opaque request IDs only to match owner-authorised private
+requests; public addresses and coordinates remain excluded. Drivers see their
+ride's exact approved addresses; riders see only their own exact addresses.
+Others' custom map pins use the standard meeting area. Nearby markers are grouped
+so all stop numbers remain visible at intercity zoom. City centres are the fallback
+for older unpinned standard stops.
+
+Maps remain Leaflet/OpenStreetMap, not Google Maps. The dashed stop overview is
+explicitly not a calculated road route or live tracking. Road previews during
+approval still use the configured routing provider. Original listed times are
+shown for standard stops; uncalculated custom-stop times require driver
+confirmation rather than fabricated ETAs. No new payment or paid-status claims
+are introduced. Online payments remain unavailable.
