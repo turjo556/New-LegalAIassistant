@@ -1099,5 +1099,20 @@
   "No profile photo added. Confirm the driver and vehicle details before boarding.": "Aucune photo de profil. Confirmez les renseignements du conducteur et du véhicule avant de monter.",
   "New confidential safety report. Open the support queue to review.": "Nouveau signalement confidentiel de sécurité. Ouvrez les demandes de soutien pour le consulter.",
   "Clear plans for everyone": "Des plans clairs pour tout le monde",
-  "Drivers list their route and stop options. Passengers review the itinerary, ask questions, and choose whether to book. Custom stops need driver approval.": "Les conducteurs affichent leur itinéraire et les options d’arrêt. Les passagers consultent le parcours, posent leurs questions et choisissent de réserver ou non. Les arrêts personnalisés nécessitent l’approbation du conducteur."
+  "Drivers list their route and stop options. Passengers review the itinerary, ask questions, and choose whether to book. Custom stops need driver approval.": "Les conducteurs affichent leur itinéraire et les options d’arrêt. Les passagers consultent le parcours, posent leurs questions et choisissent de réserver ou non. Les arrêts personnalisés nécessitent l’approbation du conducteur.",
+  "Recommended: $25 CAD per seat · Maximum: $30 CAD per seat.": "Prix recommandé : 25 $ CA par place · Maximum : 30 $ CA par place.",
+  "Optional custom-stop fees are shown separately.": "Les frais d’arrêts personnalisés facultatifs sont affichés séparément.",
+  "Your seat price": "Votre prix par place",
+  "Recommended: $25 CAD · Maximum: $30 CAD": "Prix recommandé : 25 $ CA · Maximum : 30 $ CA",
+  "This listing exceeds the new $30 cap and is hidden from new searches. Lower its price before accepting new reservations.": "Cette annonce dépasse le nouveau plafond de 30 $ et n’apparaît plus dans les recherches. Réduisez son prix avant de nouvelles réservations.",
+  "Close price editor": "Fermer la modification du prix",
+  "Update seat price": "Modifier le prix par place",
+  "Changes apply to future reservations only. Existing reservations keep their agreed cash fares. With active bookings, you can only lower the listing price.": "Les changements s’appliquent aux futures réservations. Les réservations existantes conservent leur prix convenu. Avec des réservations actives, vous pouvez seulement réduire le prix.",
+  "Save seat price": "Enregistrer le prix",
+  "Seat price must be between $5 and $30 CAD per person, with at most two decimals.": "Le prix doit être compris entre 5 $ et 30 $ CA par place, avec au plus deux décimales.",
+  "This listing exceeds the $30 seat fare cap. The driver must update its price before new reservations.": "Cette annonce dépasse le plafond de 30 $ par place. Le conducteur doit modifier le prix avant de nouvelles réservations.",
+  "You can only lower the listing price while passengers have active bookings. Existing reservations keep their agreed fares.": "Vous pouvez seulement réduire le prix pendant que des réservations sont actives. Les réservations existantes conservent leur prix convenu.",
+  "· Recommended: $25 CAD · Maximum: $30 CAD": "· Prix recommandé : 25 $ CA · Maximum : 30 $ CA",
+  "Pilot seat fares: $25 CAD recommended · $30 CAD maximum. Custom stops and booking credits are separate.": "Prix par place du projet pilote : 25 $ CA recommandé · 30 $ CA maximum. Les arrêts personnalisés et les crédits de réservation sont distincts.",
+  "The pilot seat fare is now capped at $30 CAD. Your unbooked listing was reduced to $30. The recommended fare is $25.": "Le prix par place est maintenant plafonné à 30 $ CA. Votre annonce sans réservation a été réduite à 30 $. Le prix recommandé est de 25 $."
 }

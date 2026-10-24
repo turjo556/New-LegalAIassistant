@@ -1,0 +1,6 @@
+INSERT INTO notifications(id,user_id,title,created) SELECT lower(hex(randomblob(16))),r.owner,'The pilot seat fare is now capped at $30 CAD. Your unbooked listing was reduced to $30. The recommended fare is $25.',unixepoch()*1000 FROM rides r WHERE r.price>3000 AND r.cancelled=0 AND r.completed_at IS NULL AND NOT EXISTS(SELECT 1 FROM bookings b WHERE b.ride_id=r.id AND b.cancelled=0);
+UPDATE rides SET price=3000 WHERE price>3000 AND cancelled=0 AND completed_at IS NULL AND NOT EXISTS(SELECT 1 FROM bookings WHERE ride_id=rides.id AND cancelled=0);
+CREATE TRIGGER seat_fare_cap_insert BEFORE INSERT ON rides WHEN NEW.price>3000 BEGIN SELECT RAISE(ABORT,'seat_fare_cap'); END;
+CREATE TRIGGER seat_fare_cap_update BEFORE UPDATE OF price ON rides WHEN NEW.price>3000 BEGIN SELECT RAISE(ABORT,'seat_fare_cap'); END;
+CREATE TRIGGER seat_fare_bookings_insert BEFORE INSERT ON bookings WHEN NEW.cancelled=0 AND EXISTS(SELECT 1 FROM rides WHERE id=NEW.ride_id AND price>3000) BEGIN SELECT RAISE(ABORT,'seat_fare_cap'); END;
+CREATE TRIGGER seat_fare_bookings_update BEFORE UPDATE OF cancelled,seats ON bookings WHEN NEW.cancelled=0 AND EXISTS(SELECT 1 FROM rides WHERE id=NEW.ride_id AND price>3000) BEGIN SELECT RAISE(ABORT,'seat_fare_cap'); END;

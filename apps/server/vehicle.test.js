@@ -8,7 +8,7 @@ test('vehicle identification is required, private to booked riders, owner editab
  async function req(path,body,who='guest',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return d}
  for(const who of ['driver','rider','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-fixture-password'},who);
  completeTestRiders(dbPath);
- const body={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:3,car:'Toyota',pickup:'Main station',destination:'City station',licencePlate:'ab c-123',plateProvince:'QC',vehicleColor:'Blue'};
+ const body={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:3,car:'Toyota',pickup:'Main station',destination:'City station',licencePlate:'ab c-123',plateProvince:'QC',vehicleColor:'Blue'};
  await req('rides',{...body,identityVerified:true,approved:true},'rider',403);await req('rides',body,'driver',403);approveTestDriver(dbPath);
  const db=new DatabaseSync(dbPath);t.after(()=>db.close());
  for(const sql of ["UPDATE driver_checks SET identity_status='test_verified'","UPDATE driver_checks SET licence_status='pending'","UPDATE driver_checks SET insurance_status='rejected'","UPDATE driver_checks SET insurance_expires='2099-11-05'","UPDATE driver_checks SET authority_checked_at=0"]){db.exec(sql);await req('rides',body,'driver',403);approveTestDriver(dbPath)}

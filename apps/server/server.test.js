@@ -14,7 +14,7 @@ test('accounts, ownership, shared inventory, cancellation and restart persistenc
  for(const who of ['driver','passenger','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-test-password'},who);
  await req('login',{email:'driver@example.com',password:'wrong-password'},'guest',401);
  approveTestDriver(join(dir,'test.sqlite'));completeTestRiders(join(dir,'test.sqlite'));
- const payload={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:35,seats:2,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Main station',destination:'City station'};
+ const payload={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:2,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Main station',destination:'City station'};
  await req('rides',{...payload,seats:-1},'driver',400);await req('rides',{...payload,date:'2099-02-30'},'driver',400);
  const published=await req('rides',payload,'driver',201);const id=published.rides[0].id;
  assert.equal((await req('state')).rides.length,1);
@@ -23,7 +23,7 @@ test('accounts, ownership, shared inventory, cancellation and restart persistenc
  await req('favorites',{id},'passenger');assert.deepEqual((await req('state',null,'passenger')).saved,[id]);
  const races=await Promise.all(['passenger','other'].map(async who=>{const r=await fetch(base+'/api/bookings',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookies[who]},body:JSON.stringify({rideId:id,seats:2})});return {who,status:r.status,data:await r.json()}}));
  assert.deepEqual(races.map(r=>r.status).sort(),[201,409]);const winner=races.find(r=>r.status===201),loser=races.find(r=>r.status===409);
- const booking=winner.data.bookings[0];assert.equal(booking.total,70);assert.equal((await req('state')).rides[0].seats,0);
+ const booking=winner.data.bookings[0];assert.equal(booking.total,60);assert.equal((await req('state')).rides[0].seats,0);
  await req('messages/send',{id:booking.id,message:'Meet at the station entrance.'},winner.who);
  const thread=await req('messages',{id:booking.id},'driver');assert.equal(thread.messages[0].body,'Meet at the station entrance.');
  await req('messages',{id:booking.id},loser.who,404);
