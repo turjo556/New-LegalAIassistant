@@ -80,7 +80,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(url.pathname==='/api/logout'){if(raw)db.prepare('DELETE FROM sessions WHERE token=?').run(hash(raw));res.setHeader('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure?'; Secure':''}`);send(200,await state(null));return}
  if(await memberAction(url.pathname,b,user,adapter)){send(200,await state(user));return;}
  const driverResult=await driverApi(url.pathname,b,user,adapter,{...env,LICENCE_SESSION_TOKEN:raw?hash(raw):null,LICENCE_REQUEST_SECURE:!!req.socket.encrypted||(!secure&&['127.0.0.1','::1'].includes(req.socket.remoteAddress))},async password=>{if(password.length<10)return false;const [salt,digest]=user.password.split(':');return timingSafeEqual(scryptSync(password,salt,64),Buffer.from(digest,'hex'))});if(driverResult){send(200,driverResult.refresh?await state(user):driverResult);return;}
- const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_IP:req.socket.remoteAddress});if(feature){send(200,feature.refresh?await state(user):feature);return;}
+ const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_LOCALE:req.headers['accept-language']?.startsWith('fr')?'fr':'en',REQUEST_IP:req.socket.remoteAddress});if(feature){send(200,feature.refresh?await state(user):feature);return;}
  if(!user)fail(401,'Sign in to continue.'); await guardBlocked(url.pathname,b,user,adapter);if(url.pathname==='/api/stops/quote'){send(200,await quoteStop(b,user,adapter,env));return;}
 
  if(await updateVehicle(url.pathname,b,user,adapter)){send(200,await state(user));return;}

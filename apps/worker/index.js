@@ -53,7 +53,7 @@ export default {async fetch(req,env){
  if(url.pathname==='/api/logout'){if(raw)await run('DELETE FROM sessions WHERE token=?',hash(raw));headers.set('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol==='https:'?'; Secure':''}`);return send(200,await state(null));}
  if(await memberAction(url.pathname,b,user,adapter))return send(200,await state(user));
  const driverResult=await driverApi(url.pathname,b,user,adapter,{...env,LICENCE_SESSION_TOKEN:raw?hash(raw):null,LICENCE_REQUEST_SECURE:url.protocol==='https:'||['localhost','127.0.0.1'].includes(url.hostname)},async password=>{if(password.length<10)return false;const [salt,digest]=user.password.split(':');return timingSafeEqual(Buffer.from(await passwordDigest(password,salt),'hex'),Buffer.from(digest,'hex'))});if(driverResult){return send(200,driverResult.refresh?await state(user):driverResult);}
- const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_IP:req.headers.get('CF-Connecting-IP')||'local'});if(feature){return send(200,feature.refresh?await state(user):feature);}
+ const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_LOCALE:req.headers.get('Accept-Language')?.startsWith('fr')?'fr':'en',REQUEST_IP:req.headers.get('CF-Connecting-IP')||'local'});if(feature){return send(200,feature.refresh?await state(user):feature);}
  if(!user)fail(401,'Sign in to continue.'); await guardBlocked(url.pathname,b,user,adapter);if(url.pathname==='/api/stops/quote')return send(200,await quoteStop(b,user,adapter,env));
 
  if(await updateVehicle(url.pathname,b,user,adapter)){return send(200,await state(user));}
