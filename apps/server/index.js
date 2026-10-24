@@ -1,3 +1,4 @@
+import {safetyApi} from '../../packages/core/trip-safety.js';
 import {isTripTime} from '../../packages/core/trip-times.js';
 import {photoUrl,memberState,memberAction,readPhoto} from '../../packages/core/member-profile.js';
 import {vehicleIdentification,privateVehicles,updateVehicle} from '../../packages/core/vehicle.js';
@@ -48,6 +49,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0015_driver_cancellation_reviews')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0015_driver_cancellation_reviews.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0015_driver_cancellation_reviews');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0016_vehicle_identification')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0016_vehicle_identification.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0016_vehicle_identification');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0017_profiles_and_ride_drafts')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0017_profiles_and_ride_drafts.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0017_profiles_and_ride_drafts');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
+ if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0018_trip_safety')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0018_trip_safety.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0018_trip_safety');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const attempts=new Map();
  function fail(status,message){throw Object.assign(new Error(message),{status})}
@@ -79,6 +81,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  }
  if(url.pathname==='/api/logout'){if(raw)db.prepare('DELETE FROM sessions WHERE token=?').run(hash(raw));res.setHeader('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure?'; Secure':''}`);send(200,await state(null));return}
  if(await memberAction(url.pathname,b,user,adapter)){send(200,await state(user));return;}
+ const safetyResult=await safetyApi(url.pathname,b,user,adapter,env);if(safetyResult){send(200,safetyResult);return;}
  const driverResult=await driverApi(url.pathname,b,user,adapter,{...env,LICENCE_SESSION_TOKEN:raw?hash(raw):null,LICENCE_REQUEST_SECURE:!!req.socket.encrypted||(!secure&&['127.0.0.1','::1'].includes(req.socket.remoteAddress))},async password=>{if(password.length<10)return false;const [salt,digest]=user.password.split(':');return timingSafeEqual(scryptSync(password,salt,64),Buffer.from(digest,'hex'))});if(driverResult){send(200,driverResult.refresh?await state(user):driverResult);return;}
  const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_LOCALE:req.headers['accept-language']?.startsWith('fr')?'fr':'en',REQUEST_IP:req.socket.remoteAddress});if(feature){send(200,feature.refresh?await state(user):feature);return;}
  if(!user)fail(401,'Sign in to continue.'); await guardBlocked(url.pathname,b,user,adapter);if(url.pathname==='/api/stops/quote'){send(200,await quoteStop(b,user,adapter,env));return;}
