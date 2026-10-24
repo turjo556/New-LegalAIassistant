@@ -1,0 +1,6 @@
+INSERT INTO notifications(id,user_id,title,created) SELECT lower(hex(randomblob(16))),r.owner,'Pilot seat fares now use whole dollars. Your unbooked listing was rounded down to the nearest dollar.',unixepoch()*1000 FROM rides r WHERE r.price%100<>0 AND r.cancelled=0 AND r.completed_at IS NULL AND NOT EXISTS(SELECT 1 FROM bookings b WHERE b.ride_id=r.id AND b.cancelled=0);
+UPDATE rides SET price=CAST(price/100 AS INTEGER)*100 WHERE price%100<>0 AND cancelled=0 AND completed_at IS NULL AND NOT EXISTS(SELECT 1 FROM bookings WHERE ride_id=rides.id AND cancelled=0);
+CREATE TRIGGER whole_fare_insert BEFORE INSERT ON rides WHEN NEW.price%100<>0 BEGIN SELECT RAISE(ABORT,'whole_dollar_fare'); END;
+CREATE TRIGGER whole_fare_update BEFORE UPDATE OF price ON rides WHEN NEW.price%100<>0 BEGIN SELECT RAISE(ABORT,'whole_dollar_fare'); END;
+CREATE TRIGGER whole_fare_booking_insert BEFORE INSERT ON bookings WHEN NEW.cancelled=0 AND EXISTS(SELECT 1 FROM rides WHERE id=NEW.ride_id AND price%100<>0) BEGIN SELECT RAISE(ABORT,'whole_dollar_fare'); END;
+CREATE TRIGGER whole_fare_booking_update BEFORE UPDATE OF cancelled,seats ON bookings WHEN NEW.cancelled=0 AND EXISTS(SELECT 1 FROM rides WHERE id=NEW.ride_id AND price%100<>0) BEGIN SELECT RAISE(ABORT,'whole_dollar_fare'); END;

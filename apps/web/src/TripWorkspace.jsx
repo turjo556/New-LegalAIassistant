@@ -13,7 +13,7 @@ import CashPaymentNotice from './CashPaymentNotice.jsx';
 import './trip-workspace.css';
 import VehicleIdentification from './VehicleIdentification.jsx';
 import {canCancelBooking} from '../../../packages/core/cancellation.js';
-const cad=value=>new Intl.NumberFormat(formatLocale(),{style:'currency',currency:'CAD'}).format(value||0);
+const cad=value=>new Intl.NumberFormat(formatLocale(),{style:'currency',currency:'CAD',minimumFractionDigits:Number.isInteger(Number(value||0))?0:2,maximumFractionDigits:2}).format(value||0);
 const dateLabel=r=>new Date(r.date+'T12:00:00').toLocaleDateString(formatLocale(),{weekday:'short',month:'short',day:'numeric'});
 const initials=name=>(name||'?').split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase();
 function RouteMap({ride,stops,driver}){

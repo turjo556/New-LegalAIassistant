@@ -1114,5 +1114,10 @@
   "You can only lower the listing price while passengers have active bookings. Existing reservations keep their agreed fares.": "Vous pouvez seulement réduire le prix pendant que des réservations sont actives. Les réservations existantes conservent leur prix convenu.",
   "· Recommended: $25 CAD · Maximum: $30 CAD": "· Prix recommandé : 25 $ CA · Maximum : 30 $ CA",
   "Pilot seat fares: $25 CAD recommended · $30 CAD maximum. Custom stops and booking credits are separate.": "Prix par place du projet pilote : 25 $ CA recommandé · 30 $ CA maximum. Les arrêts personnalisés et les crédits de réservation sont distincts.",
-  "The pilot seat fare is now capped at $30 CAD. Your unbooked listing was reduced to $30. The recommended fare is $25.": "Le prix par place est maintenant plafonné à 30 $ CA. Votre annonce sans réservation a été réduite à 30 $. Le prix recommandé est de 25 $."
+  "The pilot seat fare is now capped at $30 CAD. Your unbooked listing was reduced to $30. The recommended fare is $25.": "Le prix par place est maintenant plafonné à 30 $ CA. Votre annonce sans réservation a été réduite à 30 $. Le prix recommandé est de 25 $.",
+  "Seat price must be between $5 and $30 CAD per person, using whole dollars only.": "Le prix doit être compris entre 5 $ et 30 $ CA par place, en dollars entiers seulement.",
+  "Whole dollars only.": "Dollars entiers seulement.",
+  "Update this listing to a whole-dollar fare of $30 or less before accepting new reservations.": "Choisissez un prix en dollars entiers de 30 $ ou moins avant d’accepter de nouvelles réservations.",
+  "The driver must update this listing to a whole-dollar fare of $30 or less before new reservations.": "Le conducteur doit choisir un prix en dollars entiers de 30 $ ou moins avant de nouvelles réservations.",
+  "Pilot seat fares now use whole dollars. Your unbooked listing was rounded down to the nearest dollar.": "Les prix par place utilisent maintenant des dollars entiers. Le prix de votre annonce sans réservation a été arrondi au dollar inférieur."
 }
