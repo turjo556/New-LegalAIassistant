@@ -1,3 +1,4 @@
+import {siteResponse} from '../../packages/core/site-response.js';
 import {seatFareCents,maximumSeatPrice,updateSeatPrice} from '../../packages/core/fare-policy.js';
 import {safetyApi} from '../../packages/core/trip-safety.js';
 import {isTripTime} from '../../packages/core/trip-times.js';
@@ -65,7 +66,11 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  const send=(code,data)=>{res.writeHead(code,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data))};
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
  try{const url=new URL(req.url,'http://local');
- if(!url.pathname.startsWith('/api/')){const base=resolve(root,'apps/web/dist');let file=resolve(base,'.'+decodeURIComponent(url.pathname));if(!file.startsWith(base+'/'))file=resolve(base,'index.html');if(!existsSync(file)||!statSync(file).isFile()){if(extname(url.pathname)){res.writeHead(404);res.end('Not found');return}file=resolve(base,'index.html')}if(!existsSync(file)){res.writeHead(503);res.end('Build the website with npm run build first.');return}res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.woff':'font/woff','.png':'image/png','.jpg':'image/jpeg'})[extname(file)]||'application/octet-stream');createReadStream(file).pipe(res);return}
+ if(!url.pathname.startsWith('/api/')){
+  const base=resolve(root,'apps/web/dist');
+  const assets={async fetch(request){const path=new URL(request.url).pathname;let decoded;try{decoded=decodeURIComponent(path)}catch{return new Response('Not found',{status:404})}let file=resolve(base,decoded==='/'?'index.html':'.'+decoded);if(!file.startsWith(base+'/'))return new Response('Not found',{status:404});if(!extname(file)&&existsSync(file+'.html'))file+='.html';if(!existsSync(file)||!statSync(file).isFile())return new Response('Not found',{status:404});const type=({'.html':'text/html; charset=utf-8','.xml':'application/xml; charset=utf-8','.txt':'text/plain; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.woff':'font/woff','.png':'image/png','.jpg':'image/jpeg'})[extname(file)]||'application/octet-stream';return new Response(readFileSync(file),{headers:{'Content-Type':type}})}};
+  const response=await siteResponse(new Request((secure?'https://':'http://')+(req.headers.host||'localhost')+req.url,{method:req.method}),assets);res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;
+ }
  if(req.method!=='GET'&&req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail(403,'Request origin is not allowed.');
  const raw=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rmw_session='))?.slice(12);
  const user=raw?db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').get(hash(raw),Date.now()):null;

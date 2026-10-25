@@ -12,14 +12,15 @@
     "test": "node --test packages/core/*.test.js apps/server/*.test.js apps/mobile/lib/*.test.js",
     "mobile": "npm run start -w @nearway/mobile",
     "start": "node apps/server/index.js",
-    "cf:dev": "wrangler dev --ip 0.0.0.0",
+    "cf:dev": "wrangler dev --ip 0.0.0.0 --host localhost",
     "cf:migrate:local": "wrangler d1 migrations apply DB --local",
     "cf:migrate": "wrangler d1 migrations apply DB --remote",
     "deploy": "node scripts/cloudflare-preflight.mjs && npm run cf:migrate && wrangler deploy",
     "cf:check": "wrangler deploy --dry-run --outdir /tmp/ridemyway-worker-check",
     "cf:test": "node scripts/cloudflare-smoke.mjs",
     "cf:test:pickup": "node scripts/cloudflare-pickup-smoke.mjs",
-    "mobile:test:setup": "node scripts/mobile-test-setup.mjs"
+    "mobile:test:setup": "node scripts/mobile-test-setup.mjs",
+    "seo:check": "node scripts/check-site-pages.mjs"
   },
   "dependencies": {
     "react": "19.1.0",

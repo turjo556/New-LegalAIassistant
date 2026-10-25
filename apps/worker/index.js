@@ -1,3 +1,4 @@
+import {siteResponse} from '../../packages/core/site-response.js';
 import {seatFareCents,maximumSeatPrice,updateSeatPrice} from '../../packages/core/fare-policy.js';
 import {safetyApi} from '../../packages/core/trip-safety.js';
 import {isTripTime} from '../../packages/core/trip-times.js';
@@ -23,7 +24,7 @@ export default {async fetch(req,env){
  const headers=new Headers({'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY'});
  const send=(status,data)=>new Response(JSON.stringify(data),{status,headers});
  const url=new URL(req.url);
- if(!url.pathname.startsWith('/api/'))return env.ASSETS.fetch(req);
+ if(!url.pathname.startsWith('/api/'))return siteResponse(req,env.ASSETS);
  if(!env.DB)return send(503,{error:'The database binding is not configured.'});
  const get=(sql,...args)=>env.DB.prepare(sql).bind(...args).first();
  const all=async(sql,...args)=>(await env.DB.prepare(sql).bind(...args).all()).results;

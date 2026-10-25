@@ -1,0 +1,13 @@
+import {sitePage,SITE_ORIGIN,structuredData} from '../../../packages/core/site-pages.js';
+export function updateSiteMetadata(locale){
+ const path=location.pathname,fr=locale==='fr';const page=sitePage(path);
+ const sensitive=[...new URLSearchParams(location.search).keys()].some(k=>!k.startsWith('utm_')&&!['gclid','fbclid'].includes(k));
+ const publicPage=page&&!sensitive;
+ const title=publicPage?page.title:({ '/search':fr?'Chercher un covoiturage | Ridely':'Search rides | Ridely','/join':fr?'Créer un compte | Ridely':'Create an account | Ridely','/login':fr?'Se connecter | Ridely':'Sign in | Ridely'}[path]||(fr?'Votre compte et vos trajets | Ridely':'Your account and trips | Ridely'));
+ document.title=title;document.documentElement.lang=locale;
+ function meta(name,value,property=false){const key=property?'property':'name';let el=document.head.querySelector(`meta[${key}="${name}"]`);if(!el){el=document.createElement('meta');el.setAttribute(key,name);document.head.append(el);}el.setAttribute('content',value);}
+ meta('robots',publicPage?'index,follow,max-image-preview:large':'noindex,follow');meta('og:title',title,true);meta('twitter:title',title);
+ let schema=document.getElementById('ridely-schema');if(!publicPage)schema?.remove();else{if(!schema){schema=document.createElement('script');schema.type='application/ld+json';schema.id='ridely-schema';document.head.append(schema);}schema.textContent=JSON.stringify(structuredData(page));}
+ document.head.querySelectorAll('link[rel="canonical"],link[rel="alternate"][hreflang]').forEach(n=>n.remove());
+ if(page){meta('description',page.description);meta('og:description',page.description,true);meta('twitter:description',page.description);meta('og:url',SITE_ORIGIN+path,true);const canonical=document.createElement('link');canonical.rel='canonical';canonical.href=SITE_ORIGIN+page.path;document.head.append(canonical);for(const [lang,p] of [['en-CA',page.lang==='en'?page.path:page.alternate],['fr-CA',page.lang==='fr'?page.path:page.alternate],['x-default',page.lang==='en'?page.path:page.alternate]]){const a=document.createElement('link');a.rel='alternate';a.hreflang=lang;a.href=SITE_ORIGIN+p;document.head.append(a);}}
+}
