@@ -6,3 +6,6 @@ dist/
 *.log
 data/
 .wrangler/
+
+# Local isolated app-testing configuration and synthetic account credentials
+.ridely-test/

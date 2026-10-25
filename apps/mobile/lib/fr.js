@@ -1,4 +1,6 @@
 export default {
+  "Test mode · fictional accounts": "Mode test · comptes fictifs",
+  "Trips and approvals are simulated. No real identity checks or payments. Use only your test logins and fictional details.": "Les trajets et approbations sont simulés. Aucune vérification d’identité ni aucun paiement réel. Utilisez seulement vos comptes de test et des renseignements fictifs.",
   "GOOD COMPANY.": "BONNE COMPAGNIE.",
   "NEXT CITY.": "PROCHAINE VILLE.",
   "EMPTY SEATS.": "PLACES LIBRES.",

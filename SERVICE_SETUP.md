@@ -417,3 +417,7 @@ Native paid-credit purchases and push alerts remain unimplemented. Android exact
 ### Expo Go SDK 58 compatibility
 
 Updated the native app from SDK 54 to SDK 58 and matched React 19.3 / React Native 0.88 plus native modules to the Expo 58 bundled matrix. The website keeps React 19.1. Removed the root-wide React overrides and added native Metro runtime isolation; both platform source maps contain only the mobile React/RN implementation. Existing users must stop Metro, pull, run root `npm ci`, and restart from `apps/mobile` with `npx expo start --clear`. Expo project ID and backend/payment activation settings are unchanged. iPhone Expo Go/device execution remains a user-side check; no signed build was run.
+
+### Isolated native test deployment
+
+`npm run mobile:test:setup` prepares the separate `ridely-app-test` Worker/D1 through the owner's Wrangler login. Configuration and synthetic logins/independent encryption key are saved in ignored `.ridely-test/` files. Production database IDs are rejected, routes/provider secrets are not inherited, and an existing same-name unmarked database is refused. `apps/worker/mobile-test.js` requires its activation variable and database marker and exposes only synthetic sign-ins, with provider/admin/signups/private-detail uploads blocked. The normal production entry never imports it. Native test-mode notices persist on returned state after actions. `MOBILE_TESTING.md` documents the exact command and the limits of simulated approvals. Remote resources have not been created from this workspace.

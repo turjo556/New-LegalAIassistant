@@ -26,7 +26,7 @@ If Expo Go says the project uses SDK 54, stop Metro with Ctrl+C, pull the curren
 
 ## Configure a test backend first
 
-The owner selected separate test data for device testing. Use a distinct test database and test accounts; do not point this preview at the production ridely.ca API. The test backend has not yet been provisioned or connected.
+The owner selected separate test data for device testing. Use a distinct test database and test accounts; do not point this preview at the production ridely.ca API. The isolated deployment command is `npm run mobile:test:setup` at the repository root after Cloudflare login. It provisions only `ridely-app-test` and writes this app’s test URL locally. Remote execution still requires the owner’s login. See `MOBILE_TESTING.md` for the two synthetic accounts, blocked real-provider flows and first-trip checklist.
 
 There is deliberately no default live API destination. Without configuration, the app shows a development notice and makes no startup request.
 

@@ -18,7 +18,8 @@
     "deploy": "node scripts/cloudflare-preflight.mjs && npm run cf:migrate && wrangler deploy",
     "cf:check": "wrangler deploy --dry-run --outdir /tmp/ridemyway-worker-check",
     "cf:test": "node scripts/cloudflare-smoke.mjs",
-    "cf:test:pickup": "node scripts/cloudflare-pickup-smoke.mjs"
+    "cf:test:pickup": "node scripts/cloudflare-pickup-smoke.mjs",
+    "mobile:test:setup": "node scripts/mobile-test-setup.mjs"
   },
   "dependencies": {
     "react": "19.1.0",
