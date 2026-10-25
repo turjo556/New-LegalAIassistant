@@ -15,6 +15,7 @@ import Credits from './components/Credits';
 import ProfilePhoto from './components/ProfilePhoto';
 import MeetingPoint from './components/MeetingPoint';
 import TripOverview from './components/TripOverview';
+import BrandHero from './components/BrandHero';
 import {canCancelBooking} from '../../packages/core/cancellation';
 import { seatFareCents } from '../../packages/core/fare-policy';
 import { vehicleColors, plateProvinces } from '../../packages/core/vehicle.js';
@@ -439,7 +440,7 @@ function AppContent() {
             selected: role === r
           }} onPress={() => R(r)} style={[s.segment, role === r && s.segmentActive]}><Text style={[s.segmentText, role === r && {
               color: 'white'
-            }]}>{t(r)}</Text></Pressable>)}</View><View style={s.hero}><Text style={s.eyebrow}>{t("GOOD COMPANY. NEXT CITY.")}</Text><Text style={s.heroTitle}>{role === 'Riders' ? t("Good company.\nGreat journeys.") : t("Share the road.\nMake it count.")}</Text><Text style={s.heroBody}>{role === 'Riders' ? t("Book a seat with people going your way.") : t("Share your spare seats. Riders see the plan before booking, and you approve optional custom stops.")}</Text>{role === 'Drivers' && <Button title={t("\uFF0B Post your route")} onPress={offer} />}</View>{role === 'Riders' ? <View style={s.card}><City label={t("Leaving from")} value={from} onChange={From} /><City label={t("Going to")} value={to} onChange={To} /><View style={s.field}><Text style={s.label}>{t("Departure date")}</Text><Pressable accessibilityRole="button" onPress={() => SD(!showDate)} style={s.input}><Text style={s.city}>{date.toLocaleDateString(undefined, {
+            }]}>{t(r)}</Text></Pressable>)}</View><BrandHero driver={role==='Drivers'} onOffer={offer}/>{role === 'Riders' ? <View style={s.card}><City label={t("Leaving from")} value={from} onChange={From} /><City label={t("Going to")} value={to} onChange={To} /><View style={s.field}><Text style={s.label}>{t("Departure date")}</Text><Pressable accessibilityRole="button" onPress={() => SD(!showDate)} style={s.input}><Text style={s.city}>{date.toLocaleDateString(undefined, {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',

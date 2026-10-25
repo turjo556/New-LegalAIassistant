@@ -1,4 +1,8 @@
 export default {
+  "GOOD COMPANY.": "BONNE COMPAGNIE.",
+  "NEXT CITY.": "PROCHAINE VILLE.",
+  "EMPTY SEATS.": "PLACES LIBRES.",
+  "Shared rides. Real connections. Your next city starts here.": "Trajets partagés. Vraies rencontres. Votre prochaine ville commence ici.",
   "Search rides": "Rechercher un trajet",
   "Post a ride": "Publier un trajet",
   "Help": "Aide",

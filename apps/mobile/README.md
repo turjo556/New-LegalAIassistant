@@ -4,7 +4,7 @@ Native React Native / Expo SDK 58 app using the same API contracts as the Ridely
 
 ## This iteration
 
-- Ridely electric-lime/black/off-white theme and a new illustrative launcher icon.
+- Ridely electric-lime/black/off-white theme, illustrative launcher icon and a native photo hero using the same three bundled marketing photos as the website. These are illustrative scenes, not verified members.
 - Search, Trips, Saved, Credits and Account navigation; rider/driver views.
 - Signup with terms acknowledgement; sign-in and device-only SecureStore session. Test and production sessions are isolated by API origin. Language selection persists separately; English/French interface copy and verification-email language headers. Names, addresses and messages are not translated. Some dynamic/error text can still fall back to English.
 - Native email/phone code entry, encrypted private adult rider-profile submission, and a guided driver setup with QC/ON selection, explicit consent, encrypted licence-number submission, Stripe-hosted identity verification and review request. All approvals come from the server; test identity results cannot publish bookable rides. Stripe returns to the website; return to the app and check the verification result. Browser and app login sessions are separate.
@@ -25,6 +25,8 @@ The website retains React 19.1. Global root React overrides were removed so the 
 If Expo Go says the project uses SDK 54, stop Metro with Ctrl+C, pull the current repository, run `npm ci` at the repository root, then run `npx expo start --clear` in `apps/mobile` and scan the new QR code. iPhones cannot install an older App Store Expo Go version. Expo Go is a development client, not a store release or an installable production build.
 
 ## Configure a test backend first
+
+The owner selected separate test data for device testing. Use a distinct test database and test accounts; do not point this preview at the production ridely.ca API. The test backend has not yet been provisioned or connected.
 
 There is deliberately no default live API destination. Without configuration, the app shows a development notice and makes no startup request.
 
