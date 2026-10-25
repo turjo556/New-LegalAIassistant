@@ -40,6 +40,11 @@
     "splash": {
       "backgroundColor": "#11120F"
     },
-    "icon": "./assets/icon.png"
+    "icon": "./assets/icon.png",
+    "extra": {
+      "eas": {
+        "projectId": "07f16659-df0c-456b-a48e-1ced12874553"
+      }
+    }
   }
 }

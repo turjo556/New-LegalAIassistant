@@ -51,13 +51,15 @@ The native host tests render the actual app components with mocked platform prim
 
 ## Installable builds — not run here
 
+The owner-provided Expo project ID `07f16659-df0c-456b-a48e-1ced12874553` is recorded in `app.json` under `extra.eas.projectId`. This is public project configuration, not an authenticated ownership check. Do not create another starter project. Sign in and run the linked init command below from the existing app directory to validate project access.
+
 Use your Expo account and the appropriate developer accounts. Never paste credentials into chat. Proposed identifiers are `ca.ridely.app` on both platforms; verify ownership/availability before registering. Changing the old identifiers creates a separate installed app and does not migrate the old app's session.
 
 In `apps/mobile`, with EAS CLI installed according to Expo instructions:
 
 ```sh
 eas login
-eas init
+eas init --id 07f16659-df0c-456b-a48e-1ced12874553
 # Configure a real test backend URL before either preview build.
 eas build --platform android --profile preview
 # iOS simulator (Mac/Xcode required to run):
