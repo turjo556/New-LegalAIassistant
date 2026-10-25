@@ -20,10 +20,6 @@
     "cf:test": "node scripts/cloudflare-smoke.mjs",
     "cf:test:pickup": "node scripts/cloudflare-pickup-smoke.mjs"
   },
-  "overrides": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
-  },
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0"

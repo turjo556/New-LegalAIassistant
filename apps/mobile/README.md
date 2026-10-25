@@ -1,6 +1,6 @@
 # Ridely for iOS and Android
 
-Native React Native / Expo SDK 54 app using the same API contracts as the Ridely website. No embedded website, seeded public rides, background tracking or automatic charges. The app does not deploy the backend.
+Native React Native / Expo SDK 58 app using the same API contracts as the Ridely website. No embedded website, seeded public rides, background tracking or automatic charges. The app does not deploy the backend.
 
 ## This iteration
 
@@ -15,6 +15,14 @@ Native React Native / Expo SDK 54 app using the same API contracts as the Ridely
 - Native private boarding codes, background/2-minute hiding, driver confirmation, expiring trusted-contact itinerary links through the system share sheet, revocation and confidential reports. Sharing is not live tracking. Review screen check-ins on actual devices before relying on them.
 - Six-hour rider cancellation check; driver direct cancellation only without active passengers; otherwise authenticated support tickets. The server remains authoritative. Support requests never cancel automatically. The ten-minute driver waiting requirement is explained, not measured by a timer or GPS.
 - In-app notification list, polling while foregrounded, and refresh on return. **Push notifications are not implemented.**
+
+## Expo Go compatibility and runtime isolation
+
+This app targets Expo Go **SDK 58**: Expo 58.0.19, React Native 0.88.0 and React 19.3.0, with native dependencies pinned to Expo 58's bundled-module matrix. Node must satisfy React Native's engine range (`^22.13.0 || ^24.3.0 || >=26.0.0`).
+
+The website retains React 19.1. Global root React overrides were removed so the native app can install its own supported runtime. `metro.config.cjs` resolves React and React Native from the mobile workspace for every native dependency, including hoisted Expo packages. Both iOS and Android export source maps were checked for accidental inclusion of the website React or older React Native runtime. Do not restore the former root-wide React 19.1 override.
+
+If Expo Go says the project uses SDK 54, stop Metro with Ctrl+C, pull the current repository, run `npm ci` at the repository root, then run `npx expo start --clear` in `apps/mobile` and scan the new QR code. iPhones cannot install an older App Store Expo Go version. Expo Go is a development client, not a store release or an installable production build.
 
 ## Configure a test backend first
 
