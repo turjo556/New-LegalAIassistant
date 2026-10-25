@@ -37,7 +37,8 @@ for(const platform of ['ios','android'])test(platform+': native screens register
  const mod={exports:{}};new Function('require','module','exports',bundle.outputFiles[0].text)(require,mod,mod.exports);
  await act(async()=>{tree=TestRenderer.create(React.createElement(mod.exports.default));});
  const all=()=>text(tree.root);
- const press=async(label)=>{const n=tree.root.findAll(n=>n.type==='Pressable'&&(text(n)===label||['Search','My trips','Saved','Credits','Account'].includes(label)&&text(n).endsWith(label)))[0];assert.ok(n,'Missing button: '+label);assert.ok(!n.props.disabled,'Disabled: '+label);await act(async()=>{await n.props.onPress();});};
+ const assertNativeText=()=>{for(const n of tree.root.findAll(n=>typeof n.type==='string'&&n.type!=='Text')){const raw=n.children.filter(c=>typeof c==='string'||typeof c==='number');assert.deepEqual(raw,[],'Raw text outside Text under '+n.type+': '+JSON.stringify(raw));}};
+ const press=async(label)=>{const n=tree.root.findAll(n=>n.type==='Pressable'&&(text(n)===label||['Search','My trips','Saved','Credits','Account'].includes(label)&&text(n).endsWith(label)))[0];assert.ok(n,'Missing button: '+label);assert.ok(!n.props.disabled,'Disabled: '+label);await act(async()=>{await n.props.onPress();});assertNativeText();};
  const field=async(label,value)=>{const n=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===label)[0];assert.ok(n,'Missing input '+label);await act(async()=>n.props.onChangeText(value));};
  await until(()=>all().includes('Find a ride'));assert.ok(all().includes('GOOD COMPANY.'));assert.equal(tree.root.findAll(n=>n.type==='Image').length,2);
  await press('Sign in');await press('New here? Create account');await field('First name','Sam');await field('Email','sam@example.com');await field('Password','test-mobile-password');
