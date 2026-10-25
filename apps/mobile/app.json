@@ -1,28 +1,44 @@
 {
   "expo": {
-    "name": "RideMyWay",
-    "slug": "ridemyway",
-    "scheme": "ridemyway",
-    "version": "0.2.0",
+    "name": "Ridely",
+    "slug": "ridely",
+    "scheme": "ridely",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.ridemyway.app",
+      "bundleIdentifier": "ca.ridely.app",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.ridemyway.app"
+      "package": "ca.ridely.app",
+      "versionCode": 1,
+      "permissions": [],
+      "blockedPermissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose an optional Ridely profile photo.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "splash": {
-      "backgroundColor": "#0b1d3b"
+      "backgroundColor": "#11120F"
     },
     "icon": "./assets/icon.png"
   }

@@ -1,75 +1,82 @@
-# RideMyWay for iOS
+# Ridely for iOS and Android
 
-A native React Native / Expo app connected to the existing RideMyWay API. This replaces the earlier offline Nearway demo. The default API is `https://ridemyway.bonjour-847.workers.dev`; no sample trips are seeded by the app.
+Native React Native / Expo SDK 54 app using the same API contracts as the Ridely website. No embedded website, seeded public rides, background tracking or automatic charges. The app does not deploy the backend.
 
-## Implemented
+## This iteration
 
-- Navy, electric-blue, and orange branding, app icon, Riders/Drivers selector, and native bottom navigation.
-- Signup/sign-in, session persistence in iOS Keychain using Expo SecureStore, and sign-out.
-- City/date/passenger search, ride details, a privacy-safe itinerary, saved rides, and standard-seat reservations.
-- My trips, passenger cancellation, driver listings, passenger lists, and driver cancellation.
-- Native route publishing with separate custom pickup/drop-off switches and fees.
-- Native Apple Maps pin selection for standard points and custom addresses. No location permission or user tracking is requested; users manually place pins.
-- Custom stop requests only after booking and only when the listing permits the option. Private address/pin submission, driver approval/decline, and server-enforced 3 km zone checks.
-- Driver-entered extra minutes, with a shared 15-minute budget enforced by the API. This is not automatically calculated road routing.
-- Private booking messages, refresh controls, loading/errors, and refresh on app foreground.
+- Ridely electric-lime/black/off-white theme and a new illustrative launcher icon.
+- Search, Trips, Saved, Credits and Account navigation; rider/driver views.
+- Signup with terms acknowledgement; sign-in and device-only SecureStore session. Test and production sessions are isolated by API origin. Language selection persists separately; English/French interface copy and verification-email language headers. Names, addresses and messages are not translated. Some dynamic/error text can still fall back to English.
+- Native email/phone code entry, encrypted private adult rider-profile submission, and a guided driver setup with QC/ON selection, explicit consent, encrypted licence-number submission, Stripe-hosted identity verification and review request. All approvals come from the server; test identity results cannot publish bookable rides. Stripe returns to the website; return to the app and check the verification result. Browser and app login sessions are separate.
+- Optional profile photos selected on demand with the system photo picker. Crop/re-encode to a 256px JPEG; server re-encodes and strips metadata again. No camera, microphone or live location use is needed. Real permission/picker behaviour still requires device tests.
+- Four pilot cities and the owner's canonical meeting-point catalogue. Confirm exact permitted loading spots; no invented coordinates. Price defaults to $25, maximum $30, whole dollars; quarter-hour times. Save private ride drafts before checks and publish only after approval. Canonical coordinates survive draft save/restore.
+- Standard reservation first; show server credit balance and readiness checks; require one credit per reservation regardless of seats. Two complimentary credits, then $3.99 each; the ride fare is cash paid directly to the driver. Credit history is available. **No native credit purchase button or charge path is enabled yet.** Confirm store/payment treatment and production refund/dispute handling first.
+- Trip cards, dedicated full-itinerary/vehicle/plate screen, messages, custom requests and driver decisions; exact custom addresses only from authorised booking/driver data. Custom-stop 3km/shared-15-minute rules remain server-enforced.
+- Native private boarding codes, background/2-minute hiding, driver confirmation, expiring trusted-contact itinerary links through the system share sheet, revocation and confidential reports. Sharing is not live tracking. Review screen check-ins on actual devices before relying on them.
+- Six-hour rider cancellation check; driver direct cancellation only without active passengers; otherwise authenticated support tickets. The server remains authoritative. Support requests never cancel automatically. The ten-minute driver waiting requirement is explained, not measured by a timer or GPS.
+- In-app notification list, polling while foregrounded, and refresh on return. **Push notifications are not implemented.**
 
-## Development
+## Configure a test backend first
+
+There is deliberately no default live API destination. Without configuration, the app shows a development notice and makes no startup request.
 
 From the repository root:
 
 ```sh
 npm ci
+# In apps/mobile/.env.local, set public values only:
+# EXPO_PUBLIC_API_URL=https://your-actual-ridely-staging-host
+# EXPO_PUBLIC_APP_ENV=development
 npm run mobile
 ```
 
-Use a compatible Expo Go client or native development environment. Physical devices need a network path to the Metro server; starting a server in this cloud workspace does not automatically make it reachable from an iPhone. Expo Go version compatibility with SDK 54 must be checked on the actual phone.
+A test backend needs an isolated database and its own provider configuration. Do not point development fixtures at production. `EXPO_PUBLIC_*` values are embedded in the app: never put Stripe, Resend, SMS or encryption secrets there. Backend activation flags are obtained from `/api/state`.
 
-For a local iOS simulator on a Mac with Xcode:
+For local testing, loopback HTTP and Android emulator `http://10.0.2.2:3000` are allowed in development. A physical phone cannot use the cloud workspace's localhost. It needs access to an HTTPS test deployment and the Metro development server, or an installable preview build. Starting Metro in this restricted cloud does not itself create a public preview/QR destination.
 
-```sh
-cd apps/mobile
-npx expo run:ios
-```
+Production configuration requires HTTPS. The production EAS profile explicitly selects `https://ridely.ca`; it has **not** been built or submitted. Preview profiles require your test API URL set through Expo environment configuration or your local build environment. Restart Metro after changing `.env.local`.
 
-All screens use native components; this is not a website embedded in a WebView.
+## Maps
 
-## API configuration and sessions
+On iOS, manual pin selection uses native Apple Maps, with no location permission. The initial city centre is only a viewport, never a submitted exact pin. Android currently uses explicit latitude/longitude fields rather than opening an unconfigured Google map. Both platforms can open canonical meeting-point links externally. Configure and test an Android map provider before external testing of custom-stop entry. No Google Maps API billing, live GPS or automatic family tracking is enabled here.
 
-`EXPO_PUBLIC_API_URL` optionally selects a different API. It is a public URL, never a secret. The client requires HTTPS for remote endpoints. Loopback HTTP is permitted for local automated tests.
-
-The native client captures the server's `rmw_session` Set-Cookie header and stores the session cookie in SecureStore (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`). It sends this cookie explicitly on subsequent API requests. Passwords are never persisted. Native session/header behavior must still be verified on an actual iPhone before release; the automated tests exercise the transport contract against the real Node API, not the iOS networking stack or Keychain itself.
-
-Website and app accounts, rides, reservations, and messages share the same backend. The app does not deploy or change that backend. Cloudflare must already be running the custom-stop API version for custom options to work.
-
-## Validation performed here
+## Verification
 
 ```sh
 npm test
-EXPO_NO_TELEMETRY=1 CI=1 npm run export:ios -w @nearway/mobile
+EXPO_NO_TELEMETRY=1 EXPO_OFFLINE=1 CI=1 npm run export -w @nearway/mobile
 ```
 
-The native API tests cover signup/login, saved session restoration, route publication, invalid seat counts, reservation, custom request/approval and resulting fare, messages, cancellation, and logout. Existing server and domain tests also pass. The iOS JavaScript/Hermes bundle compiles successfully with the native maps, date picker, safe-area, and SecureStore modules.
+The native host tests render the actual app components with mocked platform primitives against a temporary real Node API. They exercise iOS and Android branches: signup/consent, account gates, reservation/credits/cash notice, private code hiding, share/revoke, preset draft storage and French switching without losing typed licence text. API tests cover persistence, origin isolation, path validation, insecure remote rejection and locale headers. Mocks cannot establish native layout, Keychain, networking/cookie, photo-picker, MapKit, permissions, screen-reader or store behaviour.
 
-Dependency versions are pinned to the bundled Expo SDK 54 recommendations. The online Expo version-check endpoint could not be reached in this environment; offline validation and the installed SDK's native-module matrix were checked instead.
+## Installable builds — not run here
 
-**Not yet performed:** a signed native build, simulator/device execution, real iPhone MapKit/Keychain/network testing, TestFlight upload, or App Store submission. A bundle export does not validate those steps.
+Use your Expo account and the appropriate developer accounts. Never paste credentials into chat. Proposed identifiers are `ca.ridely.app` on both platforms; verify ownership/availability before registering. Changing the old identifiers creates a separate installed app and does not migrate the old app's session.
 
-## Build for TestFlight
-
-An Expo account and an Apple Developer Program membership with appropriate App Store Connect access are needed. Sign into those services using their own secure login flows; never commit credentials or paste tokens into chat.
-
-The repository includes `eas.json` profiles for an iOS simulator preview and a production build. In `apps/mobile`, after installing EAS CLI using its official instructions:
+In `apps/mobile`, with EAS CLI installed according to Expo instructions:
 
 ```sh
 eas login
 eas init
+# Configure a real test backend URL before either preview build.
+eas build --platform android --profile preview
+# iOS simulator (Mac/Xcode required to run):
 eas build --platform ios --profile preview
-# After simulator/device testing and release setup:
-eas build --platform ios --profile production
-eas submit --platform ios --profile production
+# Physical iPhone preview: needs Apple membership, registered device and signing:
+eas device:create
+eas build --platform ios --profile device-preview
 ```
 
-`eas init` links the app to your Expo project. Confirm ownership/availability of the current bundle identifier `com.ridemyway.app` before registering it, and choose the correct Apple team. The preview profile creates a simulator build, which cannot be installed directly on a physical iPhone. Production builds can be distributed through TestFlight once signed and processed by Apple. These commands can incur platform/build charges; none has been purchased or executed here.
+`preview` produces an Android APK and an iOS simulator build. A simulator build cannot be installed on a physical iPhone. `device-preview` is for registered physical devices. Builds may incur Expo/platform charges. No paid build, developer purchase, live identity check or charge was made during implementation.
 
-Before public store release: complete account deletion and recovery, privacy/data-retention policies, support/moderation/reporting, operating compliance, release screenshots/metadata, device accessibility testing, and production monitoring. The encryption declaration currently assumes standard exempt HTTPS/Keychain use; the submitting developer must verify their App Store answers. Online payments, verification, automatic road routing, and push notifications remain unimplemented.
+## Remaining before public store submission
+
+1. Establish Expo project ownership and Apple/Google developer accounts; finalise identifiers, signing and store records. Use an Xcode/Android build image accepted by the stores at submission time.
+2. Run physical iPhone and Android tests for layout, large text, accessibility, secure sessions/logout, offline/retry, permissions, verification return, custom stops, profile photo and sharing. Verify cancelled/completed trip behaviour with two real authorised test users.
+3. Connect APNs/FCM notifications with explicit permission, revocation and reliable server delivery.
+4. Finalise store-compliant credit payment UX and accounting/refund/dispute processes; no native purchase is active now.
+5. Implement account deletion and recovery before store review; website policies or a support email alone do not complete these features. Native post-trip completion/feedback and founding-bonus claiming still need dedicated screens; their existing website workflows remain separate.
+6. Configure the Android map experience; validate exact meeting spots and route estimates. Live tracking is a later separately consented feature.
+7. Prepare final bilingual legal/privacy/support pages, current data-safety/App Privacy disclosures, content moderation/blocking UX, store screenshots and operational monitoring. Public support availability must match actual staffing. Review the exemption/encryption declaration with the submitting developer.
+
+No signed build, simulator/device run, TestFlight/Play upload or public release has been performed here. A successful JavaScript/Hermes export is not a signed native build.
