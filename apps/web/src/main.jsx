@@ -1,3 +1,4 @@
+import {withoutDriverReturn} from './navigation.js';
 import DiscoveryLinks from './DiscoveryLinks.jsx';
 import {updateSiteMetadata} from './site-metadata.js';
 import './site-pages.css';
@@ -50,7 +51,8 @@ function App(){
  useEffect(()=>{updateSiteMetadata(locale)},[locale,view,modal]);
  function findRides(){setAudience('riders');setView('explore')}
  const authReturn=useRef(['/join','/login'].includes(location.pathname)?'/':location.pathname+location.search),afterAuth=useRef(null);
- useEffect(()=>{const pop=()=>{if(['/join','/login'].includes(location.pathname)){setAuthMode(location.pathname==='/join'?'register':'login');setDriverIntent(new URLSearchParams(location.search).get('role')==='driver');setModal('auth')}else{setModal(null);afterAuth.current=null;setViewState(pathView(location.pathname))}};window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop)},[]);
+ useEffect(()=>{if(modal==='driver-onboarding'||modal==='auth')return;const url=new URL(location.href);if(url.searchParams.has('driver-verification'))history.replaceState({},'',withoutDriverReturn(url.href));authReturn.current=withoutDriverReturn(authReturn.current,location.origin);updateSiteMetadata(locale)},[modal,view,locale]);
+ useEffect(()=>{const pop=()=>{if(['/join','/login'].includes(location.pathname)){setAuthMode(location.pathname==='/join'?'register':'login');setDriverIntent(new URLSearchParams(location.search).get('role')==='driver');setModal('auth')}else{if(new URLSearchParams(location.search).has('driver-verification'))history.replaceState({},'',withoutDriverReturn(location.href));setModal(null);afterAuth.current=null;setViewState(pathView(location.pathname))}};window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop)},[]);
  useEffect(()=>{if(modal==='auth'){const target=(authMode==='register'?'/join':'/login')+(driverIntent?'?role=driver':'');if(['/join','/login'].includes(location.pathname))history.replaceState({},'',target);else{authReturn.current=location.pathname+location.search;history.pushState({},'',target)}}else if(['/join','/login'].includes(location.pathname))history.replaceState({},'',authReturn.current)},[modal,authMode,driverIntent]);
  useEffect(()=>{if(modal==='auth')window.scrollTo(0,0)},[modal]);
  function closeAuth(){setModal(null);setError('');afterAuth.current=null;setDriverIntent(false)}
