@@ -52,7 +52,7 @@ export async function driverApi(path,b,user,db,env={},reauth){
  if(d.session_id){const s=await stripe(env,'/'+encodeURIComponent(d.session_id));await updateSession(db,s,user,env);if(path.endsWith('/refresh')||s.status!=='requires_input')return {refresh:true};if(!s.url||new URL(s.url).hostname!=='verify.stripe.com')fail(502,'No valid verification link is available.');return {url:s.url}}
  if(path.endsWith('/refresh'))return {refresh:true};
  let base;try{base=new URL(env.RIDELY_PUBLIC_URL);if(base.protocol!=='https:'||base.username||base.password)throw Error()}catch{fail(503,'The public verification return URL must use HTTPS.');}
- const s=await stripe(env,'',{type:'document','options[document][allowed_types][]':'driving_license','options[document][require_matching_selfie]':'true','options[document][require_live_capture]':'true','metadata[ridely_user_id]':user.id,return_url:base.origin+'/?driver-verification=return'},'ridely-identity-'+d.attempt);validateSession(s,user,env);
+ const s=await stripe(env,'',{type:'document','options[document][allowed_types][]':'driving_license','options[document][require_matching_selfie]':'true','options[document][require_live_capture]':'true','metadata[ridely_user_id]':user.id,return_url:base.origin+'/driver-verification?driver-verification=return'},'ridely-identity-'+d.attempt);validateSession(s,user,env);
  if(!s.url||new URL(s.url).hostname!=='verify.stripe.com')fail(502,'No valid verification link is available.');
  await db.run('UPDATE driver_checks SET session_id=?,identity_status=?,identity_checked=? WHERE user_id=? AND session_id IS NULL',s.id,'requires_input',Date.now(),user.id);return {url:s.url};
 }

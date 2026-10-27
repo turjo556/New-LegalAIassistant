@@ -30,7 +30,16 @@
       "/login",
       "/trip-share",
       "/robots.txt",
-      "/sitemap.xml"
+      "/sitemap.xml",
+      "/offer-a-ride",
+      "/driver-verification",
+      "/account",
+      "/profile",
+      "/help",
+      "/policies",
+      "/notifications",
+      "/messages",
+      "/operator"
     ],
     "html_handling": "drop-trailing-slash"
   },

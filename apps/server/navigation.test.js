@@ -7,3 +7,17 @@ test('leaving Stripe return keeps language/search and hash but removes every ver
  assert.equal(withoutDriverReturn('/search?from=Montr%C3%A9al&to=Ottawa&driver-verification=return&driver-verification=again'),'/search?from=Montr%C3%A9al&to=Ottawa');
  assert.equal(withoutDriverReturn('/my-listings'),'/my-listings');
 });
+
+test('section URLs round-trip and authentication returns stay within known Ridely pages',async()=>{
+ const {readSection,sectionUrl,safeSectionReturn}=await import('../web/src/navigation.js');
+ for(const [modal,path] of [['offer','/offer-a-ride'],['driver-onboarding','/driver-verification'],['account','/account'],['rider-profile','/profile'],['messages','/messages']]){assert.equal(sectionUrl(modal),path);assert.equal(readSection(path).modal,modal);assert.equal(safeSectionReturn(path),path);}
+ for(const [community,path] of [['support','/help'],['policies','/policies'],['notifications','/notifications'],['admin','/operator']]){assert.equal(sectionUrl('community',{community}),path);assert.equal(readSection(path).community,community);}
+ const message=sectionUrl('messages',{thread:'00000000-0000-4000-8000-000000000001'});assert.equal(readSection(message).thread,'00000000-0000-4000-8000-000000000001');
+ assert.equal(readSection('/?driver-verification=return').modal,'driver-onboarding');assert.equal(readSection('/?policy=policies').community,'policies');assert.equal(readSection('/my-listings').view,'hosting');assert.equal(readSection('/join').authMode,'register');
+ for(const value of ['https://evil.example','//evil.example','/login','/join','/not-a-page','javascript:alert(1)'])assert.equal(safeSectionReturn(value),null);
+});
+
+test('all dedicated app sections are routed before Cloudflare assets and remain non-indexable app routes',async()=>{
+ const {readFileSync}=await import('node:fs');const {appPaths}=await import('../../packages/core/site-response.js');const {sectionPaths,communityPaths}=await import('../web/src/navigation.js');const config=JSON.parse(readFileSync(new URL('../../wrangler.json',import.meta.url)));
+ for(const path of [...Object.values(sectionPaths),...Object.values(communityPaths)]){assert.ok(appPaths.has(path),path+' must serve the app shell');assert.ok(config.assets.run_worker_first.includes(path),path+' must reach the Worker');}
+});

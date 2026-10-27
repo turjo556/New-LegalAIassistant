@@ -1,5 +1,5 @@
 import {sitePage} from './site-pages.js';
-export const appPaths=new Set(['/search','/my-trips','/my-listings','/saved','/cart','/join','/login','/trip-share']);
+export const appPaths=new Set(['/search','/my-trips','/my-listings','/saved','/cart','/join','/login','/trip-share','/offer-a-ride','/driver-verification','/account','/profile','/help','/policies','/notifications','/messages','/operator']);
 const prod=host=>['ridely.ca','www.ridely.ca'].includes(host);
 const robots=(text)=>new Response(text,{headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store','X-Robots-Tag':'noindex'}});
 export async function siteResponse(req,assets){
