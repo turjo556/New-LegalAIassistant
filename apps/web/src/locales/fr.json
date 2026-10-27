@@ -1441,5 +1441,6 @@
   "Request to book": "Demander une réservation",
   "Fully booked": "Complet",
   "This ride has departed": "Ce trajet est déjà parti",
-  "Driver approval required. Pending requests do not hold seats.": "Approbation du conducteur requise. Les demandes en attente ne réservent pas de places."
+  "Driver approval required. Pending requests do not hold seats.": "Approbation du conducteur requise. Les demandes en attente ne réservent pas de places.",
+  "Help people recognise you at pickup. You can leave this blank.": "Aidez les autres à vous reconnaître au point de rencontre. Vous pouvez laisser cet espace vide."
 }

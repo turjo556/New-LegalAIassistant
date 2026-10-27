@@ -1,15 +1,16 @@
 import React from 'react';
-import {Armchair,ArrowRight,ArrowLeft,Heart,CalendarDays,ShieldCheck} from 'lucide-react';
+import {ArrowRight,ArrowLeft,Heart,CalendarDays,ShieldCheck} from 'lucide-react';
 import {Avatar} from './ProfilePhoto.jsx';
 import {formatLocale,t} from './i18n.js';
 import {easternClock} from './ride-search.js';
 import './ride-details.css';
 const dayLabel=day=>new Date(day+'T12:00:00').toLocaleDateString(formatLocale(),{weekday:'short',month:'short',day:'numeric'});
+function CarSeatIcon(){return <svg className="car-seat-symbol" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="8.5" y="1.5" width="7" height="4" rx="1.5"/><path d="M8 7h8l1.5 9h-11L8 7Z"/><path d="m9 8 6 7M6.5 16h11l1.5 3.5c.2.5-.2 1-.7 1H5.7c-.5 0-.9-.5-.7-1L6.5 16ZM7 21v1m10-1v1"/></svg>}
 export const rideUrl=id=>'/ride/'+encodeURIComponent(id);
 export function SeatAvailability({ride}){
  const capacity=Math.max(0,Math.min(8,Number(ride.capacity)||Number(ride.seats)||0));
  const available=Math.max(0,Math.min(capacity,Number(ride.seats)||0));
- return <div className="seat-availability"><div className="seat-icons" role="list" aria-label="Passenger seats">{Array.from({length:capacity},(_,i)=>{const booked=i<capacity-available;return <span role="listitem" aria-label={booked?'Booked':'Available'} title={t(booked?'Booked':'Available')} className={'seat-icon '+(booked?'is-booked':'is-available')} key={i}><Armchair size={24} aria-hidden="true"/>{booked&&<span className="seat-person" aria-hidden="true"/>}</span>})}</div><div className="seat-legend"><span><i className="legend-available"/>Available</span><span><i className="legend-booked"/>Booked</span></div></div>
+ return <div className="seat-availability"><div className="seat-icons" role="list" aria-label="Passenger seats">{Array.from({length:capacity},(_,i)=>{const booked=i<capacity-available;return <span role="listitem" aria-label={booked?'Booked':'Available'} title={t(booked?'Booked':'Available')} className={'seat-icon '+(booked?'is-booked':'is-available')} key={i}><CarSeatIcon/></span>})}</div><div className="seat-legend"><span><i className="legend-available"/>Available</span><span><i className="legend-booked"/>Booked</span></div></div>
 }
 export function CompactRideCard({ride:r,saved,onSave,onView}){
  return <article className="compact-ride-card"><div className="compact-ride-meta"><time dateTime={r.date}><CalendarDays size={14}/>{dayLabel(r.date)}</time><button className={'icon-btn '+(saved?'selected':'')} onClick={onSave} aria-label={saved?'Unsave ride':'Save ride'}><Heart size={19} fill={saved?'currentColor':'none'}/></button></div><div className="compact-ride-route"><div><h3><span translate="no">{r.from}</span><ArrowRight size={18}/><span translate="no">{r.to}</span></h3><p>{r.time} – {r.arrival}</p></div><div className="compact-ride-price"><strong>${r.price}</strong><small>/ seat</small></div></div><div className="compact-driver"><Avatar src={r.driverPhoto} name={r.driver} className="driver-avatar"/><span translate="no">{r.driver}</span>{r.identityVerified&&<ShieldCheck size={17} aria-label="Identity checked"/>}</div><div className="compact-ride-bottom"><SeatAvailability ride={r}/><a className="ride-button" href={rideUrl(r.id)} onClick={e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();onView(r)}}>View ride <ArrowRight size={16}/></a></div></article>
