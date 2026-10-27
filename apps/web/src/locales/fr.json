@@ -1119,5 +1119,11 @@
   "Whole dollars only.": "Dollars entiers seulement.",
   "Update this listing to a whole-dollar fare of $30 or less before accepting new reservations.": "Choisissez un prix en dollars entiers de 30 $ ou moins avant d’accepter de nouvelles réservations.",
   "The driver must update this listing to a whole-dollar fare of $30 or less before new reservations.": "Le conducteur doit choisir un prix en dollars entiers de 30 $ ou moins avant de nouvelles réservations.",
-  "Pilot seat fares now use whole dollars. Your unbooked listing was rounded down to the nearest dollar.": "Les prix par place utilisent maintenant des dollars entiers. Le prix de votre annonce sans réservation a été arrondi au dollar inférieur."
+  "Pilot seat fares now use whole dollars. Your unbooked listing was rounded down to the nearest dollar.": "Les prix par place utilisent maintenant des dollars entiers. Le prix de votre annonce sans réservation a été arrondi au dollar inférieur.",
+  "Start live identity verification": "Commencer la vérification d’identité réelle",
+  "Complete live identity verification": "Effectuer la vérification d’identité réelle",
+  "Your saved result is a sandbox test. Live identity verification must be activated before you can complete this step.": "Votre résultat enregistré est un test. La vérification d’identité réelle doit être activée avant de pouvoir terminer cette étape.",
+  "This is a saved sandbox result. It is not a completed live identity check.": "Ce résultat enregistré provient du mode test. Il ne constitue pas une vérification d’identité réelle terminée.",
+  "Live identity verification must be activated before real bookings can open.": "La vérification d’identité réelle doit être activée avant de pouvoir accepter de vraies réservations.",
+  "Live identity check needed": "Vérification d’identité réelle nécessaire"
 }
