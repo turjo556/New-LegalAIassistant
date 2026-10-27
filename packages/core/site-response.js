@@ -13,7 +13,7 @@ export async function siteResponse(req,assets){
  const path=url.pathname;
  if(path.endsWith('/')&&path!=='/'&&(sitePage(path.slice(0,-1))||appPaths.has(path.slice(0,-1))))return redirect(path.slice(0,-1)+url.search);
  if(path.endsWith('.html')&&sitePage(path.slice(0,-5)))return redirect(path.slice(0,-5)+url.search);
- const page=sitePage(path),app=appPaths.has(path),file=/\.[a-zA-Z0-9]+$/.test(path);
+ const page=sitePage(path),app=appPaths.has(path)||/^\/ride\/[a-zA-Z0-9_-]{1,80}$/.test(path),file=/\.[a-zA-Z0-9]+$/.test(path);
  const known=!!page||app||file;
  const assetUrl=new URL(req.url);assetUrl.pathname=app?'/':known?path:'/404.html';assetUrl.search='';
  const response=await assets.fetch(new Request(assetUrl,{method:'GET',headers:req.headers}));

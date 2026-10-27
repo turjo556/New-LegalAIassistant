@@ -21,3 +21,13 @@ test('all dedicated app sections are routed before Cloudflare assets and remain 
  const {readFileSync}=await import('node:fs');const {appPaths}=await import('../../packages/core/site-response.js');const {sectionPaths,communityPaths}=await import('../web/src/navigation.js');const config=JSON.parse(readFileSync(new URL('../../wrangler.json',import.meta.url)));
  for(const path of [...Object.values(sectionPaths),...Object.values(communityPaths)]){assert.ok(appPaths.has(path),path+' must serve the app shell');assert.ok(config.assets.run_worker_first.includes(path),path+' must reach the Worker');}
 });
+
+test('ride detail links survive reloads and auth returns and serve a noindex app shell',async()=>{
+ const {readSection,safeSectionReturn}=await import('../web/src/navigation.js');
+ const {siteResponse}=await import('../../packages/core/site-response.js');
+ const path='/ride/00000000-0000-4000-8000-000000000001';
+ assert.equal(readSection(path).view,'ride');assert.equal(readSection(path).rideId,'00000000-0000-4000-8000-000000000001');assert.equal(safeSectionReturn(path+'?lang=fr'),path+'?lang=fr');
+ let requested;const response=await siteResponse(new Request('https://ridely.ca'+path),{fetch:async request=>{requested=new URL(request.url).pathname;return new Response('<html><meta name="robots" content="index,follow"/><!--seo-start-->Home<!--seo-end--></html>')}});
+ assert.equal(requested,'/');assert.equal(response.status,200);assert.match(response.headers.get('X-Robots-Tag'),/noindex/);assert(!((await response.text()).includes('Home')));
+ assert.equal(safeSectionReturn('/ride/bad/extra'),null);assert.equal(readSection('/rides/montreal-ottawa').rideId,null);
+});

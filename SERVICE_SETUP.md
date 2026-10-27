@@ -683,3 +683,11 @@ audited; self-review of the operator's own referred account is forbidden.
 Apply migration 0026 on production and the isolated mobile database before
 using the updated signup clients. Automated tests use temporary databases and
 mock/synthetic approvals, never real recruitment payouts.
+
+### Compact search cards and ride detail links
+
+Search and Saved now show compact ride cards with the date, route, times, fare, driver and passenger-seat icons. Lime means available; charcoal means booked, with only a small legend underneath. The icons use public `capacity` and remaining `seats` (confirmed, uncancelled reservations only); pending requests do not change them. Passenger identities, private stops and licence plates are not exposed.
+
+“View ride” opens `/ride/<id>`, including on direct navigation, refresh, browser back/forward and sign-in return. The page contains public itinerary stops, meeting-point directions, driver/vehicle information, custom-stop prices and cancellation/payment rules. Its separate “Request to book” button retains the existing rider-profile, credit and driver-acceptance flow. Confirmed riders and pending requesters are directed to My trips. Unavailable, full, departed and unapproved rides cannot be requested. Dynamic ride pages serve the noindex app shell on Node and Cloudflare; marketing route pages under `/rides/` remain unchanged. No database migration is needed.
+
+Validation: existing suite, dedicated route/auth-return tests, production web build, SEO checks and Worker dry-run. Local Chromium exercised a 3-seat ride with 2 booked seats, direct links/reload, request submission and login continuation, pending requests, unavailable rides and English/French at 320/390/1440px. Provider delivery and live deployment are separate checks.
