@@ -7,7 +7,7 @@ const template=readFileSync(resolve(dist,'index.html'),'utf8');
 const css=[...template.matchAll(/<link[^>]+rel="stylesheet"[^>]*>/g)].map(m=>m[0]).join('');
 for(const page of sitePages){
  const home=page.kind==='home';
- let html=home?template:`<!doctype html><html lang="${page.lang}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#11120f"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/>${css}</head><body><div id="root"></div></body></html>`;
+ let html=home?template:`<!doctype html><html lang="${page.lang}"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#11120f"/><link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>${css}</head><body><div id="root"></div></body></html>`;
  html=html.replace(/<html lang="[^"]*"/,'<html lang="'+page.lang+'"').replace(/<title>[\s\S]*?<\/title>/g,'').replace(/<meta[^>]+(?:name="(?:description|robots|twitter:[^"]+)"|property="og:[^"]+")[^>]*>/g,'').replace('</head>',pageHead(page)+'</head>');
  html=html.replace('<div id="root"></div>','<div id="root"><!--seo-start-->'+renderPageBody(page)+'<!--seo-end--></div>');
  const file=resolve(dist,page.path==='/'?'index.html':page.path.slice(1)+'.html');mkdirSync(dirname(file),{recursive:true});writeFileSync(file,html);
