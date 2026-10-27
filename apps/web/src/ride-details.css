@@ -2,3 +2,17 @@
 @media(max-width:700px){.ride-detail-page{padding:20px 16px 40px}.ride-detail-grid{grid-template-columns:1fr}.ride-booking-panel{position:static;grid-row:1}.ride-detail-heading{display:block}.ride-detail-heading .cash-payment-badge{display:inline-flex;margin-top:14px}.ride-detail-panel{padding:20px}.compact-ride-card{padding:16px}.compact-ride-route h3{font-size:18px}.compact-ride-route{gap:10px}.compact-ride-bottom{gap:10px}.compact-ride-bottom .ride-button{font-size:13px;padding:10px 12px}.seat-icons{gap:4px}.seat-icon{width:28px;height:30px}.seat-legend{gap:8px}}
 
 .content-grid.ride-results-layout{grid-template-columns:minmax(0,1fr)}
+
+/* A route preview gives wide result cards useful detail without expanding mobile cards. */
+.compact-ride-card{position:relative;container-type:inline-size}
+.compact-route-preview{display:none}
+@container(min-width:760px){
+ .compact-route-preview{display:flex;align-items:center;justify-content:center;gap:16px;position:absolute;left:34%;right:15%;top:67px;min-height:94px;padding:18px 22px;border:1px solid #e3e9d7;border-radius:16px;background:linear-gradient(115deg,#f7faed,#eef4df)}
+ .compact-route-stop{display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 1 145px;min-width:0;text-align:center;color:#354b22;font-size:12px;font-weight:600;line-height:1.5}
+ .compact-route-stop svg{flex-shrink:0;color:#425b25}
+ .compact-route-stop span{overflow-wrap:anywhere}
+ .compact-route-line{flex:1;min-width:45px;max-width:160px;display:flex;align-items:center;color:#6d8b37}
+ .compact-route-line>span{height:7px;width:7px;border-radius:50%;background:#b8ee29;flex-shrink:0;border:1px solid #6d8b37}
+ .compact-route-line svg{flex:1;min-width:0;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:4 5}
+ .compact-route-line svg path:last-child{stroke-dasharray:none}
+}
