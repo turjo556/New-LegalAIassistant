@@ -705,3 +705,9 @@ Public ride results use a generic Driver label and omit photo URLs and initials.
 Photo retrieval requires the authenticated owner, a confirmed driver/passenger pairing or the verified configured operator; anonymous and unrelated accounts and pending requesters receive 404. Native photo requests attach the existing session only to same-origin profile-photo URLs. Profile-photo consent and privacy copy now describe sharing with confirmed trip partners and authorised support. Driver-written vehicle notes remain public and should not contain personal information. No migration is needed.
 
 Validation: 84 tests passed, including private/pending/confirmed identity and photo access and native photo-source URL restrictions. Web build, SEO checks, Worker dry-run and English/French browser booking/navigation checks passed. Live deployment and physical native-device delivery were not verified.
+
+### Public safety guide
+
+`/safety` and `/fr/securite` now serve a dedicated, original Ridely safety guide in lime/cream/charcoal styling. It includes driver-check explanations, identity/address privacy, boarding codes, expiring itinerary links, travel-stage advice, professional pilot support, emergency guidance and native expandable FAQs. It does not promise criminal checks, live GPS, passenger ID verification, Ridely-provided insurance or guaranteed safety. The guide is readable without JavaScript or authentication and retains canonical, language and sitemap metadata. App navigation, footer and homepage safety panel link to it.
+
+The supplied Poparide URL could not be fetched because the workspace proxy returned 403; no claim is made to have inspected or copied that page. Existing Ridely imagery is illustrative. English/French browser checks passed at 320/390/768/1440px, including FAQ controls, fragment links, image loading and no overflow. Existing 84 tests, web build, all 18 SEO checks and Worker dry-run passed. Live deployment is not verified here.
