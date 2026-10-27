@@ -1,3 +1,4 @@
+import {acceptRequestedBooking} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import {DatabaseSync} from 'node:sqlite';
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import {createApp} from './index.js';
 import {testDatabase,approveTestDriver,completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 test('vehicle identification is required, private to booked riders, owner editable and changes notify passengers',async t=>{
  const dbPath=testDatabase(t),server=createApp({dbPath});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const base='http://127.0.0.1:'+server.address().port,cookies={};
- async function req(path,body,who='guest',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return d}
+ async function req(path,body,who='guest',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&d.rides)return acceptRequestedBooking(base,d,body.rideId,cookies,fetch);return d}
  for(const who of ['driver','rider','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-fixture-password'},who);
  completeTestRiders(dbPath);
  const body={from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:3,car:'Toyota',pickup:'Main station',destination:'City station',licencePlate:'ab c-123',plateProvince:'QC',vehicleColor:'Blue'};

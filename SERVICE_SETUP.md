@@ -570,3 +570,34 @@ is rechecked at delivery. Changed/revoked/expired approvals are skipped. Duplica
 requests reuse the recent queued/accepted message instead of sending extra copies.
 Manual requests are rate-limited and recorded in the existing email-action audit
 log (`account_email_retry_log`). Failed messages can be retried from Email delivery.
+
+### Driver-approved seat requests (migration 0024)
+
+New seat reservations on web and native clients are requests, not instant bookings.
+The driver has at most two hours to respond; the deadline is the earlier of that
+window or one hour before the scheduled Eastern-time departure. New requests
+close one hour before departure. Pending requests do not hold seats, use credits,
+expose vehicle plates or produce boarding codes. Passengers can withdraw freely.
+Drivers review requests in My listings, confirm availability across their other
+listings and accept or decline. There is no Kangaride integration: drivers must
+update other platforms themselves. Simultaneous acceptance is protected by an
+atomic SQL trigger that creates/reactivates the booking and uses exactly one
+credit, retaining existing capacity and eligibility gates. A changed fare needs a
+new request; acceptance never silently increases the agreed price.
+
+Essential, bilingual branded emails are queued for both members on request and
+decision, regardless of optional trip-update preferences. Confirmed booking links
+open My trips for the full details/boarding tools; driver links open My listings.
+An hour-one reminder is queued only while the request is still open. The existing
+five-minute Worker schedule handles reminders/expiry and email retries; state
+refresh also enforces expiry. Exact acceptance deadlines are enforced at mutation,
+not dependent on cron timing. Email provider acceptance is not inbox delivery.
+Existing confirmed reservations remain confirmed and retain their agreed fares.
+Apply migration 0024 to both production and the isolated mobile test database
+before running the updated clients. Production deploy already applies migrations.
+
+The founding-driver promotion remains one $25 CAD bonus after three distinct
+qualifying completed trips with at least one genuine booked passenger confirming
+each journey. One passenger per trip qualifies; three passengers on a single trip
+count only once. Unaccepted requests cannot qualify. Operator-reviewed claims,
+manual Interac payment, first 25 approved claims and $625 total cap remain.

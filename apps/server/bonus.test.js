@@ -1,3 +1,4 @@
+import {acceptRequestedBooking} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
@@ -5,7 +6,7 @@ import {createApp} from './index.js';
 import {approveTestDriver,completeTestRiders,testDatabase} from '../../scripts/test-driver-fixture.mjs';
 test('bonus requires actual dated trips and passenger confirmation, operator review, private recipient and unique manual payment record',async t=>{
  const dbPath=testDatabase(t),server=createApp({dbPath,env:{RIDELY_ADMIN_EMAIL:'operator@example.com'}});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const base='http://127.0.0.1:'+server.address().port,cookies={};
- async function req(path,body,who='driver',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return data}
+ async function req(path,body,who='driver',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&data.rides)return acceptRequestedBooking(base,data,body.rideId,cookies,fetch);return data}
  for(const who of ['driver','rider','operator','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-test-password'},who);
  const db=new DatabaseSync(dbPath);t.after(()=>db.close());approveTestDriver(dbPath);completeTestRiders(dbPath);
  // Real bookings are created through the API; only the clock/campaign is shifted
@@ -13,7 +14,7 @@ test('bonus requires actual dated trips and passenger confirmation, operator rev
  db.prepare('UPDATE bonus_campaign SET starts_at=?').run(Date.now()-10*86400000);
  db.prepare("INSERT INTO promo_credit_ledger(id,user_id,amount,kind,operation_key,reason,actor,created) SELECT 'test-extra-credit',id,1,'grant','test-extra-credit','Extra booking for isolated bonus test',id,? FROM users WHERE email='rider@example.com'").run(Date.now());
  const rides=[];for(let i=0;i<3;i++){
-  const published=await req('rides',{from:'Montréal',to:'Ottawa',date:`2099-11-0${i+1}`,time:'09:00',arrival:'11:30',price:30,seats:3,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Berri-UQAM',destination:'Rideau Centre'},'driver',201);const ride=published.hosting.find(r=>!rides.includes(r.id));rides.push(ride.id);await req('bookings',{rideId:ride.id,seats:2},'rider',201);
+  const published=await req('rides',{from:'Montréal',to:'Ottawa',date:`2099-11-0${i+1}`,time:'09:00',arrival:'11:30',price:30,seats:3,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Berri-UQAM',destination:'Rideau Centre'},'driver',201);const ride=published.hosting.find(r=>!rides.includes(r.id));rides.push(ride.id);await req('bookings',{rideId:ride.id,seats:1},'rider',201);
   await req('trips/complete',{rideId:ride.id,confirmed:true},'driver',409);await req('trips/complete',{rideId:ride.id,confirmed:true},'other',404);
   const date=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto'}).format(new Date(Date.now()-(i+1)*86400000));db.prepare('UPDATE rides SET date=? WHERE id=?').run(date,ride.id);
   const booking=(await req('state',null,'rider')).bookings.find(b=>b.ride.id===ride.id);

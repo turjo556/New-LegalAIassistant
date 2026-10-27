@@ -1,3 +1,4 @@
+import {acceptRequestedBooking} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
@@ -9,7 +10,7 @@ const realFetch=globalThis.fetch;
 test('private adult rider profile, real contact-code flow, booking gate, incident access, expiry and deletion',async t=>{
  const dbPath=testDatabase(t),env={LICENCE_ENCRYPTION_KEY:randomBytes(32).toString('base64'),RIDELY_ADMIN_EMAIL:'operator@example.com',RESEND_API_KEY:'test-email',EMAIL_FROM:'Ridely <no-reply@ridely.ca>',TWILIO_ACCOUNT_SID:'test-sid',TWILIO_AUTH_TOKEN:'test-token',TWILIO_FROM_NUMBER:'+15145550000'};const server=createApp({dbPath,env});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,db=new DatabaseSync(dbPath),cookies={},password='test-profile-password';let emailCode,phoneCode;
  globalThis.fetch=async(url,options)=>{if(String(url).startsWith(base))return realFetch(url,options);if(String(url).startsWith('https://api.resend.com/')){emailCode=JSON.parse(options.body).html.match(/<strong>(\d{6})/)[1];return Response.json({id:'email'})}if(String(url).startsWith('https://api.twilio.com/')){phoneCode=new URLSearchParams(options.body).get('Body').match(/\d{6}/)[0];return Response.json({sid:'sms'})}throw Error('Unexpected destination')};
- async function req(path,b,who='rider',status=200){const r=await realFetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:b?JSON.stringify(b):undefined});const data=await r.json();assert.equal(r.status,status,data.error||'Unexpected response');if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return data}
+ async function req(path,b,who='rider',status=200){const r=await realFetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:b?JSON.stringify(b):undefined});const data=await r.json();assert.equal(r.status,status,data.error||'Unexpected response');if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&data.rides)return acceptRequestedBooking(base,data,b.rideId,cookies,realFetch);return data}
  try{
  for(const who of ['rider','driver','operator','other'])await req('register',{name:who,email:who+'@example.com',password},who);approveTestDriver(dbPath);
  const ride=(await req('rides',{from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:30,seats:4,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Blue',car:'Toyota',pickup:'Main station',destination:'City station'},'driver',201)).hosting[0];

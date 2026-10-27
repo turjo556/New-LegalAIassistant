@@ -52,7 +52,7 @@ for(const platform of ['ios','android'])test(platform+': native screens register
  const dateButton=tree.root.findAll(n=>n.type==='Pressable'&&n.props.style&&text(n).includes('2026'))[0];assert.ok(dateButton);await act(async()=>dateButton.props.onPress());
  await act(async()=>tree.root.findByType('DateTimePicker').props.onChange({},new Date('2099-11-06T12:00:00Z')));
  await press('Find a ride →');await press('Review & book →');assert.ok(all().includes('cash to driver'));assert.ok(all().includes('2 booking credits available'));
- await press('Reserve standard seats');await until(()=>all().includes('STANDARD SEATS RESERVED'));
+ await press('Request standard seats');await until(()=>all().includes('Awaiting driver approval'));const pending=(await driver.request('state')).seatRequests.find(q=>q.status==='pending');assert.ok(pending);await driver.request('booking-requests/decision',{id:pending.id,decision:'accept',availabilityConfirmed:true});await act(async()=>{mocks.callbacks.forEach(fn=>fn('active'));});await until(()=>all().includes('STANDARD SEATS RESERVED'));
  await press('Trip details & boarding code');await press('Show my boarding code');await until(()=>tree.root.findAll(n=>n.type==='Text'&&/^\d{6}$/.test(text(n))).length>0);
  await act(async()=>{mocks.callbacks.forEach(fn=>fn('background'));});assert.equal(tree.root.findAll(n=>n.type==='Text'&&/^\d{6}$/.test(text(n))).length,0);
  const consent=tree.root.findAll(n=>n.type==='Switch'&&n.props.accessibilityLabel?.startsWith('I understand anyone'))[0];await act(async()=>consent.props.onValueChange(true));await press('Create and share itinerary link');assert.equal(mocks.shared.length,1);assert.ok(mocks.shared[0].message.startsWith(baseUrl+'/trip-share#'));await press('Revoke link');

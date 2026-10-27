@@ -1,3 +1,4 @@
+import {requestEmailKinds,requestEmailRelevant,requestEmailTemplate,requestEmailDetails} from './booking-request-emails.js';
 import {driverBookable} from './driver-verification.js';
 import {queueDriverApprovalEmail,driverApprovalReference} from './driver-approval-email.js';
 import {ridelyEmail,emailLink} from './email-theme.js';
@@ -17,14 +18,17 @@ const copy={
  insurance_approved:[['Your vehicle insurance review is approved','Your insurance review has been approved for the vehicle reviewed. Identity and driving-privilege checks must also be current. Check your driver profile before publishing or accepting bookings.','View my driver status'],['L’assurance de votre véhicule a été approuvée','La vérification de l’assurance a été approuvée pour le véhicule examiné. Les vérifications d’identité et de privilèges de conduite doivent aussi être à jour. Consultez votre profil avant de publier ou d’accepter des réservations.','Voir mon statut conducteur']],
  insurance_rejected:[['Your insurance review needs attention','Your vehicle insurance review was not approved. Open your driver profile or contact support to arrange the next steps. Do not email document photos or policy numbers.','View my driver status'],['Votre assurance nécessite un suivi','La vérification de l’assurance n’a pas été approuvée. Consultez votre profil ou contactez l’assistance pour connaître les prochaines étapes. N’envoyez pas de photos de documents ni de numéros de police par courriel.','Voir mon statut conducteur']]
 };
-export const accountEmailKinds=Object.keys(copy);
-export function accountEmailTemplate(kind,locale,env={}){
+export const accountEmailKinds=[...Object.keys(copy),...requestEmailKinds];
+export function accountEmailTemplate(kind,locale,env={},details){
+ if(requestEmailKinds.includes(kind))return requestEmailTemplate(kind,locale,env,details);
  if(!copy[kind])throw Error('Unknown account email');const fr=locale==='fr',[subject,body,button]=copy[kind][fr?1:0];
  const path=kind==='driver_approved'?'/offer-a-ride':['account_created','email_verified'].includes(kind)?'/account':'/driver-verification',url=emailLink(env,path,locale);const footer=fr?'Message de service concernant votre compte. Aucun document ni numéro privé n’est joint. Si vous n’avez pas demandé cette action, contactez support@ridely.ca.':'This is an account service email. No private documents or numbers are attached. If you did not request this action, contact support@ridely.ca.';
  return ridelyEmail({subject,body,button,url,footer,locale,env});
 }
 async function relevant(row,db){
- if(!copy[row.kind]||row.created<Date.now()-86400000)return false;
+ if(row.created<Date.now()-86400000)return false;
+ if(requestEmailKinds.includes(row.kind))return requestEmailRelevant(row,db);
+ if(!copy[row.kind])return false;
  if(row.kind==='account_created')return true;
  if(!row.email_verified)return null;
  if(row.kind==='email_verified')return true;
@@ -40,7 +44,7 @@ export async function deliverAccountEmails(db,env,{limit=20}={}){
  const rows=await db.all("SELECT o.*,u.email,u.email_verified,u.email_locale FROM account_email_outbox o JOIN users u ON u.id=o.user_id WHERE o.status IN ('pending','failed','sending') AND o.attempts<5 AND (o.kind='account_created' OR u.email_verified=1) AND o.next_attempt_at<=? AND o.locked_until<=? ORDER BY o.created,o.event_key LIMIT ?",now,now,Math.min(50,Math.max(1,limit)));
  let sent=0;for(const row of rows){if(Date.now()-now>15000)break;const current=await relevant(row,db);if(current===null)continue;if(!current){await db.run("UPDATE account_email_outbox SET status='skipped',last_error='event_outdated' WHERE event_key=? AND status IN ('pending','failed','sending') AND locked_until<=?",row.event_key,now);continue}
  const claim=await db.run("UPDATE account_email_outbox SET status='sending',attempts=attempts+1,locked_until=? WHERE event_key=? AND status IN ('pending','failed','sending') AND attempts<5 AND next_attempt_at<=? AND locked_until<=?",Date.now()+300000,row.event_key,Date.now(),Date.now());if(!(claim.changes??claim.meta?.changes))continue;
- try{const template=accountEmailTemplate(row.kind,row.email_locale,env),result=await email(env,row.email,template.subject,template.html,'account-'+row.event_key,template.text);if(typeof result?.id!=='string'||!result.id)throw Error('Provider did not accept');await db.run("UPDATE account_email_outbox SET status='sent',sent_at=?,provider_id=?,locked_until=0,last_error=NULL WHERE event_key=?",Date.now(),result.id.slice(0,200),row.event_key);sent++}catch{const delay=[60000,300000,900000,3600000,14400000][Math.min(row.attempts,4)];await db.run("UPDATE account_email_outbox SET status='failed',locked_until=0,next_attempt_at=?,last_error='provider_unavailable' WHERE event_key=?",Date.now()+delay,row.event_key)}
+ try{const template=accountEmailTemplate(row.kind,row.email_locale,env,requestEmailKinds.includes(row.kind)?await requestEmailDetails(row,db):null),result=await email(env,row.email,template.subject,template.html,'account-'+row.event_key,template.text);if(typeof result?.id!=='string'||!result.id)throw Error('Provider did not accept');await db.run("UPDATE account_email_outbox SET status='sent',sent_at=?,provider_id=?,locked_until=0,last_error=NULL WHERE event_key=?",Date.now(),result.id.slice(0,200),row.event_key);sent++}catch{const delay=[60000,300000,900000,3600000,14400000][Math.min(row.attempts,4)];await db.run("UPDATE account_email_outbox SET status='failed',locked_until=0,next_attempt_at=?,last_error='provider_unavailable' WHERE event_key=?",Date.now()+delay,row.event_key)}
  }return {configured:true,sent};
 }
 export async function accountEmailAdminApi(path,b,user,db,env){

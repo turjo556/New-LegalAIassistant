@@ -1,3 +1,4 @@
+import {acceptRequestedBooking} from '../../scripts/test-driver-fixture.mjs';
 import {approveTestDriver,completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -8,7 +9,7 @@ import {createApp} from './index.js';
 test('accounts, ownership, shared inventory, cancellation and restart persistence',async()=>{
  const dir=mkdtempSync(join(tmpdir(),'rmw-test-'));let server;
  async function start(){server=createApp({dbPath:join(dir,'test.sqlite'),env:{RIDELY_ADMIN_EMAIL:'other@example.com'}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return 'http://127.0.0.1:'+server.address().port}
- let base=await start();const cookies={};async function req(path,body,who='guest',expected=200,origin){const response=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookies[who]?{Cookie:cookies[who]}:{}),...(origin?{Origin:origin}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json();assert.equal(response.status,expected,JSON.stringify(data));if(response.headers.get('set-cookie'))cookies[who]=response.headers.get('set-cookie').split(';')[0];return data}
+ let base=await start();const cookies={};async function req(path,body,who='guest',expected=200,origin){const response=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookies[who]?{Cookie:cookies[who]}:{}),...(origin?{Origin:origin}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json();assert.equal(response.status,expected,JSON.stringify(data));if(response.headers.get('set-cookie'))cookies[who]=response.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&data.rides)return acceptRequestedBooking(base,data,body.rideId,cookies,fetch);return data}
  try{
  await req('rides',{},'guest',401);
  for(const who of ['driver','passenger','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-test-password'},who);
@@ -21,8 +22,9 @@ test('accounts, ownership, shared inventory, cancellation and restart persistenc
  await req('bookings',{rideId:id,seats:1},'driver',400);
  await req('bookings',{rideId:id,seats:1,mode:'home'},'passenger',400);
  await req('favorites',{id},'passenger');assert.deepEqual((await req('state',null,'passenger')).saved,[id]);
- const races=await Promise.all(['passenger','other'].map(async who=>{const r=await fetch(base+'/api/bookings',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookies[who]},body:JSON.stringify({rideId:id,seats:2})});return {who,status:r.status,data:await r.json()}}));
- assert.deepEqual(races.map(r=>r.status).sort(),[201,409]);const winner=races.find(r=>r.status===201),loser=races.find(r=>r.status===409);
+ const pending=await Promise.all(['passenger','other'].map(async who=>{const r=await fetch(base+'/api/bookings',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookies[who]},body:JSON.stringify({rideId:id,seats:2})});assert.equal(r.status,201);return {who,data:await r.json()}}));
+ const races=await Promise.all(pending.map(async p=>{const q=p.data.seatRequests.find(q=>q.status==='pending');const r=await fetch(base+'/api/booking-requests/decision',{method:'POST',headers:{'Content-Type':'application/json',Cookie:cookies.driver},body:JSON.stringify({id:q.id,decision:'accept',availabilityConfirmed:true})});return {who:p.who,status:r.status,data:r.ok?await req('state',null,p.who):await r.json()}}));
+ assert.deepEqual(races.map(r=>r.status).sort(),[200,409]);const winner=races.find(r=>r.status===200),loser=races.find(r=>r.status===409);
  const booking=winner.data.bookings[0];assert.equal(booking.total,60);assert.equal((await req('state')).rides[0].seats,0);
  await req('messages/send',{id:booking.id,message:'Meet at the station entrance.'},winner.who);
  const thread=await req('messages',{id:booking.id},'driver');assert.equal(thread.messages[0].body,'Meet at the station entrance.');

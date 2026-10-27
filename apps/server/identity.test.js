@@ -1,3 +1,4 @@
+import {acceptRequestedBooking} from '../../scripts/test-driver-fixture.mjs';
 import {completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ for(const secretKey of ['sk_live_fixture','rk_live_fixture'])test('Stripe identi
  const dbPath=testDatabase(t);const env={STRIPE_SECRET_KEY:secretKey,RIDELY_PUBLIC_URL:'https://ridely.ca',RIDELY_ADMIN_EMAIL:'operator@example.com'};
  const server=createApp({dbPath,env});await new Promise(r=>server.listen(0,'127.0.0.1',r));const db=new DatabaseSync(dbPath),base='http://127.0.0.1:'+server.address().port,cookies={};let stripeUser,status='requires_input',creates=0,foreign=false,live=true;const calls=[];
  globalThis.fetch=async(url,opts)=>{if(String(url).startsWith(base))return realFetch(url,opts);assert.ok(String(url).startsWith('https://api.stripe.com/v1/identity/verification_sessions'));calls.push({url:String(url),opts});if(opts.method==='POST'){creates++;const body=new URLSearchParams(opts.body);stripeUser=body.get('metadata[ridely_user_id]');assert.equal(body.get('options[document][allowed_types][]'),'driving_license');assert.equal(body.get('options[document][require_matching_selfie]'),'true');assert.equal(body.get('options[document][require_live_capture]'),'true');assert.equal(body.get('return_url'),'https://ridely.ca/driver-verification?driver-verification=return');assert.ok(opts.headers['Idempotency-Key'])}return Response.json({id:'vs_fixture',type:'document',livemode:live,status,metadata:{ridely_user_id:foreign?'someone-else':stripeUser},url:'https://verify.stripe.com/start/fixture'})};
- async function req(path,b,who='driver',expected=200){const r=await realFetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:b?JSON.stringify(b):undefined});const data=await r.json();assert.equal(r.status,expected,JSON.stringify(data));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return data}
+ async function req(path,b,who='driver',expected=200){const r=await realFetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Cookie:cookies[who]||''},body:b?JSON.stringify(b):undefined});const data=await r.json();assert.equal(r.status,expected,JSON.stringify(data));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&data.rides)return acceptRequestedBooking(base,data,b.rideId,cookies,realFetch);return data}
  try{
  await req('driver/enrol',{},'guest',401);
  for(const name of ['driver','rider','operator'])await req('register',{name,email:name+'@example.com',password:'identity-test-password'},name);

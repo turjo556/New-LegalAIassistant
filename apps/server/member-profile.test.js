@@ -1,3 +1,4 @@
+import {acceptRequestedBooking} from '../../scripts/test-driver-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import jpeg from 'jpeg-js';
@@ -5,7 +6,7 @@ import {createApp} from './index.js';
 import {testDatabase,approveTestDriver,completeTestRiders} from '../../scripts/test-driver-fixture.mjs';
 test('optional photos are reencoded, owner-only mutable, visible on trips and removable; drafts are private and cannot bypass approval',async t=>{
  const dbPath=testDatabase(t),server=createApp({dbPath});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const base='http://127.0.0.1:'+server.address().port,cookies={};
- async function req(path,b,who='driver',status=200){const r=await fetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:b?JSON.stringify(b):undefined});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return d}
+ async function req(path,b,who='driver',status=200){const r=await fetch(base+'/api/'+path,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:b?JSON.stringify(b):undefined});const d=await r.json();assert.equal(r.status,status,JSON.stringify(d));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&d.rides)return acceptRequestedBooking(base,d,b.rideId,cookies,fetch);return d}
  for(const who of ['driver','rider']){const d=await req('register',{name:who,email:who+'@example.com',password:'fixture-password-2026'},who);assert.equal(d.user.photoUrl,null)}
  const photo='data:image/jpeg;base64,'+jpeg.encode({width:64,height:64,data:Buffer.alloc(64*64*4,180)},90).data.toString('base64');
  await req('profile/photo',{photo,publicConsent:true},'guest',401);await req('profile/photo',{photo},'driver',400);await req('profile/photo',{photo:'data:image/svg+xml,<svg/>',publicConsent:true},'driver',400);await req('profile/photo',{photo:'data:image/jpeg;base64,AAAA',publicConsent:true},'driver',400);

@@ -16,6 +16,7 @@ export function t(value){if(language!=='fr'||typeof value!=='string')return valu
  if((m=key.match(/^Hi, (.+)\.$/)))return `Bonjour, ${m[1]}.`;
  if((m=key.match(/^Posting as (.+)$/)))return `Publication par ${m[1]}`;
  if((m=key.match(/^(\d+) booking credits?$/)))return `${m[1]} crédit${m[1]==='1'?'':'s'} de réservation`;
+ if((m=key.match(/^1 booking credit will be used only when the driver accepts \((\d+) available\)\.$/)))return `Un crédit sera utilisé seulement après acceptation du conducteur (${m[1]} disponibles).`;
  if((m=key.match(/^1 booking credit will be used for this reservation \((\d+) available\)\.$/)))return `Un crédit sera utilisé pour cette réservation (${m[1]} disponibles).`;
  if((m=key.match(/^Your (?:ride|trip) to (.+)$/)))return `Votre trajet vers ${m[1]}`;
  if((m=key.match(/^Request custom (pickup|drop-off)(.*)$/)))return `Demander un ${m[1]==='pickup'?'embarquement':'débarquement'} personnalisé${m[2].replace('/person','/personne')}`;
