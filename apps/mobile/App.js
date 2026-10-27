@@ -409,9 +409,7 @@ function AppContent() {
     const b = ride.booking;
     return <View key={b?.id || ride.id} style={s.card}><View style={s.spread}><Text style={s.route}>{ride.from} → {ride.to}</Text><Pressable accessibilityRole="button" accessibilityLabel={data.saved.includes(ride.id) ? t("Unsave ride") : t("Save ride")} onPress={() => signed(() => action('favorites', {
           id: ride.id
-        }))}><Text style={s.heart}>{data.saved.includes(ride.id) ? t("\u2665") : t("\u2661")}</Text></Pressable></View><Text style={s.tag}>{t("Cash fare \xB7 paid directly to driver")}</Text>{ride.driverPhoto && <Image accessibilityLabel={t("Driver profile photo")} source={{
-        uri: publicUrl(ride.driverPhoto)
-      }} style={{
+        }))}><Text style={s.heart}>{data.saved.includes(ride.id) ? t("\u2665") : t("\u2661")}</Text></Pressable></View><Text style={s.tag}>{t("Cash fare \xB7 paid directly to driver")}</Text>{ride.driverPhoto && <Image accessibilityLabel={t("Driver profile photo")} source={api.photoSource(ride.driverPhoto)} style={{
         width: 48,
         height: 48,
         borderRadius: 24
@@ -469,9 +467,7 @@ function AppContent() {
         open('auth');
       }} /> : tab === 'Account' ? <>
  {setup && data.user ? <><Button title={t("Back to account")} secondary onPress={() => Setup(null)} /><AccountSetup key={setup} data={data} api={api} refresh={refresh} driver={setup === 'driver'} /></> : <>
- <Text style={s.heading}>{t("Your account")}</Text>{data.user ? <><View style={s.card}>{data.user.photoUrl && <Image accessibilityLabel={t("Your profile photo")} source={{
-                uri: publicUrl(data.user.photoUrl)
-              }} style={{
+ <Text style={s.heading}>{t("Your account")}</Text>{data.user ? <><View style={s.card}>{data.user.photoUrl && <Image accessibilityLabel={t("Your profile photo")} source={api.photoSource(data.user.photoUrl)} style={{
                 width: 64,
                 height: 64,
                 borderRadius: 32

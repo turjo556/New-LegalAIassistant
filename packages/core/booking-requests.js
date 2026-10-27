@@ -11,10 +11,11 @@ export async function maintainBookingRequests(db,now=Date.now()){
 }
 export async function bookingRequestState(db,user){
  await maintainBookingRequests(db);if(!user)return [];
- return db.all(`SELECT q.id,q.user_id AS passengerId,q.ride_id AS rideId,q.seats,q.status,q.created,q.expires_at AS expiresAt,q.booking_id AS bookingId,
- r.owner AS driverId,r.origin AS origin,r.destination_city AS destination,r.date,r.time,r.pickup,r.destination AS dropoff,q.price/100.0 AS price,u.name AS passenger,d.name AS driver
+ const rows=await db.all(`SELECT q.id,q.user_id AS passengerId,q.ride_id AS rideId,q.seats,q.status,q.created,q.expires_at AS expiresAt,q.booking_id AS bookingId,
+ EXISTS(SELECT 1 FROM bookings b WHERE b.ride_id=q.ride_id AND b.user_id=q.user_id AND b.cancelled=0) AS identityVisible,r.owner AS driverId,r.origin AS origin,r.destination_city AS destination,r.date,r.time,r.pickup,r.destination AS dropoff,q.price/100.0 AS price,u.name AS passenger,d.name AS driver
  FROM booking_requests q JOIN rides r ON r.id=q.ride_id JOIN users u ON u.id=q.user_id JOIN users d ON d.id=r.owner
  WHERE q.user_id=? OR r.owner=? ORDER BY q.created DESC LIMIT 100`,user.id,user.id);
+ return rows.map(({identityVisible,...row})=>({...row,driver:row.driverId===user.id||identityVisible?row.driver:'Driver'}));
 }
 export async function bookingRequestApi(path,b,user,db){
  if(!['/api/bookings','/api/booking-requests/decision','/api/booking-requests/withdraw'].includes(path))return null;

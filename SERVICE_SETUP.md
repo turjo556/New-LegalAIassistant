@@ -697,3 +697,11 @@ Validation: existing suite, dedicated route/auth-return tests, production web bu
 Public pages declare the stable lime/black SVG favicon, a 96×96 PNG favicon and a 180×180 Apple touch icon. Organization JSON-LD uses the 512×512 brand icon, customer support contact and Ridely.ca alternate name. WebSite and Service data identify the Canadian intercity pilot and its four cities. English/French homepage descriptions describe booking credits, driver checks, optional custom stops and cash fares without promising a particular rich result.
 
 After deployment, use the verified ridely.ca Google Search Console property: URL Inspection → Test live URL → Request indexing for https://ridely.ca/ and https://ridely.ca/fr; submit https://ridely.ca/sitemap.xml under Sitemaps. Google's favicon, snippets, sitelinks and AI Overview update on its own crawl schedule and are not guaranteed. No Search Console submissions or live crawl checks were performed by this change.
+
+### Driver identity privacy before acceptance
+
+Public ride results use a generic Driver label and omit photo URLs and initials. Pending seat-request records conceal the driver name; confirmed bookings and the driver's own Hosting data retain private details. Cards show labelled icons for current driver checks, luggage allowance and enabled custom stops. Reviews and trip counts remain hidden.
+
+Photo retrieval requires the authenticated owner, a confirmed driver/passenger pairing or the verified configured operator; anonymous and unrelated accounts and pending requesters receive 404. Native photo requests attach the existing session only to same-origin profile-photo URLs. Profile-photo consent and privacy copy now describe sharing with confirmed trip partners and authorised support. Driver-written vehicle notes remain public and should not contain personal information. No migration is needed.
+
+Validation: 84 tests passed, including private/pending/confirmed identity and photo access and native photo-source URL restrictions. Web build, SEO checks, Worker dry-run and English/French browser booking/navigation checks passed. Live deployment and physical native-device delivery were not verified.

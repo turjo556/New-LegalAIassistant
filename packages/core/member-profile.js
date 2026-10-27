@@ -23,4 +23,10 @@ export async function memberAction(path,b,user,db){
  if(!cities.includes(draft.from)||!cities.includes(draft.to))fail('Choose supported pilot cities.');
  await db.run('INSERT INTO ride_drafts(user_id,payload,updated) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET payload=excluded.payload,updated=excluded.updated',user.id,JSON.stringify(draft),Date.now());return true;
 }
-export async function readPhoto(db,id){return (await db.get('SELECT profile_photo FROM users WHERE id=?',String(id||'')))?.profile_photo||null}
+export async function readPhoto(db,id,user,env={}){
+ id=String(id||'');if(!user)return null;
+ const operator=!!(user.email_verified&&env.RIDELY_ADMIN_EMAIL&&user.email===env.RIDELY_ADMIN_EMAIL.toLowerCase());
+ const tripPartner=user.id!==id&&!operator?await db.get('SELECT 1 FROM bookings b JOIN rides r ON r.id=b.ride_id WHERE b.cancelled=0 AND ((b.user_id=? AND r.owner=?) OR (b.user_id=? AND r.owner=?)) LIMIT 1',user.id,id,id,user.id):true;
+ if(!tripPartner)return null;
+ return (await db.get('SELECT profile_photo FROM users WHERE id=?',id))?.profile_photo||null;
+}

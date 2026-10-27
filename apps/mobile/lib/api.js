@@ -36,6 +36,10 @@ export function createApi({baseUrl,storage,fetchImpl=fetch,getLanguage=()=> 'en'
       if (path === 'logout') {cookie = null; await storage.deleteItem(key);}
       return data;
     }); },
+    photoSource(path) {
+      const url=new URL(path,base);if(url.username||url.password||url.origin!==base.origin||url.pathname!=='/api/profile/photo')throw Error('Unexpected profile photo URL.');
+      return {uri:url.href,headers:cookie?{Cookie:cookie}:{}};
+    },
     clear() {return enqueue(async () => {cookie = null; initialized = true; await storage.deleteItem(key);});},
   };
 }
