@@ -20,3 +20,11 @@ test('native API isolates sessions by origin, rejects path escapes and sends sel
  await one.clear();await one.request('state');assert.equal(calls.at(-1).opts.headers.Cookie,undefined);
 });
 test('mobile translation changes interface copy without altering user content',()=>{setLanguage('fr');assert.equal(t('Booking credits'),'Crédits de réservation');assert.equal(t('Avery Jones'),'Avery Jones');assert.equal(t('1. Confirm your email'),'1. Confirmez votre courriel');setLanguage('en');assert.equal(t('Booking credits'),'Booking credits');});
+
+test('store beta and production cannot accidentally target each other or arbitrary servers',()=>{
+ assert.equal(mobileConfig('https://ridely.ca','production').ready,true);
+ assert.equal(mobileConfig('https://ridely-app-test.bonjour-847.workers.dev','staging').ready,true);
+ for(const origin of ['https://staging.example','https://ridely-app-test.bonjour-847.workers.dev','https://ridely.ca.evil.example'])assert.equal(mobileConfig(origin,'production').ready,false);
+ for(const origin of ['https://ridely.ca','http://127.0.0.1:3000','https://staging.example'])assert.equal(mobileConfig(origin,'staging').ready,false);
+ assert.equal(mobileConfig('https://ridely.ca','prodution').ready,false);
+});

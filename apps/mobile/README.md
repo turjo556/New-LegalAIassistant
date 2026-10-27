@@ -92,3 +92,14 @@ eas build --platform ios --profile device-preview
 7. Prepare final bilingual legal/privacy/support pages, current data-safety/App Privacy disclosures, content moderation/blocking UX, store screenshots and operational monitoring. Public support availability must match actual staffing. Review the exemption/encryption declaration with the submitting developer.
 
 No signed build, simulator/device run, TestFlight/Play upload or public release has been performed here. A successful JavaScript/Hermes export is not a signed native build.
+
+## Downloadable beta release preparation (27 October 2026)
+
+See [the step-by-step release guide](../../MOBILE_RELEASE.md) and
+[English/French store listing draft](STORE_LISTING_DRAFT.md). The `beta` EAS profile
+is a store-distributed physical-device build using the existing isolated test
+Worker; it is suitable for preparing TestFlight/Google Play testing once accounts
+and signing are configured. It is not the `preview` simulator/APK profile.
+`npm run mobile:release:check` at the repository root validates the configuration.
+The production and staging origins are enforced separately by the native client.
+No signed cloud build or store submission has been performed here.

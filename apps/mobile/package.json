@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "export": "expo export --platform ios --platform android",
-    "export:ios": "expo export --platform ios"
+    "export:ios": "expo export --platform ios",
+    "eas-build-pre-install": "node ../../scripts/check-mobile-release.mjs"
   },
   "dependencies": {
     "@nearway/core": "1.0.0",

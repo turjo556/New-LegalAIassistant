@@ -29,7 +29,7 @@ Scan the new QR code. The app displays **Test mode · fictional accounts**. Use 
 ## First complete journey
 
 1. Sign in as `driver@ridely.test`. Its contact, driver identity, licence and insurance approvals are synthetic fixtures, not real checks. Use **Toyota** as the approved vehicle model and fictional plate details. Choose a future Montréal → Ottawa trip, preset meeting points, quarter-hour times and a $25 whole-dollar price. Publish it.
-2. Sign out and sign in as `rider@ridely.test`. Search the same date/cities and reserve a standard seat. One of its two automatic credits is consumed. The cash-fare label describes the real pilot policy; do not exchange money for test trips.
+2. Sign out and sign in as `rider@ridely.test`. Search the same date/cities and request a standard seat. It remains pending without using a credit. Sign in as the driver, accept the request from the driver view after confirming availability, then return as the rider to see the confirmed booking and one credit consumed. The cash-fare label describes the real pilot policy; do not exchange money for test trips.
 3. Open the itinerary and compare the fictional vehicle/plate. Generate a boarding code; sign in as the driver and confirm the code for that reservation.
 4. Create/revoke a trusted-contact itinerary link and test messages. Test cancellation more than six hours ahead, ensuring the credit returns once. A late/support-request path does not automatically cancel the booking.
 5. To test optional custom stops, first enable them on a listing and explicitly set standard pins using confirmed test coordinates. The existing 3km/shared-15-minute validation still applies. Android currently uses manual coordinates. The initial city-centre viewport is not an exact pin.
@@ -50,3 +50,5 @@ Driver approval expires after 30 days under the existing policy; rerunning setup
 Local integration tests run the real Worker API against an isolated SQLite adapter: seed/login/passwords, encrypted profile readiness, synthetic driver approval, publish/book, session cookie preservation, credit balance on rerun, missing marker, provider stripping and blocked real flows. Native tests still use mocked platform hosts and do not establish physical-device behaviour.
 
 The setup was prepared and locally validated in the coding workspace. Remote creation/deployment still requires the owner's Cloudflare login on the Mac. If the command fails, send the final error message, not private files. A failure may leave partially created test resources; it does not select production as a fallback. No automatic cleanup deletes a database or Worker.
+
+For installable TestFlight / Google Play test builds, follow [MOBILE_RELEASE.md](MOBILE_RELEASE.md). Store beta builds use the same isolated backend and do not require Metro to keep running.

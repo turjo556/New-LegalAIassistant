@@ -31,7 +31,7 @@ Set `RIDELY_ADMIN_EMAIL` in the Worker to the exact email of the operator's Ride
 
 Without Mapbox, manual pins and the existing **clearly labelled driver-estimate** approval workflow remain available. Do not advertise automatic road detour verification until the provider is connected and a real hosted route has been checked. Mapping searches are capped per member (100/day); route preview requests are capped (20/10 minutes), and each preview can make three Directions requests. These caps do not replace provider/account-wide spending controls.
 
-## Optional phone verification — Twilio
+## Required rider phone verification — Twilio
 
 Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` as Cloudflare secrets/variables as appropriate. The number must be authorized to send SMS to the launch region, with any required sender registration completed. Check Twilio pricing and account limits before enabling it. No SMS provider account, paid number, or subscription has been purchased by this implementation.
 
@@ -601,3 +601,38 @@ qualifying completed trips with at least one genuine booked passenger confirming
 each journey. One passenger per trip qualifies; three passengers on a single trip
 count only once. Unaccepted requests cannot qualify. Operator-reviewed claims,
 manual Interac payment, first 25 approved claims and $625 total cap remain.
+
+
+### Activate rider SMS on the live website
+
+If Rider setup says SMS verification is unavailable and the send button is
+disabled, the public capability is false: at least one required Twilio setting
+is missing from the runtime Worker. This is not an incorrect six-digit code.
+
+1. In Twilio, use the intended Ridely account/subaccount. Obtain an SMS-capable
+   sending number and complete any applicable account/sender/destination checks.
+   Trial accounts usually restrict recipients to verified test numbers and are
+   unsuitable for unrestricted public onboarding. Review charges and upgrade
+   requirements in Twilio before purchasing/activating services.
+2. Cloudflare → Workers & Pages → **ridemyway** → Settings → **Runtime variables
+   and secrets** → **Production**. This is not the build-variable screen or the
+   separate `ridely-app-test` Worker.
+3. Add `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` as secrets, and
+   `TWILIO_FROM_NUMBER` as a text variable or secret. The sending number must be
+   in international format (for example +1 followed by the Canadian number).
+   Copy real values directly from Twilio into Cloudflare; never into chat/Git.
+4. Save/deploy the variable update. Refresh ridely.ca and the rider setup. The
+   send button should enable when all three settings are present. This indicates
+   configuration presence, not confirmed provider authorization/delivery.
+5. Test with your own Canadian mobile number: request one code, check receipt,
+   confirm it, then check the rider profile is ready. If sending fails, inspect
+   Twilio Messaging logs for sender, destination, balance or trial restrictions.
+   Do not share the code, token or customer phone number in diagnostic screenshots.
+6. Verify the whole booking journey: request a seat on an approved driver's ride,
+   receive pending status, have the driver accept, confirm one credit is used and
+   the passenger sees a confirmed reservation. Confirm both email notifications
+   with the existing Resend setup. These are separate from SMS.
+
+The isolated mobile test Worker deliberately does not forward SMS credentials.
+Updating production must not activate real delivery or use real phone numbers on
+that fictional test backend. No user is marked phone-verified by setup alone.
