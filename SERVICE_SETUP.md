@@ -447,3 +447,30 @@ The main app sections have refreshable URLs: `/offer-a-ride`, `/driver-verificat
 Section state is restored on direct load and browser Back/Forward. Protected sections open sign-in and restore the requested section afterward, including when the sign-in page itself is refreshed. Only known internal URLs are accepted as authentication return destinations. Posting drafts can be prepared before driver approval; publishing gates are unchanged. Existing Stripe/query-style links remain supported; new Stripe sessions return to `/driver-verification?driver-verification=return`. The marker is removed on leaving that flow. Policy links use `/policies`. New interactive account/form routes are excluded from the public sitemap and served with noindex headers. Existing public SEO guides are unchanged.
 
 Browser verification covered direct/refresh navigation, authenticated account/driver Back/Forward, logged-out posting through a refreshed login URL, close behaviour, preserved ride drafts, booking-specific rider/driver message links and message refresh, and the existing fare/edit and live-identity restart flows. Tests use isolated fixtures and mocked Stripe responses, not real identity sessions.
+
+### Private insurance documents
+
+Driver verification → Final review now accepts the certificate and one optional
+insurer coverage-confirmation image. JPG, PNG and WebP are converted in the browser;
+PDFs currently need a readable screenshot/photo. The server validates and re-encodes
+each JPEG, then encrypts both pages with AES-GCM using the existing
+`LICENCE_ENCRYPTION_KEY` (separate insurance AAD). No additional provider account,
+public bucket or operator key is required. Do not rotate this key without a plan
+for existing encrypted licence, rider and insurance records.
+
+Apply `0021_insurance_submissions.sql` before deploying the updated Worker
+(`npm run deploy` already applies migrations). New private images expire after
+30 days and are removed from active storage after the operator records a review
+or the driver withdraws them. Hosting backups follow the provider's retention.
+Metadata and access/review audit records remain. A new submission or driver
+withdrawal resets insurance to pending; it does not approve or cancel existing trips.
+Operator access is session-bound, logged, and denied for their own application.
+Images hide after 60 seconds or when the page is hidden.
+
+In `/operator` → Driver reviews, open the applicant and choose **View insurance
+documents**. Match policyholder, vehicle and effective dates and establish whether
+the planned ridesharing is covered, using insurer confirmation when necessary.
+Upload does not establish authenticity or coverage. Record the internal evidence
+reference and coverage expiry before approving. If the submission was replaced or
+withdrawn, reload and review the current version. Existing externally arranged
+insurance checks remain supported; the software does not contact insurers.

@@ -1,0 +1,3 @@
+CREATE TABLE insurance_submissions(user_id TEXT PRIMARY KEY REFERENCES users(id),id TEXT UNIQUE NOT NULL,vehicle TEXT NOT NULL,ciphertext TEXT,iv TEXT,page_count INTEGER NOT NULL,consented_at INTEGER NOT NULL,submitted_at INTEGER NOT NULL,expires_at INTEGER NOT NULL,status TEXT NOT NULL DEFAULT 'pending');
+CREATE INDEX insurance_submission_expiry ON insurance_submissions(expires_at);
+CREATE TABLE insurance_access_log(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),operator_id TEXT NOT NULL REFERENCES users(id),action TEXT NOT NULL,submission_id TEXT NOT NULL,created INTEGER NOT NULL);
