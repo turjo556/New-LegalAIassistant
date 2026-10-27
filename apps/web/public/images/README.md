@@ -7,3 +7,8 @@ These three original AI-generated marketing images recreate the scenes in the ap
 - `ridely-city.webp`: Montréal bridge/skyline through a passenger window.
 
 Images are served locally as compressed WebP. Text, buttons, route doodles and promotional content are live HTML/SVG/CSS, not embedded screenshots. Profile photos uploaded by members are a separate feature and are not used for marketing.
+
+`ridely-logo.png` is a 128 × 128 PNG rendering of the existing
+`../favicon.svg` double-arrow mark for email-client compatibility. Email headers
+pair this mark with the live-text Ridely wordmark. Keep its shape and electric-lime
+/ black colours in sync with the source favicon.

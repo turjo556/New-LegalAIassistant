@@ -1,6 +1,6 @@
+import {ridelyEmail,emailLink} from './email-theme.js';
 import {capabilities,email,serviceBudget} from './providers.js';
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status})};
-const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const copy={
  account_created:[['Welcome to Ridely','Your account has been created. Confirm your email in your account before booking or completing driver checks.','Open my account'],['Bienvenue chez Ridely','Votre compte a été créé. Confirmez votre courriel dans votre compte avant de réserver ou de terminer les vérifications conducteur.','Ouvrir mon compte']],
  email_verified:[['Your Ridely email is confirmed','Your email address is confirmed. This confirms access to your inbox; it does not verify identity or driving eligibility.','Open my account'],['Votre courriel Ridely est confirmé','Votre adresse courriel est confirmée. Cela confirme l’accès à votre boîte de réception, sans vérifier votre identité ou vos privilèges de conduite.','Ouvrir mon compte']],
@@ -16,9 +16,9 @@ const copy={
 };
 export const accountEmailKinds=Object.keys(copy);
 export function accountEmailTemplate(kind,locale,env={}){
- if(!copy[kind])throw Error('Unknown account email');const fr=locale==='fr',[subject,body,button]=copy[kind][fr?1:0];let origin='https://ridely.ca';try{const u=new URL(env.RIDELY_PUBLIC_URL);if(u.protocol==='https:'&&!u.username&&!u.password)origin=u.origin}catch{}
- const path=['account_created','email_verified'].includes(kind)?'/account':'/driver-verification',url=origin+path+'?lang='+(fr?'fr':'en');const footer=fr?'Message de service concernant votre compte. Aucun document ni numéro privé n’est joint. Si vous n’avez pas demandé cette action, contactez support@ridely.ca.':'This is an account service email. No private documents or numbers are attached. If you did not request this action, contact support@ridely.ca.';
- return {subject,text:subject+'\n\n'+body+'\n\n'+button+': '+url+'\n\n'+footer,html:`<!doctype html><html lang="${fr?'fr':'en'}"><body style="margin:0;background:#f5f5ec;font-family:Arial,sans-serif;color:#171b14"><table role="presentation" style="width:100%;max-width:580px;margin:28px auto;background:#fff;border-radius:16px"><tr><td style="padding:26px;background:#171b14;color:#fff;font-size:30px;font-weight:800">ridely<span style="color:#c5ff28">.</span></td></tr><tr><td style="padding:28px"><h1 style="font-size:24px;line-height:1.3;margin:0 0 18px">${escape(subject)}</h1><p style="font-size:16px;line-height:1.7">${escape(body)}</p><p style="margin:25px 0"><a href="${escape(url)}" style="display:inline-block;background:#c5ff28;color:#171b14;padding:15px 20px;border-radius:9px;text-decoration:none;font-weight:700">${escape(button)}</a></p><p style="font-size:12px;line-height:1.6;color:#65705f">${escape(footer)}</p><a href="mailto:support@ridely.ca" style="color:#435c15">support@ridely.ca</a></td></tr></table></body></html>`};
+ if(!copy[kind])throw Error('Unknown account email');const fr=locale==='fr',[subject,body,button]=copy[kind][fr?1:0];
+ const path=['account_created','email_verified'].includes(kind)?'/account':'/driver-verification',url=emailLink(env,path,locale);const footer=fr?'Message de service concernant votre compte. Aucun document ni numéro privé n’est joint. Si vous n’avez pas demandé cette action, contactez support@ridely.ca.':'This is an account service email. No private documents or numbers are attached. If you did not request this action, contact support@ridely.ca.';
+ return ridelyEmail({subject,body,button,url,footer,locale,env});
 }
 async function relevant(row,db){
  if(!copy[row.kind]||row.created<Date.now()-86400000)return false;

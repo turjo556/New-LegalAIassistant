@@ -540,3 +540,17 @@ messages cannot be resent there. Operator retries are logged. “Accepted by pro
 means Resend accepted the request, not inbox delivery. Inspect Resend's logs for
 bounces/delivery and confirm `ridely.ca` is verified in the Resend account. Delivery
 and inbox placement have not been verified from this development environment.
+
+### Shared Ridely email design
+
+All Ridely-generated account/document messages, verification codes and optional
+trip updates render through `packages/core/email-theme.js`. Use `ridelyEmail`
+for future email types so the same electric lime (`#c5ff28`), black (`#11120f`),
+off-white (`#f5f5ec`), header, footer and buttons stay consistent.
+
+The header includes `/images/ridely-logo.png`, a PNG rendering of the existing
+website favicon, and a live-text Ridely wordmark. The wordmark remains readable
+when an email client blocks images. HTML uses inline styles and presentation
+tables; every type also has a plain-text version. Verification codes remain
+selectable text with their existing 10-minute expiry. This changes presentation,
+not verification, delivery retries, opt-in preferences or approval rules.
