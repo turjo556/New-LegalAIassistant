@@ -502,3 +502,41 @@ The backend overrides supplied coordinates for configured presets (including
 matching canonical preset names) and rejects custom publication using unresolved
 presets. Existing rides keep the coordinates stored when they were published;
 changing a preset does not move their zones or existing requests.
+
+### Essential account and document emails
+
+Deploy migration `0023_account_emails.sql` with the updated Worker. Account
+creation, email confirmation, secure licence/insurance submissions, Stripe identity
+results, and operator licence/insurance decisions queue service emails automatically.
+Only future events are queued; existing accounts are not sent a welcome-message
+backfill. These are separate from the optional `email_updates` trip-notification
+preference. No marketing, identity images, licence/policy numbers, evidence notes,
+passwords or private rider details are included.
+
+The existing Resend setup is reused: `RESEND_API_KEY` secret, verified
+`EMAIL_FROM` sender/domain, `RIDELY_PUBLIC_URL=https://ridely.ca`. No new key or
+provider is needed. Cloudflare starts delivery in `waitUntil` after successful POST
+responses, with the existing five-minute schedule as a retry fallback. The Node
+server drains the same queue every minute. Existing Stripe sessions in `processing`
+are also refreshed on that schedule, without creating new checks; confirmed results
+queue their emails even when a driver leaves the page.
+
+Messages have English/French HTML and plain-text versions. Signup language is
+stored; subsequent authenticated API requests with an explicit English/French
+language preference update it. Only the welcome message can be sent before contact
+verification. Email-verification codes keep their existing immediate send flow.
+
+The database queue records events atomically with the state changes. A five-minute
+lease and a stable Resend idempotency key prevent concurrent refreshes or retry
+attempts from duplicating a message. Temporary failures retry with backoff up to
+five attempts. Events older than 24 hours, superseded decisions and replaced or
+withdrawn documents are not sent. This stays within the provider's idempotency
+window. Missing provider configuration leaves events queued; it never claims that
+an email was sent and does not block account creation or document submission.
+
+At `/operator?section=emails`, inspect provider configuration, all-event counts and
+the latest 50 events. The operator may retry recent failed messages; sent or outdated
+messages cannot be resent there. Operator retries are logged. “Accepted by provider”
+means Resend accepted the request, not inbox delivery. Inspect Resend's logs for
+bounces/delivery and confirm `ridely.ca` is verified in the Resend account. Delivery
+and inbox placement have not been verified from this development environment.

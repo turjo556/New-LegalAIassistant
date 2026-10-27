@@ -1,3 +1,4 @@
+import {deliverAccountEmails} from '../../packages/core/account-emails.js';
 import {configuredMeetingPoints} from '../../packages/core/meeting-point-pins.js';
 import {siteResponse} from '../../packages/core/site-response.js';
 import {seatFareCents,maximumSeatPrice,updateSeatPrice} from '../../packages/core/fare-policy.js';
@@ -10,7 +11,7 @@ import {creditWebhook} from '../../packages/core/credits.js';
 import {applyMeetingPoints,meetingPointFor} from '../../packages/core/meeting-points.js';
 import {cities} from '../../packages/core/index.js';
 import {requireRider,expireRiderProfiles} from '../../packages/core/rider-profile.js';
-import {driverApi,driverBookable} from '../../packages/core/driver-verification.js';
+import {driverApi,driverBookable,refreshProcessingIdentities} from '../../packages/core/driver-verification.js';
 import {extras,community,guardBlocked,deliverEmails} from '../../packages/core/community.js';
 import {quoteStop} from '../../packages/core/routing.js';
 import {routeSettings,handleStop,publicStops} from '../../packages/core/custom-stops.js';
@@ -57,6 +58,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0020_whole_dollar_fares')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0020_whole_dollar_fares.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0020_whole_dollar_fares');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0021_insurance_submissions')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0021_insurance_submissions.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0021_insurance_submissions');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0022_meeting_point_pins')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0022_meeting_point_pins.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0022_meeting_point_pins');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
+ if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0023_account_emails')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0023_account_emails.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0023_account_emails');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const attempts=new Map();
  function fail(status,message){throw Object.assign(new Error(message),{status})}
@@ -77,6 +79,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(req.method!=='GET'&&req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)fail(403,'Request origin is not allowed.');
  const raw=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rmw_session='))?.slice(12);
  const user=raw?db.prepare('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?').get(hash(raw),Date.now()):null;
+ const emailLocale=req.headers['accept-language']?.match(/^(en|fr)(?:\b|-)/i)?.[1]?.toLowerCase();if(user&&emailLocale&&user.email_locale!==emailLocale)await adapter.run('UPDATE users SET email_locale=? WHERE id=?',emailLocale,user.id);
  if(req.method==='GET'&&url.pathname==='/api/state'){send(200,await state(user));return}
  if(req.method==='GET'&&url.pathname==='/api/health'){send(200,{status:'ok'});return}
  if(req.method==='GET'&&url.pathname==='/api/profile/photo'){const photo=await readPhoto(adapter,url.searchParams.get('id'));if(!photo)fail(404,'Photo not found.');res.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'"});res.end(Buffer.from(photo.split(',')[1],'base64'));return}
@@ -86,8 +89,9 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(['/api/register','/api/login'].includes(url.pathname)){
  const key=req.socket.remoteAddress;const limit=attempts.get(key)||{n:0,until:Date.now()+600000};if(limit.until<Date.now()){limit.n=0;limit.until=Date.now()+600000}limit.n++;attempts.set(key,limit);if(attempts.size>10000)for(const [k,v] of attempts)if(v.until<Date.now())attempts.delete(k);if(limit.n>40)fail(429,'Too many attempts. Try again in ten minutes.');
  const email=text(b.email,'email',3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fail(400,'Enter a valid email.');const password=text(b.password,'password',10,128);let account;
- if(url.pathname==='/api/register'){const name=text(b.name,'name',2,50);if(db.prepare('SELECT id FROM users WHERE email=?').get(email))fail(409,'An account already exists with that email.');const salt=randomBytes(16).toString('hex');const encoded=salt+':'+scryptSync(password,salt,64).toString('hex');const id=randomUUID();db.prepare('INSERT INTO users(id,name,email,password) VALUES(?,?,?,?)').run(id,name,email,encoded);account={id,name,email}}
+ if(url.pathname==='/api/register'){const name=text(b.name,'name',2,50);if(db.prepare('SELECT id FROM users WHERE email=?').get(email))fail(409,'An account already exists with that email.');const salt=randomBytes(16).toString('hex');const encoded=salt+':'+scryptSync(password,salt,64).toString('hex');const id=randomUUID();db.prepare('INSERT INTO users(id,name,email,password,email_locale) VALUES(?,?,?,?,?)').run(id,name,email,encoded,req.headers['accept-language']?.startsWith('fr')?'fr':'en');account={id,name,email}}
  else{account=db.prepare('SELECT * FROM users WHERE email=?').get(email);const [salt,digest]=(account?.password||'missing:'+scryptSync('dummy','missing',64).toString('hex')).split(':');const matches=timingSafeEqual(scryptSync(password,salt,64),Buffer.from(digest,'hex'));if(!account||!matches)fail(401,'Email or password is incorrect.');}
+ const loginEmailLocale=req.headers['accept-language']?.match(/^(en|fr)(?:\b|-)/i)?.[1]?.toLowerCase();if(loginEmailLocale)db.prepare('UPDATE users SET email_locale=? WHERE id=?').run(loginEmailLocale,account.id);
  const token=randomBytes(32).toString('hex');db.prepare('DELETE FROM sessions WHERE expires<?').run(Date.now());db.prepare('INSERT INTO sessions(token,user_id,expires) VALUES(?,?,?)').run(hash(token),account.id,Date.now()+7*86400000);res.setHeader('Set-Cookie',`rmw_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${secure?'; Secure':''}`);send(200,await state(account));return;
  }
  if(url.pathname==='/api/logout'){if(raw)db.prepare('DELETE FROM sessions WHERE token=?').run(hash(raw));res.setHeader('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure?'; Secure':''}`);send(200,await state(null));return}
@@ -132,6 +136,6 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!db.prepare('SELECT id FROM rides WHERE id=? AND cancelled=0').get(id))fail(404,'Ride not found.');const exists=db.prepare('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?').get(user.id,id);if(exists)db.prepare('DELETE FROM favorites WHERE user_id=? AND ride_id=?').run(user.id,id);else db.prepare('INSERT INTO favorites VALUES(?,?)').run(user.id,id);send(200,await state(user));return}
  fail(404,'Endpoint not found.');
  }catch(e){if(!e.status)console.error('Request failed:',e.message);if(!res.headersSent)send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'});else res.end()}
- });server.on('close',()=>db.close());return server;
+ });let emailTimer,emailTask;server.on('listening',()=>{emailTimer=setInterval(()=>{if(!emailTask)emailTask=refreshProcessingIdentities(adapter,env).then(()=>deliverAccountEmails(adapter,env)).catch(()=>{}).finally(()=>{emailTask=null})},60000);emailTimer.unref()});server.on('close',()=>{clearInterval(emailTimer);if(emailTask)emailTask.finally(()=>db.close());else db.close()});return server;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){createApp().listen(Number(process.env.PORT)||3000,'0.0.0.0',()=>console.log('RideMyWay server listening on port '+(process.env.PORT||3000)));}

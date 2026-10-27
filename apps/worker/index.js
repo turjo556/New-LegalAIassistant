@@ -1,3 +1,4 @@
+import {deliverAccountEmails} from '../../packages/core/account-emails.js';
 import {configuredMeetingPoints,resolveMissingMeetingPoints} from '../../packages/core/meeting-point-pins.js';
 import {expireInsurance} from '../../packages/core/insurance-vault.js';
 import {siteResponse} from '../../packages/core/site-response.js';
@@ -12,7 +13,7 @@ import {applyMeetingPoints,meetingPointFor} from '../../packages/core/meeting-po
 import {cities} from '../../packages/core/index.js';
 import {requireRider,expireRiderProfiles} from '../../packages/core/rider-profile.js';
 import {expireLicences} from '../../packages/core/licence-vault.js';
-import {driverApi,driverBookable} from '../../packages/core/driver-verification.js';
+import {driverApi,driverBookable,refreshProcessingIdentities} from '../../packages/core/driver-verification.js';
 import {extras,community,guardBlocked,deliverEmails} from '../../packages/core/community.js';
 import {quoteStop} from '../../packages/core/routing.js';
 import {routeSettings,handleStop,publicStops} from '../../packages/core/custom-stops.js';
@@ -22,9 +23,9 @@ const hash=s=>createHash('sha256').update(s).digest('hex');
 async function passwordDigest(password,salt){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256);return Buffer.from(bits).toString('hex')}
 function easternNow(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const get=k=>parts.find(p=>p.type===k).value;return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`}
 
-export default {async fetch(req,env){
+export default {async fetch(req,env,ctx){
  const headers=new Headers({'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin','X-Frame-Options':'DENY'});
- const send=(status,data)=>new Response(JSON.stringify(data),{status,headers});
+ const send=(status,data)=>{if(status<400&&req.method==='POST'&&ctx?.waitUntil&&env.DB)ctx.waitUntil(deliverAccountEmails(adapter,env).catch(()=>{}));return new Response(JSON.stringify(data),{status,headers})};
  const url=new URL(req.url);
  if(!url.pathname.startsWith('/api/'))return siteResponse(req,env.ASSETS);
  if(!env.DB)return send(503,{error:'The database binding is not configured.'});
@@ -42,6 +43,7 @@ export default {async fetch(req,env){
  if(req.method!=='GET'&&req.headers.get('Origin')&&new URL(req.headers.get('Origin')).origin!==url.origin)fail(403,'Request origin is not allowed.');
  const raw=(req.headers.get('Cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('rmw_session='))?.slice(12);
  const user=raw?await get('SELECT u.* FROM users u JOIN sessions s ON s.user_id=u.id WHERE s.token=? AND s.expires>?',hash(raw),Date.now()):null;
+ const emailLocale=req.headers.get('Accept-Language')?.match(/^(en|fr)(?:\b|-)/i)?.[1]?.toLowerCase();if(user&&emailLocale&&user.email_locale!==emailLocale)await run('UPDATE users SET email_locale=? WHERE id=?',emailLocale,user.id);
  if(req.method==='GET'&&url.pathname==='/api/state'){return send(200,await state(user));}
  if(req.method==='GET'&&url.pathname==='/api/health'){return send(200,{status:'ok'});}
  if(req.method==='GET'&&url.pathname==='/api/profile/photo'){const photo=await readPhoto(adapter,url.searchParams.get('id'));if(!photo)fail(404,'Photo not found.');return new Response(Uint8Array.from(atob(photo.split(',')[1]),c=>c.charCodeAt(0)),{headers:{'Content-Type':'image/jpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'"}})}
@@ -51,8 +53,9 @@ export default {async fetch(req,env){
  if(['/api/register','/api/login'].includes(url.pathname)){
  const key=hash(req.headers.get('CF-Connecting-IP')||'local');const now=Date.now();await run('DELETE FROM auth_attempts WHERE expires<?',now);await run('INSERT INTO auth_attempts(key,attempts,expires) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=attempts+1',key,now+600000);const limit=await get('SELECT attempts FROM auth_attempts WHERE key=?',key);if(limit.attempts>40)fail(429,'Too many attempts. Try again in ten minutes.');
  const email=text(b.email,'email',3,254).toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fail(400,'Enter a valid email.');const password=text(b.password,'password',10,128);let account;
- if(url.pathname==='/api/register'){const name=text(b.name,'name',2,50);if(await get('SELECT id FROM users WHERE email=?',email))fail(409,'An account already exists with that email.');const salt=randomBytes(16).toString('hex');const encoded=salt+':'+await passwordDigest(password,salt);const id=randomUUID();await run('INSERT INTO users(id,name,email,password) VALUES(?,?,?,?)',id,name,email,encoded);account={id,name,email}}
+ if(url.pathname==='/api/register'){const name=text(b.name,'name',2,50);if(await get('SELECT id FROM users WHERE email=?',email))fail(409,'An account already exists with that email.');const salt=randomBytes(16).toString('hex');const encoded=salt+':'+await passwordDigest(password,salt);const id=randomUUID();await run('INSERT INTO users(id,name,email,password,email_locale) VALUES(?,?,?,?,?)',id,name,email,encoded,req.headers.get('Accept-Language')?.startsWith('fr')?'fr':'en');account={id,name,email}}
  else{account=await get('SELECT * FROM users WHERE email=?',email);const [salt,digest]=(account?.password||'missing:'+await passwordDigest('dummy','missing')).split(':');const matches=timingSafeEqual(Buffer.from(await passwordDigest(password,salt),'hex'),Buffer.from(digest,'hex'));if(!account||!matches)fail(401,'Email or password is incorrect.');}
+ const loginEmailLocale=req.headers.get('Accept-Language')?.match(/^(en|fr)(?:\b|-)/i)?.[1]?.toLowerCase();if(loginEmailLocale)await run('UPDATE users SET email_locale=? WHERE id=?',loginEmailLocale,account.id);
  const token=randomBytes(32).toString('hex');await run('DELETE FROM sessions WHERE expires<?',Date.now());await run('INSERT INTO sessions(token,user_id,expires) VALUES(?,?,?)',hash(token),account.id,Date.now()+7*86400000);headers.set('Set-Cookie',`rmw_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800${url.protocol==='https:'?'; Secure':''}`);return send(200,await state(account));
  }
  if(url.pathname==='/api/logout'){if(raw)await run('DELETE FROM sessions WHERE token=?',hash(raw));headers.set('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${url.protocol==='https:'?'; Secure':''}`);return send(200,await state(null));}
@@ -98,4 +101,4 @@ export default {async fetch(req,env){
  if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!await get('SELECT id FROM rides WHERE id=? AND cancelled=0',id))fail(404,'Ride not found.');const exists=await get('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);if(exists)await run('DELETE FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);else await run('INSERT INTO favorites VALUES(?,?)',user.id,id);return send(200,await state(user));}
  fail(404,'Endpoint not found.');
  }catch(e){if(!e.status)console.error('API request failed',e.message);return send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'})}
-},async scheduled(event,env,ctx){const adapter={get:(sql,...a)=>env.DB.prepare(sql).bind(...a).first(),all:async(sql,...a)=>(await env.DB.prepare(sql).bind(...a).all()).results,run:(sql,...a)=>env.DB.prepare(sql).bind(...a).run()};ctx.waitUntil(Promise.all([deliverEmails(adapter,env),expireLicences(adapter),expireInsurance(adapter),expireRiderProfiles(adapter),resolveMissingMeetingPoints(adapter,env)]));}};
+},async scheduled(event,env,ctx){const adapter={get:(sql,...a)=>env.DB.prepare(sql).bind(...a).first(),all:async(sql,...a)=>(await env.DB.prepare(sql).bind(...a).all()).results,run:(sql,...a)=>env.DB.prepare(sql).bind(...a).run()};ctx.waitUntil(Promise.all([deliverEmails(adapter,env),refreshProcessingIdentities(adapter,env).then(()=>deliverAccountEmails(adapter,env)),expireLicences(adapter),expireInsurance(adapter),expireRiderProfiles(adapter),resolveMissingMeetingPoints(adapter,env)]));}};

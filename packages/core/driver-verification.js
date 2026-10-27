@@ -60,3 +60,10 @@ export async function driverApi(path,b,user,db,env={},reauth){
  if(!s.url||new URL(s.url).hostname!=='verify.stripe.com')fail(502,'No valid verification link is available.');
  await db.run('UPDATE driver_checks SET session_id=?,identity_status=?,identity_checked=? WHERE user_id=? AND session_id IS NULL',s.id,'requires_input',Date.now(),user.id);return {url:s.url};
 }
+
+// Reconcile submitted checks even when the driver closes the return page.
+// Only retrieve existing processing sessions; never create paid checks here.
+export async function refreshProcessingIdentities(db,env){
+ if(!identityAvailable(env))return;const rows=await db.all("SELECT user_id,session_id FROM driver_checks WHERE identity_status='processing' AND session_id IS NOT NULL AND identity_checked<? ORDER BY identity_checked LIMIT 5",Date.now()-60000);
+ for(const row of rows){try{const session=await stripe(env,'/'+encodeURIComponent(row.session_id));await updateSession(db,session,{id:row.user_id},env)}catch{await db.run("UPDATE driver_checks SET identity_checked=? WHERE user_id=? AND session_id=? AND identity_status='processing'",Date.now(),row.user_id,row.session_id)}}
+}
