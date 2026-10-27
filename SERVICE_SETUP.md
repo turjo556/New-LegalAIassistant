@@ -474,3 +474,31 @@ Upload does not establish authenticity or coverage. Record the internal evidence
 reference and coverage expiry before approving. If the submission was replaced or
 withdrawn, reload and review the current version. Existing externally arranged
 insurance checks remain supported; the software does not contact insurers.
+
+### Automatic preset meeting-point zones
+
+Apply `0022_meeting_point_pins.sql` before deploying. The six original owner-selected
+Google Maps links remain in `packages/core/meeting-points.js`. No replacement
+coordinates or city-centre approximations are hardcoded.
+
+The existing five-minute Worker schedule attempts to read explicit place pins
+from those links for the verified operator account configured by
+`RIDELY_ADMIN_EMAIL`. Missing links that cannot be resolved are retried at most
+once daily. The resolver follows at most four Google-only URLs, uses a 12-second
+timeout and bounded response bodies, and refuses camera (`@...`) coordinates or
+ambiguous results. It does not call a paid geocoding service. Automatic setup only
+inserts missing pins; it never overwrites an operator correction.
+
+The operator can retry immediately at `/operator?section=locations` using
+**Set up pins from saved links**. Each location also permits a manual correction
+from its exact Google Maps place link/coordinates with explicit confirmation.
+Pin changes are recorded in the audit log. No extra operator key is used.
+
+Drivers select standard meeting points; configured pins automatically supply both
+3 km zones. The posting form no longer includes pin placement, coordinate entry,
+or unavailable address-search controls. If either location is unresolved, custom
+stops are unavailable with a clear message; standard rides and drafts still work.
+The backend overrides supplied coordinates for configured presets (including
+matching canonical preset names) and rejects custom publication using unresolved
+presets. Existing rides keep the coordinates stored when they were published;
+changing a preset does not move their zones or existing requests.

@@ -1,3 +1,4 @@
+import {configuredMeetingPoints} from '../../packages/core/meeting-point-pins.js';
 import {siteResponse} from '../../packages/core/site-response.js';
 import {seatFareCents,maximumSeatPrice,updateSeatPrice} from '../../packages/core/fare-policy.js';
 import {safetyApi} from '../../packages/core/trip-safety.js';
@@ -55,6 +56,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0019_seat_fare_cap')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0019_seat_fare_cap.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0019_seat_fare_cap');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0020_whole_dollar_fares')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0020_whole_dollar_fares.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0020_whole_dollar_fares');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0021_insurance_submissions')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0021_insurance_submissions.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0021_insurance_submissions');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
+ if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0022_meeting_point_pins')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0022_meeting_point_pins.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0022_meeting_point_pins');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const attempts=new Map();
  function fail(status,message){throw Object.assign(new Error(message),{status})}
@@ -104,7 +106,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  send(200,{messages:db.prepare('SELECT m.id,m.body,m.created,u.name AS sender FROM messages m JOIN users u ON u.id=m.sender WHERE m.booking_id=? ORDER BY m.created,m.rowid LIMIT 500').all(id)});return;
  }
  if(url.pathname==='/api/rides'){
- applyMeetingPoints(b);const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');
+ applyMeetingPoints(b,await configuredMeetingPoints(adapter));const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');
  const date=text(b.date,'date');const time=text(b.time,'departure time');const arrival=text(b.arrival,'arrival time');if(!isTripTime(time)||!isTripTime(arrival))fail(400,'Choose departure and arrival times in 15-minute increments (:00, :15, :30 or :45).');if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(arrival)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)fail(400,'Enter valid trip dates and times.');if(date+'T'+time<=easternNow()||arrival<=time)fail(400,'Choose a future date and an arrival after departure (same day).');
  const luggage=['small','medium','large'].includes(b.luggage)?b.luggage:'Ask the driver';const vehicleNotes=b.vehicleNotes?text(b.vehicleNotes,'vehicle information',1,300):'';const cancellationPolicy='six-hour-support';
  const vehicle=vehicleIdentification(b);const custom=routeSettings(b);

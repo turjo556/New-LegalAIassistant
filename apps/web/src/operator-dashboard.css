@@ -7,3 +7,4 @@
 .operator-app .op-header-actions{position:static;transform:none;margin:0;flex-shrink:0}
 @media(max-width:800px){.operator-app .op-sidebar nav{flex-direction:row;align-items:center;gap:6px;padding:0 0 6px;margin-top:12px}.operator-app .op-main .op-header{padding:0!important;gap:15px}.operator-app .op-header-actions{width:100%}}
 @media(max-width:800px){.operator-app .op-sidebar nav{display:grid;grid-template-columns:1fr 1fr;overflow:visible;gap:4px}.operator-app .op-sidebar nav a{white-space:normal;font-size:12px}.operator-app .op-sidebar nav a:last-child{grid-column:1/-1}}
+.op-point-editor{border-top:1px solid #dce3d2;padding:20px 0}.op-point-editor>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer}.op-point-editor summary small{display:block;color:#65705f;margin-top:6px}.op-point-editor .op-external{margin:20px 0}.op-point-editor input{min-width:0}.op-meeting-points{max-width:950px}

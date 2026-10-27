@@ -1,3 +1,4 @@
+import {configuredMeetingPoints,resolveMissingMeetingPoints} from '../../packages/core/meeting-point-pins.js';
 import {expireInsurance} from '../../packages/core/insurance-vault.js';
 import {siteResponse} from '../../packages/core/site-response.js';
 import {seatFareCents,maximumSeatPrice,updateSeatPrice} from '../../packages/core/fare-policy.js';
@@ -70,7 +71,7 @@ export default {async fetch(req,env){
  return send(200,{messages:await all('SELECT m.id,m.body,m.created,u.name AS sender FROM messages m JOIN users u ON u.id=m.sender WHERE m.booking_id=? ORDER BY m.created,m.rowid LIMIT 500',id)});
  }
  if(url.pathname==='/api/rides'){
- applyMeetingPoints(b);const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');
+ applyMeetingPoints(b,await configuredMeetingPoints(adapter));const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');
  const date=text(b.date,'date');const time=text(b.time,'departure time');const arrival=text(b.arrival,'arrival time');if(!isTripTime(time)||!isTripTime(arrival))fail(400,'Choose departure and arrival times in 15-minute increments (:00, :15, :30 or :45).');if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(arrival)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)fail(400,'Enter valid trip dates and times.');if(date+'T'+time<=easternNow()||arrival<=time)fail(400,'Choose a future date and an arrival after departure (same day).');
  const luggage=['small','medium','large'].includes(b.luggage)?b.luggage:'Ask the driver';const vehicleNotes=b.vehicleNotes?text(b.vehicleNotes,'vehicle information',1,300):'';const cancellationPolicy='six-hour-support';
  const vehicle=vehicleIdentification(b);const custom=routeSettings(b);
@@ -97,4 +98,4 @@ export default {async fetch(req,env){
  if(url.pathname==='/api/favorites'){const id=text(b.id,'ride');if(!await get('SELECT id FROM rides WHERE id=? AND cancelled=0',id))fail(404,'Ride not found.');const exists=await get('SELECT 1 FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);if(exists)await run('DELETE FROM favorites WHERE user_id=? AND ride_id=?',user.id,id);else await run('INSERT INTO favorites VALUES(?,?)',user.id,id);return send(200,await state(user));}
  fail(404,'Endpoint not found.');
  }catch(e){if(!e.status)console.error('API request failed',e.message);return send(e.status||500,{error:e.status?e.message:'Something went wrong. Please try again.'})}
-},async scheduled(event,env,ctx){const adapter={get:(sql,...a)=>env.DB.prepare(sql).bind(...a).first(),all:async(sql,...a)=>(await env.DB.prepare(sql).bind(...a).all()).results,run:(sql,...a)=>env.DB.prepare(sql).bind(...a).run()};ctx.waitUntil(Promise.all([deliverEmails(adapter,env),expireLicences(adapter),expireInsurance(adapter),expireRiderProfiles(adapter)]));}};
+},async scheduled(event,env,ctx){const adapter={get:(sql,...a)=>env.DB.prepare(sql).bind(...a).first(),all:async(sql,...a)=>(await env.DB.prepare(sql).bind(...a).all()).results,run:(sql,...a)=>env.DB.prepare(sql).bind(...a).run()};ctx.waitUntil(Promise.all([deliverEmails(adapter,env),expireLicences(adapter),expireInsurance(adapter),expireRiderProfiles(adapter),resolveMissingMeetingPoints(adapter,env)]));}};
