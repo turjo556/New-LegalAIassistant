@@ -1311,5 +1311,14 @@
   "Insurance needs attention": "Assurance à revoir",
   "attempts": "tentatives",
   "Essential account, contact-confirmation, document-receipt and review-decision emails are sent separately from optional trip updates. They contain no document images or licence/policy numbers. Delivery-event records and provider message references are retained for troubleshooting. Email trip updates are optional and require verified email. You may disable them in Account. You can block/report members and request access, correction, or deletion through support. Deletion may require retention of information needed for disputes, security, or legal requirements. Rider legal names and dates of birth are removed from active storage after 12 months from their last save, or when you remove them. Renew the profile before new bookings if expired. Hosting backups may retain encrypted copies until provider retention ends. Trip and incident records are retained separately for dispute, safety, and legal requirements; their retention schedule and the operating legal entity must be finalized before general launch. These self-reported details are not identity verification.": "Les courriels essentiels concernant le compte, les confirmations de contact, les documents et les décisions sont distincts des mises à jour de trajet facultatives. Ils ne contiennent ni images de documents ni numéros de permis ou de police. Les événements d’envoi et les références fournisseur sont conservés pour le dépannage. Les mises à jour par courriel sont facultatives et exigent un courriel confirmé. Vous pouvez les désactiver dans Compte. Vous pouvez bloquer ou signaler des membres et demander l’accès, la correction ou la suppression de vos renseignements au soutien. Certaines données peuvent devoir être conservées pour des différends, la sécurité ou des obligations légales. Les noms légaux et dates de naissance sont retirés du stockage actif 12 mois après leur dernier enregistrement ou dès leur suppression par vous. Renouvelez le profil avant une réservation s’il est expiré. Les sauvegardes peuvent conserver des copies chiffrées selon leur durée de conservation. Les dossiers de trajets et d’incidents sont conservés séparément pour les différends, la sécurité et les besoins légaux; les durées et l’entité exploitante doivent être finalisées avant le lancement général. Ces renseignements sont déclarés par vous et ne constituent pas une vérification d’identité.",
-  "Email event totals": "Totaux des événements de courriel"
+  "Email event totals": "Totaux des événements de courriel",
+  "Any city": "Toutes les villes",
+  "From date": "À partir du",
+  "All rides": "Tous les trajets",
+  "From": "Depuis",
+  "To": "Vers",
+  "rides": "trajets",
+  "Approved stops": "Arrêts approuvés",
+  "No rides in this date range": "Aucun trajet dans ces dates",
+  "Try another route or start date.": "Essayez un autre trajet ou une autre date de début."
 }
