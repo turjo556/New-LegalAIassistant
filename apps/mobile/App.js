@@ -1,3 +1,4 @@
+import {customFeeCents} from '../../packages/core/custom-fees';
 import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { View, Text, TextInput, ScrollView, Pressable, StyleSheet, Modal, Alert, Platform, KeyboardAvoidingView, RefreshControl, Switch, AppState, Linking, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -105,11 +106,12 @@ function NumberChoice({
   label,
   value,
   onChange,
-  max = 4
+  max = 4,
+  min = 1
 }) {
   return <View style={s.field}><Text style={s.label}>{t(label)}</Text><View style={s.row}>{Array.from({
-        length: max
-      }, (_, i) => i + 1).map(n => <Pressable accessibilityRole="button" accessibilityLabel={label + ': ' + n} accessibilityState={{
+        length: max - min + 1
+      }, (_, i) => i + min).map(n => <Pressable accessibilityRole="button" accessibilityLabel={label + ': ' + n} accessibilityState={{
         selected: value === n
       }} key={n} onPress={() => onChange(n)} style={[s.number, value === n && {
         backgroundColor: C.blue,
@@ -327,6 +329,7 @@ function AppContent() {
       E(e.message);
       return;
     }
+    try {if(form.allowPickup)customFeeCents(Number(form.pickupFee));if(form.allowDropoff)customFeeCents(Number(form.dropoffFee));}catch(e){E(e.message);return;}
     const draft = {
       ...form,
       price,
@@ -583,7 +586,7 @@ function AppContent() {
                       flex: 1
                     }]}>{t("Allow custom ")}{kind === 'pickup' ? t("pickup") : t("drop-off")}</Text><Switch accessibilityLabel={'Allow custom ' + kind} value={form[key]} onValueChange={v => set(key, v)} trackColor={{
                       true: C.blue
-                    }} /></View>{form[key] && <><Field label={kind + ' fee per person (CAD)'} numeric value={form[kind + 'Fee']} onChange={v => set(kind + 'Fee', v)} /><Pin label={'Standard ' + kind + ' pin'} value={form[pin]} onChange={v => set(pin, v)} city={kind === 'pickup' ? form.from : form.to} /></>}</View>;
+                    }} /></View>{form[key] && <><NumberChoice label={kind + ' fee per person (CAD)'} min={5} max={10} value={Number(form[kind + 'Fee'])} onChange={v => set(kind + 'Fee',String(v))}/><Text style={s.small}>{t('$5–$10 CAD per option, per passenger. $1 increments.')}</Text><Pin label={'Standard ' + kind + ' pin'} value={form[pin]} onChange={v => set(pin, v)} city={kind === 'pickup' ? form.from : form.to} /></>}</View>;
               })}{form.allowPickup && !form.allowDropoff && <Pin label={t("Standard dropoff pin")} value={form.dropoffPin} onChange={v => set('dropoffPin', v)} city={form.to} />}{form.allowDropoff && !form.allowPickup && <Pin label={t("Standard pickup pin")} value={form.pickupPin} onChange={v => set('pickupPin', v)} city={form.from} />}<Text style={s.body}>{t("Custom pins must fall within 3 km of their standard point. All approved stops share a 15-minute driver-estimated detour allowance, including stopping. Verify road access and timing before approval.")}</Text><Button title={busy ? t("Saving\u2026") : data.driverVerification?.approved ? t("Publish route") : t("Save ride & continue to verification")} onPress={publish} disabled={busy} /></>}
  {modal === 'request' && form.booking && <><Text style={s.heading}>{t("Custom ")}{form.kind === 'pickup' ? t("pickup") : t("drop-off")}</Text><Text style={s.body}>{t("Your standard seats stay booked. Only your driver sees the precise address. The fee is added only after approval.")}</Text><Field label={t("Full address")} value={form.address} onChange={v => set('address', v)} multiline /><Pin label={t("Requested stop")} value={form.pin} onChange={v => set('pin', v)} city={form.kind === 'pickup' ? form.booking.ride.from : form.booking.ride.to} standard={{
                 lat: form.kind === 'pickup' ? form.booking.ride.pickupLat : form.booking.ride.dropoffLat,
@@ -591,6 +594,7 @@ function AppContent() {
               }} /><Text style={s.body}>{t("The pin must be within 3 km of the standard stop. Pins are not address-verified; the driver checks road detours.")}</Text><Button title={busy ? t("Sending\u2026") : t("Send request to driver")} disabled={busy || !Number.isFinite(form.pin?.lat) || !Number.isFinite(form.pin?.lng)} onPress={() => action('stops/request', {
                 bookingId: form.booking.id,
                 kind: form.kind,
+                expectedFee: form.booking.ride[form.kind+'Fee'],
                 address: form.address,
                 lat: form.pin.lat,
                 lng: form.pin.lng

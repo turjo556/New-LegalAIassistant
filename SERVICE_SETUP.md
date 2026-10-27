@@ -617,3 +617,19 @@ only, and bonus qualification no longer requires passenger phone verification.
 A passenger who previously stopped at the unavailable SMS step becomes ready as
 soon as the updated deployment loads, provided email/private details are current.
 New reservations still require driver acceptance and a booking credit.
+
+### Custom-stop fee range
+
+Custom pickup and custom drop-off each cost $5–$10 CAD per passenger, in $1 steps.
+Enabled options are validated server-side when publishing, and again when creating
+a stop request; disabled options carry no supplement. Fees are independent: two
+passengers using $5 pickup and $10 drop-off add $30 to their cash fare only after
+both requests are approved. The driver sets the fee within the allowed range.
+Existing pending/approved requests retain their recorded supplement; updates never
+rewrite it. The driver can update enabled option fees under My listings →
+Custom-stop fees; new requests use the revised fees. Updated web/native clients
+send the displayed per-person fee so a stale price produces a review/refresh
+message rather than silently accepting a changed quote. Older listing options
+outside this range are hidden from new requests until the driver corrects them.
+No migration changes historical requests, and the 3 km / 15-minute / explicit
+approval rules remain unchanged.

@@ -1337,5 +1337,15 @@ export default {
   "Seat request not confirmed": "Demande non confirmée",
   "Seat request expired": "Demande expirée",
   "Seat request withdrawn": "Demande retirée",
-  "Welcome messages, submission receipts, verification decisions and seat requests.": "Messages de bienvenue, confirmations de réception, décisions de vérification et demandes de places."
+  "Welcome messages, submission receipts, verification decisions and seat requests.": "Messages de bienvenue, confirmations de réception, décisions de vérification et demandes de places.",
+  "$5–$10 CAD per option, per passenger. $1 increments.": "De 5 à 10 $ CA par option et par passager, par tranches de 1 $.",
+  "You approve each request. $5–$10 per option, per passenger · $1 increments. Within 3 km · 15-minute total detour.": "Vous approuvez chaque demande. De 5 à 10 $ par option et par passager · Tranches de 1 $. Rayon de 3 km · Détour total de 15 minutes.",
+  "Custom-stop fees": "Suppléments des arrêts personnalisés",
+  "$5–$10 CAD per option, per passenger · $1 increments.": "De 5 à 10 $ CA par option et par passager · Tranches de 1 $.",
+  "Update custom-stop fees": "Modifier les suppléments",
+  "Close fee editor": "Fermer les suppléments",
+  "Choose a fee": "Choisir un supplément",
+  "Save custom-stop fees": "Enregistrer les suppléments",
+  "Changes apply to new custom-stop requests only. Existing requests keep their agreed fees.": "Les modifications concernent uniquement les nouvelles demandes. Les demandes existantes conservent leurs suppléments convenus.",
+  "Custom pickup and drop-off fees must be $5–$10 CAD per option, per passenger, in $1 increments.": "Les suppléments de prise en charge et de dépose doivent être de 5 à 10 $ CA par option et par passager, par tranches de 1 $."
 };
