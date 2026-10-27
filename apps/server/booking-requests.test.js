@@ -10,7 +10,7 @@ async function fixture(t){
  const dbPath=testDatabase(t),server=createApp({dbPath});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const base='http://127.0.0.1:'+server.address().port,cookies={};
  async function req(path,body,who='driver',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];return data}
  for(const who of ['driver','rider','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-test-password'},who);
- const db=new DatabaseSync(dbPath);t.after(()=>db.close());approveTestDriver(dbPath);completeTestRiders(dbPath);
+ const db=new DatabaseSync(dbPath);t.after(()=>db.close());approveTestDriver(dbPath);completeTestRiders(dbPath);db.prepare("UPDATE users SET phone_verified=0,phone=NULL").run();
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const ride=(await req('rides',{from:'Montréal',to:'Ottawa',date:'2099-11-06',time:'09:00',arrival:'12:00',price:25,seats:1,licencePlate:'TEST123',plateProvince:'QC',vehicleColor:'Black',car:'Toyota',pickup:'Namur',destination:'St-Laurent'},'driver',201)).hosting[0];
  return {req,db,adapter,ride};

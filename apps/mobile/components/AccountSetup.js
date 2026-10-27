@@ -43,13 +43,7 @@ export default function AccountSetup({data,api,refresh,driver=false}) {
       <Button title="Save private details" disabled={busy||!rider.available||!form.profileConsent||!form.legalName||!form.dob} onPress={()=>run('rider/profile/save',{legalName:form.legalName,dob:form.dob,consent:true,adultPolicyAccepted:true},()=>F({}))}/>
       {!rider.available&&<Copy>Private profile storage is awaiting activation. No private details were saved.</Copy>}
       </>}</Card>
-      <Card><Copy heading>3. Confirm your phone</Copy>{data.user.phoneVerified?<Copy>Phone confirmed</Copy>:<>
-      <Field label="Phone number (+1…)" value={form.phone} onChange={v=>set('phone',v)} keyboardType="phone-pad" autoComplete="tel"/>
-      <Button title="Send phone code" disabled={busy||!data.capabilities?.sms||!form.phone} onPress={()=>run('verification/send',{kind:'phone',phone:form.phone},()=>M('Code sent. It expires in 10 minutes.'))}/>
-      {!data.capabilities?.sms&&<Copy>Phone verification is awaiting SMS provider setup.</Copy>}
-      <Field label="Six-digit phone code" value={form.phoneCode} onChange={v=>set('phoneCode',v)} keyboardType="number-pad" maxLength={6} textContentType="oneTimeCode"/>
-      <Button title="Confirm phone" disabled={busy||!/^\d{6}$/.test(form.phoneCode||'')} onPress={()=>run('verification/confirm',{kind:'phone',code:form.phoneCode},()=>F({}))}/>
-      </>}</Card>
+
     </>}
   </View>;
 }

@@ -40,7 +40,7 @@ project or run `create-expo-app`. EAS verifies access to the existing project wh
 building; the configured project ID alone does not prove access.
 
 The first installable builds use the separate test Worker/database. Before a
-new beta, bring that test environment up to date (including migration 0024):
+new beta, bring that test environment up to date (including migrations 0024 and 0025):
 
 ```sh
 npx wrangler login
@@ -160,7 +160,7 @@ Unfinished release work is explicit:
 - Final operating legal entity, bilingual privacy/terms, retention rules and
   support/contact details. Existing `/policies` is early-access content, not a
   claim that store/legal review is complete.
-- Real-device validation of live contact verification, Stripe-hosted identity
+- Real-device validation of live email verification, Stripe-hosted identity
   return, private licence/insurance submission and operator approval. No test
   fixture may approve a real driver.
 - Native report/block and post-trip safety-feedback completeness; the website's

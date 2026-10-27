@@ -31,11 +31,15 @@ Set `RIDELY_ADMIN_EMAIL` in the Worker to the exact email of the operator's Ride
 
 Without Mapbox, manual pins and the existing **clearly labelled driver-estimate** approval workflow remain available. Do not advertise automatic road detour verification until the provider is connected and a real hosted route has been checked. Mapping searches are capped per member (100/day); route preview requests are capped (20/10 minutes), and each preview can make three Directions requests. These caps do not replace provider/account-wide spending controls.
 
-## Required rider phone verification — Twilio
+## Rider contact verification — email only
 
-Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` as Cloudflare secrets/variables as appropriate. The number must be authorized to send SMS to the launch region, with any required sender registration completed. Check Twilio pricing and account limits before enabling it. No SMS provider account, paid number, or subscription has been purchased by this implementation.
-
-Phone codes expire after ten minutes, have five confirmation attempts, and are rate-limited. Verification status means control of the contact channel, **not** identity, insurance, vehicle, or licence verification. Full driver verification still requires a selected provider/process and operating policies.
+The pilot no longer collects or verifies a phone number during rider setup.
+Verified email and a current encrypted adult rider profile are required; driver
+identity, driving privileges and insurance approval remain separate and mandatory.
+Twilio is not required. SMS capabilities are disabled even if old Twilio variables
+exist, and old clients attempting phone-code send/confirm receive HTTP 410. No
+phone status is automatically marked verified. Previously stored contact data is
+not deleted or fabricated by this change.
 
 ## Deployment and validation
 
@@ -114,7 +118,7 @@ Legal name and DOB are separately AES-256-GCM encrypted using the configured `LI
 
 The private profile expires 365 days after its last save and must be renewed before new bookings. Expiry clears ciphertext and the adult declaration from active rows through state requests or the Worker cron. User removal deletes the active profile row. Booking/contact/incident records remain separate. Provider backup/time-travel retention can retain encrypted historical copies; do not promise immediate physical erasure from all backups. Define incident-record and access-log retention and review the privacy policy with the operator's legal/privacy adviser before general launch. The early-access policy explains these distinctions.
 
-SMS is required to verify a phone. Configure the existing `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` secrets with an appropriate SMS-enabled number and permitted destinations; email uses the existing Resend settings. If SMS/email/private-storage configuration is absent, the interface clearly explains what is unavailable. No verification bypass or client-only completion flag is accepted. Tests mock external delivery; no paid messages were sent during development.
+Email verification uses the existing Resend configuration. SMS is no longer required or enabled. Missing email/private-profile configuration still blocks booking. Tests mock delivery; no real messages are sent during development.
 
 Operator access to private rider details is **incident-only**, under the support operator screen. It requires the verified `RIDELY_ADMIN_EMAIL` account, current password confirmation, a booking ID, a related support-ticket/member-report ID, an allowed purpose (accident, safety report, lawful request), and an authority acknowledgement. The record is never an ordinary driver lookup or passenger directory. Each access records operator/rider/booking/case/purpose/time without the private details. The UI hides results after 60 seconds or when the tab is hidden. Licence-review unlocks do not confer incident access. The form does not automatically establish that a request is legally valid: the operator must assess access/disclosure authority. Self-reported details may be inaccurate; do not infer accountability or guarantee safety from collection alone.
 
@@ -603,36 +607,13 @@ count only once. Unaccepted requests cannot qualify. Operator-reviewed claims,
 manual Interac payment, first 25 approved claims and $625 total cap remain.
 
 
-### Activate rider SMS on the live website
+### Simplified pilot rider setup (migration 0025)
 
-If Rider setup says SMS verification is unavailable and the send button is
-disabled, the public capability is false: at least one required Twilio setting
-is missing from the runtime Worker. This is not an incorrect six-digit code.
-
-1. In Twilio, use the intended Ridely account/subaccount. Obtain an SMS-capable
-   sending number and complete any applicable account/sender/destination checks.
-   Trial accounts usually restrict recipients to verified test numbers and are
-   unsuitable for unrestricted public onboarding. Review charges and upgrade
-   requirements in Twilio before purchasing/activating services.
-2. Cloudflare → Workers & Pages → **ridemyway** → Settings → **Runtime variables
-   and secrets** → **Production**. This is not the build-variable screen or the
-   separate `ridely-app-test` Worker.
-3. Add `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` as secrets, and
-   `TWILIO_FROM_NUMBER` as a text variable or secret. The sending number must be
-   in international format (for example +1 followed by the Canadian number).
-   Copy real values directly from Twilio into Cloudflare; never into chat/Git.
-4. Save/deploy the variable update. Refresh ridely.ca and the rider setup. The
-   send button should enable when all three settings are present. This indicates
-   configuration presence, not confirmed provider authorization/delivery.
-5. Test with your own Canadian mobile number: request one code, check receipt,
-   confirm it, then check the rider profile is ready. If sending fails, inspect
-   Twilio Messaging logs for sender, destination, balance or trial restrictions.
-   Do not share the code, token or customer phone number in diagnostic screenshots.
-6. Verify the whole booking journey: request a seat on an approved driver's ride,
-   receive pending status, have the driver accept, confirm one credit is used and
-   the passenger sees a confirmed reservation. Confirm both email notifications
-   with the existing Resend setup. These are separate from SMS.
-
-The isolated mobile test Worker deliberately does not forward SMS credentials.
-Updating production must not activate real delivery or use real phone numbers on
-that fictional test backend. No user is marked phone-verified by setup alone.
+Migration 0025 replaces the rider booking triggers with verified-email + current
+private adult profile checks and removes outstanding phone challenges. It does
+not alter any stored phone-verification flags or weaken driver checks. Website
+and native setup omit the phone step, account settings offer email verification
+only, and bonus qualification no longer requires passenger phone verification.
+A passenger who previously stopped at the unavailable SMS step becomes ready as
+soon as the updated deployment loads, provided email/private details are current.
+New reservations still require driver acceptance and a booking credit.

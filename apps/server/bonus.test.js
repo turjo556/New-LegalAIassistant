@@ -8,7 +8,7 @@ test('bonus requires actual dated trips and passenger confirmation, operator rev
  const dbPath=testDatabase(t),server=createApp({dbPath,env:{RIDELY_ADMIN_EMAIL:'operator@example.com'}});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const base='http://127.0.0.1:'+server.address().port,cookies={};
  async function req(path,body,who='driver',status=200){const r=await fetch(base+'/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',...(cookies[who]?{Cookie:cookies[who]}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();assert.equal(r.status,status,JSON.stringify(data));if(r.headers.get('set-cookie'))cookies[who]=r.headers.get('set-cookie').split(';')[0];if(path==='bookings'&&data.rides)return acceptRequestedBooking(base,data,body.rideId,cookies,fetch);return data}
  for(const who of ['driver','rider','operator','other'])await req('register',{name:who,email:who+'@example.com',password:'safe-test-password'},who);
- const db=new DatabaseSync(dbPath);t.after(()=>db.close());approveTestDriver(dbPath);completeTestRiders(dbPath);
+ const db=new DatabaseSync(dbPath);t.after(()=>db.close());approveTestDriver(dbPath);completeTestRiders(dbPath);db.prepare("UPDATE users SET phone_verified=0,phone=NULL WHERE email='rider@example.com'").run();
  // Real bookings are created through the API; only the clock/campaign is shifted
  // in this isolated fixture to test completed historical journeys without waiting.
  db.prepare('UPDATE bonus_campaign SET starts_at=?').run(Date.now()-10*86400000);
