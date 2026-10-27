@@ -314,7 +314,8 @@ function AppContent() {
     action(authMode === 'login' ? 'login' : 'register', {
       name: form.name,
       email: form.email,
-      password: form.password
+      password: form.password,
+      referralCode: authMode==='register'?form.referralCode:undefined
     }, () => {
       close();
       T('Account');
@@ -523,7 +524,7 @@ function AppContent() {
               }}>×</Text></Pressable></View><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.page}>{err}
  {modal==='safety'&&form.ride&&<><TripOverview ride={form.ride} booking={form.booking} driver={form.driver}/><SafetyTools ride={form.ride} booking={form.booking} driver={form.driver} api={api} onSupport={()=>support('Trip support',form.booking?.id||form.ride.id)}/></>}
  {modal==='support'&&<><Text style={s.body}>{t('A support request does not automatically cancel your booking. In immediate danger, call 911.')}</Text><Field label={t('Subject')} value={form.subject} onChange={v=>set('subject',v)} maxLength={100}/>{!data.user&&<Field label={t('Email')} value={form.email} onChange={v=>set('email',v)} autoCapitalize="none" keyboardType="email-address"/>}<Field label={t('How can we help?')} value={form.body} onChange={v=>set('body',v)} multiline maxLength={4000}/><Button title={t('Send support request')} disabled={busy||form.subject?.trim().length<3||form.body?.trim().length<10} onPress={()=>action('support/create',{subject:form.subject,body:form.body,email:form.email},r=>{close();Alert.alert(t('Request received'),t('Reference')+': '+r.ticketId);})}/></>}
- {modal === 'auth' && <>{authMode === 'register' && <Field label={t("First name")} value={form.name} onChange={v => set('name', v)} autoComplete="given-name" />}<Field label={t("Email")} value={form.email} onChange={v => set('email', v)} keyboardType="email-address" autoCapitalize="none" autoComplete="email" /><Field label={t("Password")} value={form.password} onChange={v => set('password', v)} secure autoCapitalize="none" autoComplete={authMode === 'login' ? "current-password" : "new-password"} /><Text style={s.small}>{t("At least 10 characters. Use your password manager to create and save a strong password.")}</Text>{authMode === 'register' && <><View style={s.spread}><Text style={[s.body, {
+ {modal === 'auth' && <>{authMode === 'register' && <Field label={t("First name")} value={form.name} onChange={v => set('name', v)} autoComplete="given-name" />}<Field label={t("Email")} value={form.email} onChange={v => set('email', v)} keyboardType="email-address" autoCapitalize="none" autoComplete="email" /><Field label={t("Password")} value={form.password} onChange={v => set('password', v)} secure autoCapitalize="none" autoComplete={authMode === 'login' ? "current-password" : "new-password"} /><Text style={s.small}>{t("At least 10 characters. Use your password manager to create and save a strong password.")}</Text>{authMode === 'register' && <><Field label={t('Referral code (optional)')} value={form.referralCode} onChange={v=>set('referralCode',v.toUpperCase().replace(/[^A-Z0-9-]/g,''))} autoCapitalize="characters" autoCorrect={false} maxLength={20}/><View style={s.spread}><Text style={[s.body, {
                     flex: 1
                   }]}>{t("I agree to the early-access terms and privacy policy.")}</Text><Switch accessibilityLabel={t("Accept terms and privacy policy")} value={!!form.terms} onValueChange={v => set('terms', v)} trackColor={{
                     true: C.orange

@@ -1,3 +1,4 @@
+import {referralApi} from './referrals.js';
 import {bookingRequestState} from './booking-requests.js';
 import {verificationEmail,tripUpdateEmail} from './email-theme.js';
 import {accountEmailAdminApi} from './account-emails.js';
@@ -14,6 +15,7 @@ const digest=async s=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-
 export async function extras(db,user,env){const operator=env.RIDELY_ADMIN_EMAIL?await db.get('SELECT id FROM users WHERE email=? AND email_verified=1',env.RIDELY_ADMIN_EMAIL.toLowerCase()):null;return {seatRequests:await bookingRequestState(db,user),meetingPoints:await configuredMeetingPoints(db),bookingCredits:await creditState(db,user,env),foundingBonus:await bonusState(db,user),riderProfile:await riderState(db,user,env),driverVerification:await driverState(db,user,env),capabilities:{...capabilities(env),supportMonitored:!!operator},notifications:user?await db.all('SELECT id,title,created,read_at FROM notifications WHERE user_id=? ORDER BY created DESC,rowid DESC LIMIT 100',user.id):[],blockedUsers:user?await db.all('SELECT b.blocked_id AS id,u.name FROM blocks b JOIN users u ON u.id=b.blocked_id WHERE b.user_id=?',user.id):[],isAdmin:!!(user&&user.email_verified&&env.RIDELY_ADMIN_EMAIL&&user.email===env.RIDELY_ADMIN_EMAIL.toLowerCase())}}
 export async function guardBlocked(path,b,user,db){let other=null;if(path==='/api/bookings'){other=(await db.get('SELECT owner FROM rides WHERE id=?',String(b.rideId||'')))?.owner}else if(['/api/messages/send','/api/stops/request'].includes(path)){const row=await db.get('SELECT b.user_id,r.owner FROM bookings b JOIN rides r ON r.id=b.ride_id WHERE b.id=?',String(b.bookingId||b.id||''));if(row)other=row.user_id===user.id?row.owner:row.user_id}if(other&&await db.get('SELECT 1 FROM blocks WHERE (user_id=? AND blocked_id=?) OR (user_id=? AND blocked_id=?)',user.id,other,other,user.id))fail(403,'Communication or booking between these accounts is blocked. Existing reservations can still be cancelled.')}
 export async function community(path,b,user,db,env={}){
+ const referrals=await referralApi(path,b,user,db,env);if(referrals)return referrals;
  const accountMail=await accountEmailAdminApi(path,b,user,db,env);if(accountMail)return accountMail;
  const pins=await meetingPointPinApi(path,b,user,db,env);if(pins)return pins;
  const credits=await creditsApi(path,b,user,db,env);if(credits)return credits;

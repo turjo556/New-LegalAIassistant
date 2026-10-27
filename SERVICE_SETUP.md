@@ -633,3 +633,53 @@ message rather than silently accepting a changed quote. Older listing options
 outside this range are hidden from new requests until the driver corrects them.
 No migration changes historical requests, and the 3 km / 15-minute / explicit
 approval rules remain unchanged.
+
+### Referral code ABA01 (migration 0026)
+
+Both driver and passenger signups accept the optional `referralCode` field.
+`/join?ref=ABA01` opens signup with the code populated; add `lang=fr` or
+`role=driver` as desired. It survives role/login toggles and reload in the same
+browser tab. Users can remove it before signup. Native signup supports manual
+code entry; app deep-link attribution is not implemented. The linked QR opens
+web signup. ABA01-specific bilingual print cards are under `/downloads/`.
+
+Attribution is stored atomically with the new user, with an immutable referral
+code/timestamp. Existing accounts cannot be retroactively attributed or changed.
+Invalid/paused/ended codes are rejected with a message allowing removal. Codes
+do not enable special account roles. Aba has no operator dashboard, credentials,
+private document access, signup email list or automatic payment permission.
+No email account is required for a referral code; his mailbox is independent.
+
+Operator → Referrals tracks referred accounts and review candidates:
+- $5 per genuine, bookable published ride (drafts excluded).
+- $5 when that ride is completed with at least one genuine confirmed passenger.
+- $3 once per referred passenger’s first completed/confirmed trip.
+Each event key is unique, and duplicate same-driver/date/departure listings are
+collapsed. Candidate checks require verified account email, active pilot rides,
+driver approval or recorded completion eligibility, and real trip confirmation.
+A driver and passenger referral can both earn a bonus for the same trip. The
+employee's $20/hour wage is separate and is not calculated by this feature.
+These are review candidates; code attribution alone does not prove genuine
+recruitment or prevent duplicate people using different accounts. The operator
+must review that evidence before approval/payment.
+
+Tracking begins at migration; there is no historical signup backfill. ABA01
+starts enabled with no end date and a $0 bonus budget. This activates referral
+capture but prevents reward approval until the operator sets an agreed budget.
+Set the budget and optional last qualifying day (Eastern) in Programme budget &
+dates. Pausing a code blocks new attributed signups; it does not erase existing
+attribution. An end date limits qualifying events as shown. Agree these terms
+with the employee separately before work; the dashboard does not create an
+employment agreement or authorize unpaid hourly work.
+
+Manual approvals reserve budget using database guards; paid + approved totals
+cannot exceed the configured amount, and committed budget cannot be lowered.
+Recording payment requires a previously approved, still-qualifying event,
+confirmation the payment already happened, and a payroll/payment reference.
+This does not send money or add booking credits. Paid rows are final and remain
+in the audit if later circumstances invalidate a result. Reject unpaid invalid
+claims to release reserved budget. Changes are operator-only, rate-limited and
+audited; self-review of the operator's own referred account is forbidden.
+Apply migration 0026 on production and the isolated mobile database before
+using the updated signup clients. Automated tests use temporary databases and
+mock/synthetic approvals, never real recruitment payouts.

@@ -41,11 +41,11 @@ for(const platform of ['ios','android'])test(platform+': native screens register
  const press=async(label)=>{const n=tree.root.findAll(n=>n.type==='Pressable'&&(text(n)===label||['Search','My trips','Saved','Credits','Account'].includes(label)&&text(n).endsWith(label)))[0];assert.ok(n,'Missing button: '+label);assert.ok(!n.props.disabled,'Disabled: '+label);await act(async()=>{await n.props.onPress();});assertNativeText();};
  const field=async(label,value)=>{const n=tree.root.findAll(n=>n.type==='TextInput'&&n.props.accessibilityLabel===label)[0];assert.ok(n,'Missing input '+label);await act(async()=>n.props.onChangeText(value));};
  await until(()=>all().includes('Find a ride'));assert.ok(all().includes('GOOD COMPANY.'));assert.equal(tree.root.findAll(n=>n.type==='Image').length,2);
- await press('Sign in');await press('New here? Create account');await field('First name','Sam');await field('Email','sam@example.com');await field('Password','test-mobile-password');
+ await press('Sign in');await press('New here? Create account');await field('First name','Sam');await field('Email','sam@example.com');await field('Password','test-mobile-password');await field('Referral code (optional)','aba01');
  // Registration requires consent; no misleading verified state is created.
  await press('Create account');assert.ok(all().includes('Accept the early-access terms'));
  await act(async()=>tree.root.findAll(n=>n.type==='Switch'&&n.props.accessibilityLabel==='Accept terms and privacy policy')[0].props.onValueChange(true));await press('Create account');
- await until(()=>all().includes('Get ready for your first ride'));assert.ok(all().includes('Confirm your email'));assert.ok(all().includes('Your private rider details'));
+ await until(()=>all().includes('Get ready for your first ride'));const referralDb=new DatabaseSync(dbPath);assert.equal(referralDb.prepare("SELECT referral_code FROM users WHERE email='sam@example.com'").get().referral_code,'ABA01');referralDb.close();assert.ok(all().includes('Confirm your email'));assert.ok(all().includes('Your private rider details'));
  completeTestRiders(dbPath);await act(async()=>{mocks.callbacks.forEach(fn=>fn('active'));});await until(()=>all().includes('Email confirmed'));
  await press('Back to account');await press('Credits');assert.ok(all().includes('two free booking credits'));assert.ok(all().includes('No charge can be made here'));
  await press('Search');

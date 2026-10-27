@@ -1,3 +1,4 @@
+import {readReferralCode,clearReferralCode} from './referral-code.js';
 import {readRideSearch,rideSearchRange,upcomingRides,easternClock} from './ride-search.js';
 import {withoutDriverReturn,sectionUrl,readSection,safeSectionReturn} from './navigation.js';
 import DiscoveryLinks from './DiscoveryLinks.jsx';
@@ -73,7 +74,7 @@ function App(){
   if(modal==='auth'){
    if(!['/join','/login'].includes(location.pathname))authReturn.current=location.pathname+location.search;
    const next=safeSectionReturn(authReturn.current);
-   const params=new URLSearchParams();if(driverIntent)params.set('role','driver');if(next&&!['/','/fr'].includes(new URL(next,location.origin).pathname))params.set('next',next);
+   const params=new URLSearchParams();if(driverIntent)params.set('role','driver');const ref=readReferralCode();if(ref)params.set('ref',ref);if(getLocale()==='fr')params.set('lang','fr');if(next&&!['/','/fr'].includes(new URL(next,location.origin).pathname))params.set('next',next);
    const target=(authMode==='register'?'/join':'/login')+(params.size?'?'+params:'');
    if(location.pathname+location.search!==target){if(['/join','/login'].includes(location.pathname))history.replaceState({},'',target);else history.pushState({},'',target);}
   }else if(['/join','/login'].includes(location.pathname))history.replaceState({},'',authReturn.current);
@@ -107,7 +108,7 @@ function App(){
  function sendStop(e){e.preventDefault();if(!pickupPin){setError('Choose the address pin.');return}action('stops/request',{bookingId:stopTarget.booking.id,kind:stopTarget.kind,expectedFee:stopTarget.booking.ride[stopTarget.kind+'Fee'],address,lat:pickupPin.lat,lng:pickupPin.lng},()=>setModal(null))}
  function switchAudience(next){setAudience(next);setMenu(false)}
  function showCommunity(mode,target=null){setCommunityMode(mode);setReportTarget(target);setError('');setModal('community',{community:mode})}
- function auth(e){e.preventDefault();const f=new FormData(e.currentTarget);action(authMode==='login'?'login':'register',{email:f.get('email'),password:f.get('password'),name:f.get('name')},data=>{const pending=afterAuth.current;afterAuth.current=null;const destination=safeSectionReturn(new URLSearchParams(location.search).get('next'));if(pending){setModalState(null);pending(data)}else if(destination)restoreSection(destination);else setModal(driverIntent?'driver-onboarding':authMode==='register'?'rider-profile':null);setDriverIntent(false)})}
+ function auth(e){e.preventDefault();const f=new FormData(e.currentTarget);action(authMode==='login'?'login':'register',{email:f.get('email'),password:f.get('password'),name:f.get('name'),referralCode:authMode==='register'?f.get('referralCode'):undefined},data=>{if(authMode==='register')clearReferralCode();const pending=afterAuth.current;afterAuth.current=null;const destination=safeSectionReturn(new URLSearchParams(location.search).get('next'));if(pending){setModalState(null);pending(data)}else if(destination)restoreSection(destination);else setModal(driverIntent?'driver-onboarding':authMode==='register'?'rider-profile':null);setDriverIntent(false)})}
  if(location.pathname==='/trip-share')return <SharedTripPage api={api}/>;
  if(modal==='offer'&&user)return <OfferRidePage points={extra.meetingPoints} user={user} draft={extra.rideDraft} onSaveDraft={(draft,next)=>action('rides/draft',{draft},()=>{if(next)startDriverSetup()})} verification={extra.driverVerification} onVerify={startDriverSetup} capabilities={extra.capabilities} busy={busy} error={error} onBack={()=>{setModal(null);setError('')}} onPublish={ride=>action('rides',ride,()=>{setModal(null);setView('hosting');setAudience('drivers')})}/>;
  if(modal==='auth')return <AccountEntry mode={authMode} role={driverIntent?'driver':'rider'} onMode={mode=>{setAuthMode(mode);setError('')}} onRole={role=>setDriverIntent(role==='driver')} onSubmit={auth} onBack={closeAuth} busy={busy} error={error}/>;
