@@ -1320,5 +1320,18 @@
   "rides": "trajets",
   "Approved stops": "Arrêts approuvés",
   "No rides in this date range": "Aucun trajet dans ces dates",
-  "Try another route or start date.": "Essayez un autre trajet ou une autre date de début."
+  "Try another route or start date.": "Essayez un autre trajet ou une autre date de début.",
+  "Driver approval confirmation": "Confirmation d’approbation du conducteur",
+  "Send a branded confirmation with a link to post a ride.": "Envoyez une confirmation Ridely avec un lien pour publier un trajet.",
+  "Send driver approval email": "Envoyer la confirmation d’approbation",
+  "Queuing email…": "Mise en file du courriel…",
+  "Approval email accepted": "Courriel d’approbation accepté",
+  "Approval email queued": "Courriel d’approbation en attente",
+  "Available after all required driver checks are current.": "Disponible lorsque toutes les vérifications requises sont à jour.",
+  "Email delivery needs to be configured first.": "L’envoi des courriels doit être configuré.",
+  "Approval email queued. Check Email delivery for its status.": "Courriel d’approbation en attente. Consultez Envoi des courriels pour son statut.",
+  "Approval email accepted by the email provider.": "Le fournisseur de courriels a accepté le message d’approbation.",
+  "View email delivery status →": "Voir le statut d’envoi →",
+  "This email failed. Open Email delivery to retry it.": "L’envoi a échoué. Ouvrez Envoi des courriels pour réessayer.",
+  "Driver approved to post": "Conducteur autorisé à publier"
 }

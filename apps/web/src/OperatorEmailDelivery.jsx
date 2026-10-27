@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {Mail,RefreshCw} from 'lucide-react';
 import {formatLocale} from './i18n.js';
-const labels={account_created:'Account created',email_verified:'Email confirmed',licence_received:'Licence received',insurance_received:'Insurance received',identity_verified:'Identity confirmed',identity_test_verified:'Sandbox identity result',identity_action_needed:'Identity action needed',licence_approved:'Licence approved',licence_rejected:'Licence needs attention',insurance_approved:'Insurance approved',insurance_rejected:'Insurance needs attention'};
+const labels={driver_approved:'Driver approved to post',account_created:'Account created',email_verified:'Email confirmed',licence_received:'Licence received',insurance_received:'Insurance received',identity_verified:'Identity confirmed',identity_test_verified:'Sandbox identity result',identity_action_needed:'Identity action needed',licence_approved:'Licence approved',licence_rejected:'Licence needs attention',insurance_approved:'Insurance approved',insurance_rejected:'Insurance needs attention'};
 const statuses={pending:'Queued',sending:'Sending',sent:'Accepted by provider',failed:'Retry needed',skipped:'Outdated · Not sent'};
 export default function OperatorEmailDelivery({api}){
  const [data,D]=useState(null),[busy,B]=useState(false),[error,E]=useState('');async function load(){B(true);E('');try{D(await api('admin/emails',{}))}catch(e){E(e.message)}finally{B(false)}}useEffect(()=>{load()},[]);

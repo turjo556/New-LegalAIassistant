@@ -554,3 +554,19 @@ when an email client blocks images. HTML uses inline styles and presentation
 tables; every type also has a plain-text version. Verification codes remain
 selectable text with their existing 10-minute expiry. This changes presentation,
 not verification, delivery retries, opt-in preferences or approval rules.
+
+### Manually confirm a driver can post rides
+
+In `/operator` → Driver reviews, choose **Checks current** (or **All applications**),
+select the driver and use **Send driver approval email**. The branded English/French
+message links to `/offer-a-ride` and makes clear approval applies to the vehicle
+reviewed and must cover each trip date. This sends a confirmation; it never changes
+or bypasses verification status.
+
+The backend requires verified operator access, a configured email provider, the
+recipient's verified email, live identity, consent, current official driving-privilege
+checks, and valid vehicle-specific insurance. A fingerprint of the actual approval
+is rechecked at delivery. Changed/revoked/expired approvals are skipped. Duplicate
+requests reuse the recent queued/accepted message instead of sending extra copies.
+Manual requests are rate-limited and recorded in the existing email-action audit
+log (`account_email_retry_log`). Failed messages can be retried from Email delivery.

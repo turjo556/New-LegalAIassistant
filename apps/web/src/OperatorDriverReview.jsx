@@ -1,3 +1,4 @@
+import DriverApprovalEmail from './DriverApprovalEmail.jsx';
 import {InsuranceReviewAccess} from './InsuranceSubmission.jsx';
 import React,{useState} from 'react';
 import {CheckCircle2,ExternalLink,LockKeyhole} from 'lucide-react';
@@ -5,11 +6,12 @@ import LicenceReviewAccess from './LicenceReviewAccess.jsx';
 import {driverReviewState,statusLabel} from './operator-model.js';
 import {formatLocale} from './i18n.js';
 const date=value=>value?new Date(value).toLocaleDateString(formatLocale()):'Not recorded';
-export default function OperatorDriverReview({driver,user,api,onSaved}){
+export default function OperatorDriverReview({driver,user,api,onSaved,emailAvailable}){
  const [busy,B]=useState(false),[error,E]=useState(''),[message,M]=useState('');const self=driver.id===user.id,state=driverReviewState(driver);
  async function submit(e){e.preventDefault();if(busy||self)return;B(true);E('');M('');const form=new FormData(e.currentTarget);try{await api('admin/driver-review',{id:driver.id,licenceSubmissionId:driver.licenceSubmission?.id,insuranceSubmissionId:driver.insuranceSubmission?.status==='pending'?driver.insuranceSubmission.id:undefined,licence:form.get('licence'),insurance:form.get('insurance'),licenceExpires:form.get('licenceExpires'),insuranceExpires:form.get('insuranceExpires'),vehicle:form.get('vehicle'),evidence:form.get('evidence'),confirmed:form.get('confirmed')==='on',holderConfirmed:form.get('holderConfirmed')==='on',authoritySource:form.get('authoritySource'),authorityCheckedOn:form.get('authorityCheckedOn'),authorityReference:form.get('authorityReference'),classConfirmed:form.get('classConfirmed')==='on',restrictionsConfirmed:form.get('restrictionsConfirmed')==='on'});M('Review saved. Booking eligibility still depends on every required check and the trip date.');await onSaved();}catch(err){E(err.message)}finally{B(false)}}
  return <article className="op-driver-detail" aria-label="Selected driver review"><div className="op-detail-heading"><div><span className="op-kicker">DRIVER APPLICATION</span><h2 translate="no">{driver.name}</h2><p translate="no">{driver.email}</p></div><span className={'op-badge '+state.tone}>{state.label}</span></div>
  <div className="op-check-strip">{[['Identity',statusLabel(driver.identity_status)],['Licence',statusLabel(driver.licence_status)],['Insurance',statusLabel(driver.insurance_status)]].map(([title,value])=><div key={title}><small>{title}</small><b>{value}</b></div>)}</div>
+ {!self&&<DriverApprovalEmail driver={driver} eligible={state.key==='current'} emailAvailable={emailAvailable} api={api}/>}
  <dl className="op-facts"><div><dt>Issuing province</dt><dd translate="no">{driver.licence_province||'—'}</dd></div><div><dt>Review consent</dt><dd>{driver.eligibility_consent_at?'Recorded':'Not recorded'}</dd></div><div><dt>Last authority check</dt><dd>{date(driver.authority_checked_at)}</dd></div><div><dt>Last review</dt><dd>{date(driver.reviewed_at)}</dd></div></dl>
  {self?<p className="op-notice"><LockKeyhole size={18}/> Self-review is blocked. Your own application cannot be approved through your operator account.</p>:<LicenceReviewAccess driver={driver} api={api} refresh={onSaved}/>}
  {!self&&<InsuranceReviewAccess driver={driver} api={api} refresh={onSaved}/>}

@@ -1,7 +1,10 @@
+import {driverBookable} from './driver-verification.js';
+import {queueDriverApprovalEmail,driverApprovalReference} from './driver-approval-email.js';
 import {ridelyEmail,emailLink} from './email-theme.js';
 import {capabilities,email,serviceBudget} from './providers.js';
 const fail=(status,message)=>{throw Object.assign(new Error(message),{status})};
 const copy={
+ driver_approved:[['You’re approved to post rides on Ridely','Your live identity, driving-privilege and vehicle-insurance checks are approved and current. You can now post rides with the vehicle reviewed. Your checks must remain current and cover each trip date.','Post a ride'],['Vous pouvez publier des trajets sur Ridely','Vos vérifications d’identité réelle, de privilèges de conduite et d’assurance du véhicule sont approuvées et à jour. Vous pouvez publier des trajets avec le véhicule examiné. Vos vérifications doivent rester à jour et couvrir la date de chaque trajet.','Publier un trajet']],
  account_created:[['Welcome to Ridely','Your account has been created. Confirm your email in your account before booking or completing driver checks.','Open my account'],['Bienvenue chez Ridely','Votre compte a été créé. Confirmez votre courriel dans votre compte avant de réserver ou de terminer les vérifications conducteur.','Ouvrir mon compte']],
  email_verified:[['Your Ridely email is confirmed','Your email address is confirmed. This confirms access to your inbox; it does not verify identity or driving eligibility.','Open my account'],['Votre courriel Ridely est confirmé','Votre adresse courriel est confirmée. Cela confirme l’accès à votre boîte de réception, sans vérifier votre identité ou vos privilèges de conduite.','Ouvrir mon compte']],
  licence_received:[['We received your licence submission','Your licence number was received securely for a driving-privilege review. Received does not mean approved. We’ll email you when the review decision is recorded.','View my driver status'],['Votre permis a bien été transmis','Votre numéro de permis a été reçu de façon sécurisée pour la vérification de vos privilèges de conduite. La réception ne signifie pas une approbation. Nous vous aviserons lorsque la décision sera enregistrée.','Voir mon statut conducteur']],
@@ -17,7 +20,7 @@ const copy={
 export const accountEmailKinds=Object.keys(copy);
 export function accountEmailTemplate(kind,locale,env={}){
  if(!copy[kind])throw Error('Unknown account email');const fr=locale==='fr',[subject,body,button]=copy[kind][fr?1:0];
- const path=['account_created','email_verified'].includes(kind)?'/account':'/driver-verification',url=emailLink(env,path,locale);const footer=fr?'Message de service concernant votre compte. Aucun document ni numéro privé n’est joint. Si vous n’avez pas demandé cette action, contactez support@ridely.ca.':'This is an account service email. No private documents or numbers are attached. If you did not request this action, contact support@ridely.ca.';
+ const path=kind==='driver_approved'?'/offer-a-ride':['account_created','email_verified'].includes(kind)?'/account':'/driver-verification',url=emailLink(env,path,locale);const footer=fr?'Message de service concernant votre compte. Aucun document ni numéro privé n’est joint. Si vous n’avez pas demandé cette action, contactez support@ridely.ca.':'This is an account service email. No private documents or numbers are attached. If you did not request this action, contact support@ridely.ca.';
  return ridelyEmail({subject,body,button,url,footer,locale,env});
 }
 async function relevant(row,db){
@@ -27,6 +30,7 @@ async function relevant(row,db){
  if(row.kind==='email_verified')return true;
  if(row.kind.endsWith('_received')){const table=row.kind==='licence_received'?'licence_submissions':'insurance_submissions';return !!await db.get("SELECT id FROM "+table+" WHERE user_id=? AND id=? AND status IN ('pending','reviewed') AND expires_at>?",row.user_id,row.reference,Date.now())}
  const driver=await db.get('SELECT * FROM driver_checks WHERE user_id=?',row.user_id);if(!driver)return false;
+ if(row.kind==='driver_approved')return !!driver.vehicle.trim()&&driverBookable(driver,new Date().toISOString().slice(0,10),driver.vehicle)&&(await driverApprovalReference(driver))===row.reference;
  if(row.kind.startsWith('identity_')){const statuses={identity_verified:'verified',identity_test_verified:'test_verified',identity_action_needed:'requires_input'};return driver.identity_status===statuses[row.kind]&&(driver.session_id||driver.attempt)===row.reference}
  const [kind,status]=row.kind.split('_');return String(driver.reviewed_at)===row.reference&&driver[kind+'_status']===status&&(status!=='approved'||driver[kind+'_expires']>=new Date().toISOString().slice(0,10));
 }
@@ -40,7 +44,8 @@ export async function deliverAccountEmails(db,env,{limit=20}={}){
  }return {configured:true,sent};
 }
 export async function accountEmailAdminApi(path,b,user,db,env){
- if(!['/api/admin/emails','/api/admin/emails/retry'].includes(path))return null;if(!user)fail(401,'Sign in to continue.');if(!user.email_verified||!env.RIDELY_ADMIN_EMAIL||user.email!==env.RIDELY_ADMIN_EMAIL.toLowerCase())fail(403,'Verified operator access is required.');
+ if(!['/api/admin/emails','/api/admin/emails/retry','/api/admin/emails/driver-approval'].includes(path))return null;if(!user)fail(401,'Sign in to continue.');if(!user.email_verified||!env.RIDELY_ADMIN_EMAIL||user.email!==env.RIDELY_ADMIN_EMAIL.toLowerCase())fail(403,'Verified operator access is required.');
+ if(path.endsWith('/driver-approval'))return queueDriverApprovalEmail(b,user,db,env);
  if(path.endsWith('/retry')){if(!capabilities(env).email)fail(503,'Configure Resend and the sender address before retrying.');await serviceBudget(db,'email-retry:'+user.id,20,600000);if(typeof b.id!=='string'||b.id.length>250)fail(400,'Choose an email event.');const changed=await db.run("UPDATE account_email_outbox SET status='pending',attempts=0,next_attempt_at=0,last_error=NULL WHERE event_key=? AND status='failed' AND locked_until<=? AND created>?",b.id,Date.now(),Date.now()-86400000);if(!(changed.changes??changed.meta?.changes))fail(409,'Only recent failed events can be retried. Sent and outdated messages are not resent.');await db.run('INSERT INTO account_email_retry_log VALUES(?,?,?,?)',crypto.randomUUID(),b.id,user.id,Date.now());}
  return {configured:capabilities(env).email,counts:await db.all('SELECT status,COUNT(*) AS count FROM account_email_outbox GROUP BY status'),emails:await db.all('SELECT o.event_key AS id,o.kind,o.status,o.attempts,o.created,o.sent_at,o.last_error,u.email FROM account_email_outbox o JOIN users u ON u.id=o.user_id ORDER BY o.created DESC LIMIT 50')};
 }
