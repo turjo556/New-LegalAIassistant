@@ -17,7 +17,8 @@ async function fixture(t){
 }
 test('requests require acceptance; concurrent acceptance cannot overbook or double-debit; no pending boarding details',async t=>{
  const {req,db,ride}=await fixture(t);
- const a=await req('bookings',{rideId:ride.id,seats:1},'rider',201),b=await req('bookings',{rideId:ride.id,seats:1},'other',201);
+ await req('bookings',{rideId:ride.id,seats:1,expectedPrice:20},'rider',409);await req('bookings',{rideId:ride.id,seats:1,expectedEditVersion:1},'rider',409);
+ const a=await req('bookings',{rideId:ride.id,seats:1,expectedEditVersion:0,expectedPrice:25},'rider',201),b=await req('bookings',{rideId:ride.id,seats:1},'other',201);
  assert.equal(a.bookings.length,0);assert.equal(a.bookingCredits.balance,2);assert.equal(a.rides[0].seats,1);assert(!JSON.stringify(a.seatRequests).includes('TEST123'));assert.equal((await req('state',null,'guest')).seatRequests.length,0);
  const qa=a.seatRequests[0],qb=b.seatRequests[0];assert.equal(qa.expiresAt-qa.created,7200000);
  await req('bookings',{rideId:ride.id,seats:1},'rider',409);await req('booking-requests/decision',{id:qa.id,decision:'accept',availabilityConfirmed:true},'other',404);await req('booking-requests/decision',{id:qa.id,decision:'accept'},'driver',400);

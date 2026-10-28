@@ -22,7 +22,7 @@ export async function bookingRequestApi(path,b,user,db){
  if(!user)fail(401,'Sign in to continue.');await maintainBookingRequests(db);await serviceBudget(db,'seat-requests:'+user.id,60,3600000);
  if(path==='/api/bookings'){
   await requireRider(db,user);const seats=b.seats;if(!Number.isSafeInteger(seats)||seats<1||seats>4)fail(400,'Choose a seat count between 1 and 4.');
-  const ride=await db.get('SELECT * FROM rides WHERE id=?',String(b.rideId||''));if(!ride||ride.cancelled)fail(404,'This ride is unavailable.');if(ride.completed_at)fail(409,'This trip has already been completed.');if(ride.owner===user.id)fail(400,'You cannot book your own ride.');
+  const ride=await db.get('SELECT * FROM rides WHERE id=?',String(b.rideId||''));if(!ride||ride.cancelled)fail(404,'This ride is unavailable.');if(ride.completed_at)fail(409,'This trip has already been completed.');if(b.expectedEditVersion!==undefined&&b.expectedEditVersion!==ride.edit_version||b.expectedPrice!==undefined&&b.expectedPrice!==ride.price/100)fail(409,'Ride details changed. Return to the ride and review the latest fare before requesting.');if(ride.owner===user.id)fail(400,'You cannot book your own ride.');
   if((b.mode&&b.mode!=='meeting')||(b.pickupMode&&b.pickupMode!=='standard'))fail(400,'Book the standard ride first, then request custom stops from My trips.');
   if(ride.price>maximumSeatPrice*100||ride.price%100!==0)fail(409,'The driver must update this listing to a whole-dollar fare of $30 or less before new reservations.');
   if(!driverBookable(await db.get('SELECT * FROM driver_checks WHERE user_id=?',ride.owner),ride.date,ride.car))fail(403,'This driver is awaiting identity, licence, or insurance approval for this trip.');

@@ -31,3 +31,9 @@ test('ride detail links survive reloads and auth returns and serve a noindex app
  assert.equal(requested,'/');assert.equal(response.status,200);assert.match(response.headers.get('X-Robots-Tag'),/noindex/);assert(!((await response.text()).includes('Home')));
  assert.equal(safeSectionReturn('/ride/bad/extra'),null);assert.equal(readSection('/rides/montreal-ottawa').rideId,null);
 });
+
+test('seat request review URLs serve a private app page and remain valid auth return targets',async()=>{
+ const {readSection,safeSectionReturn}=await import('../web/src/navigation.js');const {siteResponse}=await import('../../packages/core/site-response.js');
+ const path='/ride/test-ride/request?seats=2&lang=fr';assert.equal(readSection(path).view,'request');assert.equal(readSection(path).rideId,'test-ride');assert.equal(safeSectionReturn(path),path);assert.equal(safeSectionReturn('/ride/test-ride/request/other'),null);
+ const response=await siteResponse(new Request('https://ridely.ca'+path),{fetch:async request=>{assert.equal(new URL(request.url).pathname,'/');return new Response('<html><meta name="robots" content="index,follow"/></html>')}});assert.equal(response.status,200);assert.match(response.headers.get('X-Robots-Tag'),/noindex/);
+});
