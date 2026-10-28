@@ -1488,5 +1488,11 @@
   "Manage email": "Gérer le courriel",
   "Your name and optional photo are shared with confirmed trip partners. Your email and private rider details stay private.": "Votre nom et votre photo facultative sont partagés avec vos partenaires de trajet confirmés. Votre courriel et vos renseignements privés restent confidentiels.",
   "Loading your account…": "Chargement de votre compte…",
-  "Back to your account": "Retour à votre compte"
+  "Back to your account": "Retour à votre compte",
+  "Edit ride": "Modifier le trajet",
+  "Edit your ride": "Modifier votre trajet",
+  "Save changes": "Enregistrer les modifications",
+  "Changes are allowed only with no booked seats. Pending requests will be closed so passengers can review the new details and request again.": "Les modifications sont possibles sans places réservées. Les demandes en attente seront fermées pour permettre aux passagers de vérifier les nouveaux détails et de refaire une demande.",
+  "Ride editing unavailable": "Modification indisponible",
+  "Only your upcoming rides without booked seats can be edited. Contact support for changes involving passengers.": "Seuls vos trajets à venir sans places réservées peuvent être modifiés. Pour tout changement impliquant des passagers, contactez le soutien."
 }
