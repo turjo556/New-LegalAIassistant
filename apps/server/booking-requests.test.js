@@ -44,5 +44,5 @@ test('acceptance rechecks credit, fare and eligibility, and booking emails use t
 test('request deadline is the earlier of two hours or an hour before Eastern departure',async t=>{
  const {req,db,ride}=await fixture(t),later=new Date(Date.now()+150*60000),parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(later).split(' ');
  db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(parts[0],parts[1],ride.id);const q=(await req('bookings',{rideId:ride.id,seats:1},'rider',201)).seatRequests[0];assert.equal(q.expiresAt,departureTime(parts[0],parts[1])-3600000);assert(q.expiresAt-q.created<7200000);
- db.prepare('UPDATE rides SET time=? WHERE id=?').run(new Intl.DateTimeFormat('en-GB',{timeZone:'America/Toronto',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(Date.now()+30*60000)),ride.id);await req('bookings',{rideId:ride.id,seats:1},'other',409);
+ const near=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(Date.now()+30*60000)).split(' ');db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(near[0],near[1],ride.id);await req('bookings',{rideId:ride.id,seats:1},'other',409);
 });
