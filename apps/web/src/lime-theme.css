@@ -21,3 +21,18 @@ header nav button.search-nav-primary{background:var(--ink);color:var(--lime);bor
 .ride-search-page{margin:26px auto 22px}.ride-search-page+#trip-content .result-heading small{font-size:11px;line-height:1.5}
 
 header nav .header-nav-link{display:inline-flex;align-items:center;align-self:center;color:var(--ink);font-size:13px;font-weight:650;line-height:1.5;padding:12px 0;white-space:nowrap;text-decoration:none}header nav .header-nav-link:hover{color:#4f6c20}html[lang=fr] header nav .header-nav-link{font-size:12px}
+
+/* Shared public feature cards: inset content, one icon treatment, readable status. */
+.marketing .benefit-grid,.marketing .feature-grid,.marketing .steps-grid{gap:20px;align-items:stretch}
+.marketing .benefit-card,.marketing .feature-grid>article,.marketing .steps-grid>article{box-sizing:border-box;min-width:0;padding:28px;border:1px solid #dce0d2;border-radius:20px;background:#fff;box-shadow:0 3px 12px #11120f03}
+.marketing .benefit-card:hover{transform:none;box-shadow:0 3px 12px #11120f03}
+.marketing .feature-icon,.marketing .benefit-card:nth-child(even) .feature-icon{display:flex;align-items:center;justify-content:center;width:48px;height:48px;box-sizing:border-box;margin:0 0 22px;border:1px solid #e0e7d4;border-radius:14px;background:#f0f5e6;color:#354c10}
+.marketing .feature-icon>svg{width:24px;height:24px;flex-shrink:0;stroke-width:1.8;color:inherit}
+.marketing .feature-grid h3,.marketing .benefit-card h3,.marketing .steps-grid h3{margin:0 0 12px;color:#20251a;font-size:18px;line-height:1.4;letter-spacing:-.3px}
+.marketing .feature-grid p,.marketing .benefit-card p,.marketing .steps-grid p{margin:0;color:#626a59;font-size:14px;line-height:1.75}
+.marketing .launch-badge{display:inline-flex;align-items:center;max-width:100%;box-sizing:border-box;width:fit-content;margin:0 0 24px;padding:7px 11px;border:1px solid #dce0d2;border-radius:8px;background:#f3f4ef;color:#626a59;font-size:11px;font-weight:650;line-height:1.4}
+.marketing .feature-available .launch-badge{background:#eaf6d5;border-color:#c7dca9;color:#354c10}
+.marketing .steps-grid>article{padding:30px 24px}
+.marketing .step-number{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;margin:0 auto 22px;border-radius:14px;background:#f0f5e6;color:#354c10}
+@media(min-width:701px) and (max-width:1000px){.marketing .feature-grid,.marketing .benefit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.marketing .feature-grid,.marketing .benefit-grid,.marketing .steps-grid{grid-template-columns:minmax(0,1fr);gap:14px}.marketing .benefit-card,.marketing .feature-grid>article,.marketing .steps-grid>article{padding:24px;border-radius:16px}.marketing .feature-grid h3,.marketing .benefit-card h3,.marketing .steps-grid h3{font-size:17px}.marketing .feature-icon,.marketing .launch-badge{margin-bottom:18px}}
