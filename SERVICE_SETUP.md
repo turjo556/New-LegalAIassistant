@@ -739,3 +739,15 @@ Pre-acceptance driver identity/photo remains hidden; confirmed passengers retain
 Review URLs serve the noindex app shell on Node and Cloudflare; the existing `/ride/*` Worker asset rule covers them. New web requests submit the reviewed fare and edit version, and the server rejects mismatches before creating a pending request. These guards are optional for older clients and do not change the cash payment/credit-on-acceptance model. No database migration is needed for this change.
 
 Validation: 88 tests, including request-route/auth-target/noindex and matching/stale quote checks; browser review at 320/390/900/1440px in English/French with no open dialogs or overflow, quantity/total/submission, disclosures, pending/confirmed refresh, profile/credits/login returns and login cancellation, full/missing rides; production build, 18 SEO checks and Worker dry-run. Live deployment and real email delivery remain unverified.
+
+### Trip reviews and essential cancellation emails
+
+Apply migrations `0028_trip_reviews.sql` and `0029_cancellation_emails.sql` before deploying this Worker version (the normal `npm run deploy` workflow applies pending D1 migrations first). Do not deploy the Worker against an unmigrated database. Local Node startup applies both automatically.
+
+Account → Trip reviews is available on web and mobile. Each verified participant can leave one immutable review per booking after the driver completes the journey and the passenger confirms travelling. Four integer scores from 1–5 produce an equally weighted average. Passenger-to-driver criteria: punctuality, communication, respect, driving. Driver-to-passenger criteria: punctuality, communication, respect, readiness at pickup. Comments are optional (500 characters). The 14-day window starts at the later completion confirmation. Reviews publish together after both submit, or when the window expires; cron/state maintenance releases expired reviews and creates one in-app notification per review. No fabricated zero-star rating is displayed for a new account.
+
+Accounts show separate driver/passenger summaries and received comments. Public ride results show only published numerical driver aggregates; confirmed drivers can see passenger aggregates. Raw review text and reviewer identity are not exposed in public ride responses. Reviews do not replace safety reporting or guarantee safety.
+
+Cancellation events now enter the transactional account-email outbox for the passenger and driver irrespective of optional email-update preferences. Ordinary trip/message emails remain opt-in. Cancellation rows are idempotent per booking credit cycle, stale events after rebooking are skipped, and optional duplicate cancellation emails are suppressed. Operator Email delivery shows their status. Node's delivery timer now processes optional notifications too; Worker uses its existing scheduled job.
+
+Local mocked provider tests cannot confirm production sender verification or inbox receipt. Validate live account/booking/cancellation mail with a controlled account before claiming delivery works. No real messages were sent while implementing this feature.

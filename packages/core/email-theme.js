@@ -14,6 +14,7 @@ export function verificationEmail(code,locale,env={}){
  if(typeof code!=='string'||!/^\d{6}$/.test(code))throw Error('A six-digit verification code is required.');const fr=locale==='fr';return ridelyEmail({locale,env,code,subject:fr?'Votre code de confirmation Ridely':'Your Ridely verification code',body:fr?'Utilisez ce code pour confirmer votre adresse courriel. Il expire dans 10 minutes.':'Use this code to confirm your email address. It expires in 10 minutes.',footer:fr?'Ne partagez jamais ce code. Si vous ne l’avez pas demandé, vous pouvez ignorer ce message.':'Never share this code. If you did not request it, you can ignore this email.'});
 }
 const frenchTripTitles={
+ 'New trip review available in your account.':'Un nouvel avis est disponible dans votre compte.',
  'New confidential safety report. Open the support queue to review.':'Nouveau signalement de sécurité confidentiel. Ouvrez la file d’assistance pour l’examiner.',
  'Pilot seat fares now use whole dollars. Your unbooked listing was rounded down to the nearest dollar.':'Les tarifs du projet pilote utilisent maintenant des dollars entiers. Le tarif de votre annonce sans réservation a été arrondi au dollar inférieur.',
  'The pilot seat fare is now capped at $30 CAD. Your unbooked listing was reduced to $30. The recommended fare is $25.':'Le tarif du projet pilote est plafonné à 30 $ CA par place. Votre annonce sans réservation a été réduite à 30 $. Le tarif conseillé est de 25 $.',

@@ -1,0 +1,23 @@
+import React,{useState} from 'react';
+import {View,Text,Pressable} from 'react-native';
+import {Card,Copy,Button,Field,ui,colors} from './ui';
+import {t} from '../lib/i18n';
+const labels={punctuality:'Punctuality',communication:'Communication',respect:'Respect',driving:'Driving',preparedness:'Ready for pickup'};
+const roleLabel=role=>role==='driver'?'As driver':'As passenger';
+function Summary({title,value}){
+ const count=Number(value?.count)||0;
+ return <View style={{flex:1,minWidth:120,gap:6}}><Text style={ui.label}>{t(title)}</Text><Text style={{fontSize:25,fontWeight:'800',color:colors.ink}}>{count?Number(value.average).toFixed(1)+' / 5':t('No reviews yet')}</Text>{count>0&&<Copy>{count+' '+t(count===1?'review':'reviews')}</Copy>}</View>;
+}
+function ReviewForm({opportunity,api,refresh,onClose}){
+ const [ratings,setRatings]=useState({}),[comment,setComment]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[saved,setSaved]=useState(false);
+ const criteria=['punctuality','communication','respect',opportunity.role==='passenger'?'driving':'preparedness'];
+ const ready=criteria.every(key=>Number.isInteger(ratings[key])&&ratings[key]>=1&&ratings[key]<=5);
+ async function submit(){if(busy||!ready)return;setBusy(true);setError('');try{await api.request('reviews/submit',{bookingId:opportunity.bookingId,ratings,comment:comment.trim()});setSaved(true);await refresh();}catch(e){setError(e.message||t('Unable to save your review. Try again.'));}finally{setBusy(false);}}
+ if(saved)return <View style={{gap:12}}><Copy>Review saved. It appears after both reviews are submitted or the review window ends.</Copy><Button title="Done" secondary onPress={onClose}/></View>;
+ return <View style={{gap:18}}><Copy>{opportunity.role==='passenger'?'Rate your driver':'Rate your passenger'}</Copy>{criteria.map(key=><View key={key} style={{gap:8}}><Text style={ui.label}>{t(labels[key])}</Text><View style={{flexDirection:'row',gap:4}}>{[1,2,3,4,5].map(value=><Pressable key={value} accessibilityRole="button" accessibilityLabel={t(labels[key])+': '+value+' / 5'} accessibilityState={{selected:ratings[key]===value,disabled:busy}} disabled={busy} onPress={()=>setRatings(previous=>({...previous,[key]:value}))} style={{flex:1,minHeight:44,alignItems:'center',justifyContent:'center',borderRadius:10,backgroundColor:value<=(ratings[key]||0)?colors.lime:colors.paper,borderWidth:1,borderColor:colors.line}}><Text style={{fontSize:25,color:colors.ink}}>{value<=(ratings[key]||0)?'★':'☆'}</Text></Pressable>)}</View></View>)}<Field label="Comment (optional)" value={comment} onChange={setComment} editable={!busy} multiline maxLength={500}/><Copy>Do not include names, contact details, or private addresses. Use support for safety concerns.</Copy>{error&&<Text accessibilityRole="alert" style={ui.error}>{error}</Text>}<Button title={busy?'Saving…':'Submit review'} disabled={!ready||busy} onPress={submit}/><Button title="Cancel" secondary disabled={busy} onPress={onClose}/></View>;
+}
+export default function TripReviews({data,api,refresh}){
+ const reviews=data.reviews||{},opportunities=reviews.opportunities||[],received=reviews.received||[];
+ const [selected,setSelected]=useState(null);
+ return <View style={{gap:16}}><Card><Copy heading>Trip reviews</Copy><View style={{flexDirection:'row',flexWrap:'wrap',gap:18}}><Summary title="As driver" value={reviews.summary?.asDriver}/><Summary title="As passenger" value={reviews.summary?.asPassenger}/></View><Copy>Only completed, confirmed trips can be reviewed.</Copy></Card>{opportunities.length>0&&<Card><Copy heading>Your trip feedback</Copy><Copy>Reviews stay private until both people submit or the 14-day window ends.</Copy>{opportunities.map(item=><View key={item.bookingId} style={{gap:12,borderTopWidth:1,borderTopColor:colors.line,paddingTop:16}}><Text style={ui.label}>{item.from+' → '+item.to}</Text><Copy>{item.date+' · '+t(roleLabel(item.role))}</Copy>{item.submitted?<Copy>Review submitted</Copy>:selected===item.bookingId?<ReviewForm key={item.bookingId} opportunity={item} api={api} refresh={refresh} onClose={()=>setSelected(null)}/>:<Button title={item.role==='passenger'?'Rate your driver':'Rate your passenger'} secondary onPress={()=>setSelected(item.bookingId)}/>}</View>)}</Card>}{received.length>0&&<Card><Copy heading>Reviews received</Copy>{received.map((review,index)=><View key={review.id||index} style={{gap:7,borderTopWidth:1,borderTopColor:colors.line,paddingTop:14}}><Text style={ui.label}>{t(roleLabel(review.role||review.targetRole))+' · '+Number(review.overall).toFixed(1)+' / 5'}</Text>{review.comment&&<Text style={ui.copy}>{review.comment}</Text>}<Copy>{new Date(review.created).toLocaleDateString()}</Copy></View>)}</Card>}</View>;
+}
