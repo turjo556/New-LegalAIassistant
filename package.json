@@ -21,7 +21,8 @@
     "cf:test:pickup": "node scripts/cloudflare-pickup-smoke.mjs",
     "mobile:test:setup": "node scripts/mobile-test-setup.mjs",
     "seo:check": "node scripts/check-site-pages.mjs",
-    "mobile:release:check": "node scripts/check-mobile-release.mjs"
+    "mobile:release:check": "node scripts/check-mobile-release.mjs",
+    "mobile:test:ride": "node scripts/mobile-test-ride.mjs"
   },
   "dependencies": {
     "react": "19.1.0",
