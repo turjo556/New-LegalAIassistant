@@ -1580,5 +1580,16 @@
   "What’s next for Ridely": "Les prochaines étapes de Ridely",
   "Planned features · Not available in the pilot": "Fonctionnalités prévues · Non offertes pendant le projet pilote",
   "Ready to find a ride?": "Prêt à trouver un trajet?",
-  "Search Montréal, Longueuil, Ottawa, and Gatineau.": "Trouvez un trajet entre Montréal, Longueuil, Ottawa et Gatineau."
+  "Search Montréal, Longueuil, Ottawa, and Gatineau.": "Trouvez un trajet entre Montréal, Longueuil, Ottawa et Gatineau.",
+  "Your request was not accepted": "Votre demande n’a pas été acceptée",
+  "Your request expired": "Votre demande a expiré",
+  "You withdrew this request": "Vous avez retiré cette demande",
+  "No seat was booked and no booking credit was used.": "Aucune place n’a été réservée et aucun crédit n’a été utilisé.",
+  "The driver did not accept before the request deadline.": "Le conducteur n’a pas accepté avant l’échéance de la demande.",
+  "Review a new request": "Préparer une nouvelle demande",
+  "Confirm your email before publishing this ride.": "Confirmez votre courriel avant de publier ce trajet.",
+  "Complete your driver checks before publishing this ride.": "Terminez vos vérifications de conducteur avant de publier ce trajet.",
+  "This vehicle needs an insurance review before you can publish it.": "L’assurance de ce véhicule doit être vérifiée avant de publier ce trajet.",
+  "Your licence and insurance checks must cover the selected trip date.": "Votre permis et votre assurance doivent être valides à la date du trajet.",
+  "Your changes are still here. Review the vehicle or date, or contact support.": "Vos modifications sont conservées ici. Vérifiez le véhicule ou la date, ou contactez le soutien."
 }
