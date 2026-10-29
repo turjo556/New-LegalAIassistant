@@ -579,8 +579,8 @@ log (`account_email_retry_log`). Failed messages can be retried from Email deliv
 
 New seat reservations on web and native clients are requests, not instant bookings.
 The driver has at most two hours to respond; the deadline is the earlier of that
-window or one hour before the scheduled Eastern-time departure. New requests
-close one hour before departure. Pending requests do not hold seats, use credits,
+window or ten minutes before the scheduled Eastern-time departure. New requests
+close ten minutes before departure. Pending requests do not hold seats, use credits,
 expose vehicle plates or produce boarding codes. Passengers can withdraw freely.
 Drivers review requests in My listings, confirm availability across their other
 listings and accept or decline. There is no Kangaride integration: drivers must

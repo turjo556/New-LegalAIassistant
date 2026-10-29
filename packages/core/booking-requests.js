@@ -1,3 +1,4 @@
+import {requestDeadline,requestCutoffMs} from './booking-policy.js';
 import {maximumSeatPrice} from './fare-policy.js';
 import {departureTime} from './cancellation.js';
 import {driverBookable} from './driver-verification.js';
@@ -27,7 +28,7 @@ export async function bookingRequestApi(path,b,user,db){
   if(ride.price>maximumSeatPrice*100||ride.price%100!==0)fail(409,'The driver must update this listing to a whole-dollar fare of $30 or less before new reservations.');
   if(!driverBookable(await db.get('SELECT * FROM driver_checks WHERE user_id=?',ride.owner),ride.date,ride.car))fail(403,'This driver is awaiting identity, licence, or insurance approval for this trip.');
   if(await db.get('SELECT 1 FROM blocks WHERE (user_id=? AND blocked_id=?) OR (user_id=? AND blocked_id=?)',user.id,ride.owner,ride.owner,user.id))fail(403,'Booking between these accounts is blocked.');
-  const now=Date.now(),deadline=Math.min(now+7200000,departureTime(ride.date,ride.time)-3600000);if(deadline<=now)fail(409,'Seat requests close one hour before departure.');
+  const now=Date.now(),deadline=requestDeadline(ride.date,ride.time,now);if(deadline<=now)fail(409,'Seat requests close 10 minutes before departure.');
   if(await db.get('SELECT id FROM bookings WHERE user_id=? AND ride_id=? AND cancelled=0',user.id,ride.id))fail(409,'You already booked this ride.');
   const used=await db.get('SELECT COALESCE(SUM(seats),0) AS n FROM bookings WHERE ride_id=? AND cancelled=0',ride.id);if(used.n+seats>ride.capacity)fail(409,'Not enough seats left. Refresh and choose another ride.');
   const balance=await db.get('SELECT COALESCE(SUM(amount),0) AS n FROM promo_credit_ledger WHERE user_id=?',user.id);if(balance.n<1)fail(409,'You need a booking credit before requesting seats. No credit is used until acceptance.');
@@ -42,7 +43,7 @@ export async function bookingRequestApi(path,b,user,db){
   if(status==='accepted'){
    if(b.availabilityConfirmed!==true)fail(400,'Confirm that these seats are available across all your listings.');
    if(!user.email_verified||!driverBookable(await db.get('SELECT * FROM driver_checks WHERE user_id=?',user.id),q.date,q.car))fail(403,'All driver checks must still be current.');
-   if(q.ride_cancelled||departureTime(q.date,q.time)-Date.now()<=3600000)fail(409,'The response deadline has passed.');
+   if(q.ride_cancelled||departureTime(q.date,q.time)-Date.now()<=requestCutoffMs)fail(409,'The response deadline has passed.');
    if(await db.get('SELECT 1 FROM blocks WHERE (user_id=? AND blocked_id=?) OR (user_id=? AND blocked_id=?)',q.user_id,q.owner,q.owner,q.user_id))fail(403,'Booking between these accounts is blocked.');
    await requireRider(db,await db.get('SELECT * FROM users WHERE id=?',q.user_id));
   }

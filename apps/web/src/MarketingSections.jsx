@@ -20,7 +20,7 @@ export default function MarketingSections({onJoin,onOffer,onSupport}){const loca
  ['01','Find a ride','Choose your cities and date. Check the meeting points, luggage allowance, and fare.'],
  ['02','Request a seat','Send your request. Seats are not held while you wait, and no credit is used yet.'],
  ['03','The driver accepts','Your reservation is confirmed and one booking credit is used. Message your driver to arrange the details.']
- ].map(([n,title,copy])=><article key={n}><span className="step-number">{n}</span><h3>{title}</h3><p>{copy}</p></article>)}</div><p className="marketing-response-note">The driver has up to 2 hours to respond, or until 1 hour before departure if sooner.</p></section>
+ ].map(([n,title,copy])=><article key={n}><span className="step-number">{n}</span><h3>{title}</h3><p>{copy}</p></article>)}</div><p className="marketing-response-note">The driver has up to 2 hours to respond, or until 10 minutes before departure if sooner.</p></section>
  <section className="marketing-section pilot-tools" id="features"><div className="marketing-heading"><span className="section-kicker">DURING YOUR TRIP</span><h2>Keep the details together.</h2></div><ul>{[
  'Message your driver after acceptance.',
  'Use your private boarding code at pickup.',

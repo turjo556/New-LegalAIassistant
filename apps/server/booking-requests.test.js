@@ -42,8 +42,18 @@ test('acceptance rechecks credit, fare and eligibility, and booking emails use t
  const env={RESEND_API_KEY:'fake',EMAIL_FROM:'Ridely <no-reply@ridely.ca>',RIDELY_PUBLIC_URL:'https://ridely.ca'};await deliverAccountEmails(adapter,env,{limit:50});assert(sent.some(s=>s.subject==='Seat request sent'&&s.html.includes('/my-trips')));assert(sent.some(s=>s.subject==='New seat request'&&s.html.includes('/my-listings')));
  await req('booking-requests/decision',{id:q.id,decision:'accept',availabilityConfirmed:true},'driver');await deliverAccountEmails(adapter,env,{limit:50});assert(sent.some(s=>s.subject==='Booking confirmed'&&s.html.includes('ridely-logo.png')));assert(sent.some(s=>s.subject==='Booking accepted'));
 });
-test('request deadline is the earlier of two hours or an hour before Eastern departure',async t=>{
- const {req,db,ride}=await fixture(t),later=new Date(Date.now()+150*60000),parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(later).split(' ');
- db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(parts[0],parts[1],ride.id);const q=(await req('bookings',{rideId:ride.id,seats:1},'rider',201)).seatRequests[0];assert.equal(q.expiresAt,departureTime(parts[0],parts[1])-3600000);assert(q.expiresAt-q.created<7200000);
- const near=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(Date.now()+30*60000)).split(' ');db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(near[0],near[1],ride.id);await req('bookings',{rideId:ride.id,seats:1},'other',409);
+test('request deadline is the earlier of two hours or ten minutes before Eastern departure',async t=>{
+ const {req,db,ride}=await fixture(t),later=new Date(Date.now()+90*60000),parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(later).split(' ');
+ db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(parts[0],parts[1],ride.id);const q=(await req('bookings',{rideId:ride.id,seats:1},'rider',201)).seatRequests[0];assert.equal(q.expiresAt,departureTime(parts[0],parts[1])-600000);assert(q.expiresAt-q.created<7200000);
+ const near=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(Date.now()+9*60000)).split(' ');db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(near[0],near[1],ride.id);await req('bookings',{rideId:ride.id,seats:1},'other',409);
+});
+
+test('a passenger can request and driver can accept within the former final-hour lockout',async t=>{
+ const {req,db,ride}=await fixture(t);
+ const parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(Date.now()+30*60000)).split(' ');
+ db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(parts[0],parts[1],ride.id);
+ const q=(await req('bookings',{rideId:ride.id,seats:1},'rider',201)).seatRequests[0];
+ assert.equal(q.expiresAt,departureTime(parts[0],parts[1])-600000);
+ const result=await req('booking-requests/decision',{id:q.id,decision:'accept',availabilityConfirmed:true},'driver');
+ assert.equal(result.hosting[0].passengers.length,1);
 });
