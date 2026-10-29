@@ -1,4 +1,10 @@
 export default {
+  "Messages": "Messages",
+  "Open trip messages": "Ouvrir les messages du trajet",
+  "Sign in to see messages": "Connectez-vous pour voir vos messages",
+  "Messages appear after a reservation is accepted.": "Les messages sont disponibles après l’acceptation d’une réservation.",
+  "Cancelled trip · Messages are read-only": "Trajet annulé · Messages en lecture seule",
+
   "Back to profile": "Retour au profil",
   "Your next trip": "Votre prochain trajet",
   "Choose how you’re travelling.": "Comment souhaitez-vous voyager?",

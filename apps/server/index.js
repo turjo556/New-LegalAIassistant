@@ -1,3 +1,4 @@
+import {readMessages} from '../../packages/core/message-inbox.js';
 import {maintainReviews,reviewSummaryIndex} from '../../packages/core/trip-reviews.js';
 import {saveRideEdit} from '../../packages/core/ride-edit.js';
 import {signupReferral} from '../../packages/core/referrals.js';
@@ -68,7 +69,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0025_email_only_riders')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0025_email_only_riders.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0025_email_only_riders');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0026_referrals')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0026_referrals.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0026_referrals');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0027_ride_editing')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0027_ride_editing.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0027_ride_editing');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
- for(const name of ['0028_trip_reviews','0029_cancellation_emails']){if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get(name)){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/'+name+'.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run(name);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}}
+ for(const name of ['0028_trip_reviews','0029_cancellation_emails','0030_message_reads']){if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get(name)){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/'+name+'.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run(name);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}}
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const attempts=new Map();
  function fail(status,message){throw Object.assign(new Error(message),{status})}
@@ -118,7 +119,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(url.pathname==='/api/messages'||url.pathname==='/api/messages/send'){
  const id=text(b.id,'booking');const booking=db.prepare('SELECT b.*,r.owner,r.cancelled AS ride_cancelled FROM bookings b JOIN rides r ON r.id=b.ride_id WHERE b.id=?').get(id);if(!booking||(booking.user_id!==user.id&&booking.owner!==user.id))fail(404,'Booking not found.');
  if(url.pathname.endsWith('/send')){if(booking.cancelled||booking.ride_cancelled)fail(400,'This trip is cancelled.');const message=text(b.message,'message',1,2000);db.prepare('INSERT INTO messages VALUES(?,?,?,?,?)').run(randomUUID(),id,user.id,message,Date.now());}
- send(200,{messages:db.prepare('SELECT m.id,m.body,m.created,u.name AS sender FROM messages m JOIN users u ON u.id=m.sender WHERE m.booking_id=? ORDER BY m.created,m.rowid LIMIT 500').all(id)});return;
+ send(200,{messages:await readMessages(adapter,user,id)});return;
  }
  if(['/api/rides','/api/rides/update'].includes(url.pathname)){
  applyMeetingPoints(b,await configuredMeetingPoints(adapter));const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');

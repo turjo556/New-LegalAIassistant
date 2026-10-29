@@ -1,3 +1,4 @@
+import {readMessages} from '../../packages/core/message-inbox.js';
 import {maintainReviews,reviewSummaryIndex} from '../../packages/core/trip-reviews.js';
 import {saveRideEdit} from '../../packages/core/ride-edit.js';
 import {signupReferral} from '../../packages/core/referrals.js';
@@ -77,7 +78,7 @@ export default {async fetch(req,env,ctx){
  if(url.pathname==='/api/messages'||url.pathname==='/api/messages/send'){
  const id=text(b.id,'booking');const booking=await get('SELECT b.*,r.owner,r.cancelled AS ride_cancelled FROM bookings b JOIN rides r ON r.id=b.ride_id WHERE b.id=?',id);if(!booking||(booking.user_id!==user.id&&booking.owner!==user.id))fail(404,'Booking not found.');
  if(url.pathname.endsWith('/send')){if(booking.cancelled||booking.ride_cancelled)fail(400,'This trip is cancelled.');const message=text(b.message,'message',1,2000);await run('INSERT INTO messages VALUES(?,?,?,?,?)',randomUUID(),id,user.id,message,Date.now());}
- return send(200,{messages:await all('SELECT m.id,m.body,m.created,u.name AS sender FROM messages m JOIN users u ON u.id=m.sender WHERE m.booking_id=? ORDER BY m.created,m.rowid LIMIT 500',id)});
+ return send(200,{messages:await readMessages(adapter,user,id)});
  }
  if(['/api/rides','/api/rides/update'].includes(url.pathname)){
  applyMeetingPoints(b,await configuredMeetingPoints(adapter));const from=text(b.from,'departure city'),to=text(b.to,'destination city');if(!cities.includes(from)||!cities.includes(to)||from===to)fail(400,'Choose two different supported cities.');

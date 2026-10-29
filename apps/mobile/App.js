@@ -20,6 +20,7 @@ import CustomStops from './components/CustomStops';
 import TripReviews from './components/TripReviews';
 import UtilityHome from './components/UtilityHome';
 import UtilityIcon from './components/UtilityIcon';
+import MessagesInbox from './components/MessagesInbox';
 import {canCancelBooking} from '../../packages/core/cancellation';
 import { seatFareCents } from '../../packages/core/fare-policy';
 import { vehicleColors, plateProvinces } from '../../packages/core/vehicle.js';
@@ -297,7 +298,7 @@ function AppContent() {
       });
       action('messages', {
         id
-      }, d => SM(d.messages));
+      }, async d => {SM(d.messages);await refresh();});
     });
   }
   function offer() {
@@ -440,14 +441,16 @@ function AppContent() {
                       true: C.blue
                     }} /></View>{form[key] && <><NumberChoice label={kind + ' fee per person (CAD)'} min={5} max={10} value={Number(form[kind + 'Fee'])} onChange={v => set(kind + 'Fee',String(v))}/><Text style={s.small}>{t('$5–$10 CAD per option, per passenger. $1 increments.')}</Text><Pin label={'Standard ' + kind + ' pin'} value={form[pin]} onChange={v => set(pin, v)} city={kind === 'pickup' ? form.from : form.to} /></>}</View>;
               })}{form.allowPickup && !form.allowDropoff && <Pin label={t("Standard dropoff pin")} value={form.dropoffPin} onChange={v => set('dropoffPin', v)} city={form.to} />}{form.allowDropoff && !form.allowPickup && <Pin label={t("Standard pickup pin")} value={form.pickupPin} onChange={v => set('pickupPin', v)} city={form.from} />}<Text style={s.body}>{t("Custom pins must fall within 3 km of their standard point. All approved stops share a 15-minute driver-estimated detour allowance, including stopping. Verify road access and timing before approval.")}</Text><Button title={busy ? t("Saving\u2026") : data.driverVerification?.approved ? t("Publish route") : t("Save ride & continue to verification")} onPress={publish} disabled={busy} /></>;
-  const navTab=['Trips','Saved'].includes(tab)?'Home':tab;
+  const navTab=['Trips','Saved','Messages'].includes(tab)?'Home':tab;
   const driverTrips = (tripRole || (data.hosting.length && !data.bookings.length ? 'Drivers' : 'Riders')) === 'Drivers';
   const shown = tab === 'Trips' ? driverTrips ? data.hosting : data.bookings.map(b => ({
     ...b.ride,
     booking: b
   })) : tab === 'Saved' ? data.rides.filter(r => data.saved.includes(r.id)) : role === 'Drivers' ? data.hosting : searchRides(data.rides, query);
   const money = v => '$' + (Number.isInteger(Number(v)) ? Number(v) : Number(v).toFixed(2));
-  const unreadCount = data.user ? (data.notifications||[]).filter(n=>n.read_at==null).length : 0;
+  const unreadCount = data.user ? (data.notifications||[]).filter(n=>n.read_at==null&&n.title!=='You have a new private booking message.').length : 0;
+  const unreadMessages = data.user ? data.messageInbox?.unread||0 : 0;
+  const messagesReadOnly=!!data.messageInbox?.threads?.find(q=>q.bookingId===form.id)?.cancelled;
   const pendingCount = data.user ? (data.seatRequests||[]).filter(q=>q.driverId===data.user.id&&q.status==='pending').length : 0;
   const badge = count => count>0 ? <View style={s.notificationBadge}><Text style={s.notificationBadgeText}>{count>99?'99+':count}</Text></View> : null;
   const updatesPanel = <View style={s.card}><Text style={s.route}>{t("Trip updates")}</Text><Text style={s.body}>{t("Updates appear here while the app is open. Push notifications are not connected yet.")}</Text>{data.notifications?.length ? data.notifications.map(n => <View key={n.id}><Text style={s.body}>{t(n.title)}</Text><Text style={s.small}>{new Date(n.created).toLocaleString(language === 'fr' ? 'fr-CA' : 'en-CA')}</Text></View>) : <Text style={s.body}>{t("No updates yet.")}</Text>}<Button title={t("Mark updates as read")} secondary disabled={busy} onPress={() => action('notifications/read', {})} /></View>;
@@ -478,7 +481,7 @@ function AppContent() {
   }
   return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar style="dark" /><View style={s.header}><Text style={s.logo}>{t("ridely")}<Text style={{
           color: C.orange
-        }}>.</Text></Text><Pressable accessibilityRole="button" accessibilityLabel={t("Change language")} onPress={toggleLanguage}><Text style={s.signin}>{language === 'fr' ? t("EN") : t("FR")}</Text></Pressable>{data.user && <Pressable accessibilityRole="button" accessibilityLabel={t('Notifications')+', '+unreadCount} onPress={()=>open('updates')} style={{position:'relative',padding:8}}><Text style={{fontSize:20}}>🔔</Text>{badge(unreadCount)}</Pressable>}<Pressable accessibilityRole="button" onPress={() => data.user ? T('Account') : (AM('login'), open('auth'))}><Text style={s.signin}>{data.user?.name || 'Sign in'}</Text></Pressable></View><ScrollView contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => {
+        }}>.</Text></Text><Pressable accessibilityRole="button" accessibilityLabel={t("Change language")} onPress={toggleLanguage}><Text style={s.signin}>{language === 'fr' ? t("EN") : t("FR")}</Text></Pressable>{data.user?<Pressable accessibilityRole="button" accessibilityLabel={t('Messages')+', '+unreadMessages} onPress={()=>T('Messages')} style={{flexDirection:'row',gap:7,alignItems:'center',minHeight:44,paddingHorizontal:3}}><Text style={s.signin}>{t('Messages')}</Text>{unreadMessages>0&&<Text style={{color:'#c62828',fontWeight:'800',fontSize:14}}>{unreadMessages>99?'99+':unreadMessages}</Text>}</Pressable>:<Pressable accessibilityRole="button" onPress={()=>{AM('login');open('auth')}}><Text style={s.signin}>{t('Sign in')}</Text></Pressable>}</View><ScrollView contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => {
       setLoading(true);
       refresh();
     }} />} keyboardShouldPersistTaps="handled">{data.testing?.isolated&&<View style={s.notice}><Text style={s.small}>{t('Test mode · fictional accounts')}</Text></View>}{!configuration.ready && <View style={s.notice}><Text style={s.driverName}>{t("Development build")}</Text><Text style={s.body}>{configuration.message}</Text></View>}{!modal && err}{loading && <ActivityIndicator color={C.blue} />}{tab === 'Explore' && <><Text style={s.heading}>{t('Search rides')}</Text>{role === 'Riders' ? <View style={s.card}><City label={t("Leaving from")} value={from} onChange={From} /><City label={t("Going to")} value={to} onChange={To} /><View style={s.field}><Text style={s.label}>{t("Departure date")}</Text><Pressable accessibilityRole="button" onPress={() => SD(!showDate)} style={s.input}><Text style={s.city}>{date.toLocaleDateString(undefined, {
@@ -501,7 +504,7 @@ function AppContent() {
               seats
             });
           }} /></View> : <View style={s.notice}><Text style={s.body}>{t("Custom pickup and drop-off are off by default. Enable either on your listing. Passengers book your standard route first, then request a change.")}</Text></View>}</>}
- {tab === 'Home' ? <UtilityHome data={data} onPassenger={()=>{R('Riders');T('Explore')}} onDriver={()=>{R('Drivers');setTripRole('Drivers');if(data.hosting.length)T('Trips');else offer()}} onTrips={()=>T('Trips')} onSaved={()=>T('Saved')} onCredits={()=>T('Credits')}/> : tab === 'Post' ? <><Text style={s.heading}>{t('Post a ride')}</Text>{offerPanel}</> : tab === 'Credits' ? <><Text style={s.heading}>{t('Cart')}</Text><Credits data={data} onAccount={() => {
+ {tab === 'Home' ? <UtilityHome data={data} onPassenger={()=>{R('Riders');T('Explore')}} onDriver={()=>{R('Drivers');setTripRole('Drivers');if(data.hosting.length)T('Trips');else offer()}} onTrips={()=>T('Trips')} onSaved={()=>T('Saved')} onCredits={()=>T('Credits')} onMessages={()=>T('Messages')} unreadMessages={unreadMessages}/> : tab === 'Messages' ? <MessagesInbox data={data} onOpen={conversation} onSignIn={()=>{AM('login');open('auth')}} onRefresh={refresh} busy={busy}/> : tab === 'Post' ? <><Text style={s.heading}>{t('Post a ride')}</Text>{offerPanel}</> : tab === 'Credits' ? <><Text style={s.heading}>{t('Cart')}</Text><Credits data={data} onAccount={() => {
         AM('login');
         open('auth');
       }} /></> : tab === 'Account' ? <>
@@ -516,7 +519,7 @@ function AppContent() {
                 T('Home');postDraft.current=null;pendingPost.current=false;
                 R('Riders');
               })} /></View>
- <Button title={t('Trip reviews')} secondary onPress={()=>setProfileSection('reviews')}/><Button title={t('Profile photo')} secondary onPress={()=>setProfileSection('photo')}/><Button title={t('My trips')} secondary onPress={()=>T('Trips')}/><Button title={t('Saved rides')} secondary onPress={()=>T('Saved')}/><Button title={t('Notifications')} secondary onPress={()=>open('updates')}/>
+ <Button title={t('Trip reviews')} secondary onPress={()=>setProfileSection('reviews')}/><Button title={t('Profile photo')} secondary onPress={()=>setProfileSection('photo')}/><Button title={t('My trips')} secondary onPress={()=>T('Trips')}/><Button title={t('Saved rides')} secondary onPress={()=>T('Saved')}/><Button title={t('Messages')} secondary onPress={()=>T('Messages')}/><Button title={t('Notifications')} secondary onPress={()=>open('updates')}/>
  </> : <Button title={t("Sign in or create account")} onPress={() => {
             AM('login');
             open('auth');
@@ -583,12 +586,13 @@ function AppContent() {
  {modal === 'updates' && updatesPanel}
  {modal === 'messages' && <><Text style={s.small}>{t("Private to you and the other member. No push alerts yet\u2014refresh for replies.")}</Text>{messages.map(m => <View key={m.id} style={s.card}><Text style={s.driverName}>{m.sender}</Text><Text style={s.body}>{m.body}</Text><Text style={s.small}>{new Date(m.created).toLocaleString()}</Text></View>)}{!messages.length && <Text style={s.body}>{t("No messages yet.")}</Text>}<Button title={t("Refresh messages")} secondary disabled={busy} onPress={() => action('messages', {
                 id: form.id
-              }, d => SM(d.messages))} /><Field label={t("Your message")} value={form.message} onChange={v => set('message', v)} multiline maxLength={2000} /><Button title={busy ? t("Sending\u2026") : t("Send message")} disabled={busy || !form.message?.trim()} onPress={() => action('messages/send', {
+              }, async d => {SM(d.messages);await refresh();})} /><Field label={t("Your message")} editable={!messagesReadOnly} value={form.message} onChange={v => set('message', v)} multiline maxLength={2000} /><Button title={busy ? t("Sending\u2026") : t("Send message")} disabled={busy || messagesReadOnly || !form.message?.trim()} onPress={() => action('messages/send', {
                 id: form.id,
                 message: form.message
-              }, d => {
+              }, async d => {
                 SM(d.messages);
                 set('message', '');
+                await refresh();
               })} /></>}
  </ScrollView></KeyboardAvoidingView></SafeAreaView></Modal></SafeAreaView>;
 }
