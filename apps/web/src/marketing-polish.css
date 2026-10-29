@@ -1,0 +1,27 @@
+/* A shorter public page, with practical information before optional plans. */
+.marketing-polished .marketing-section{padding:48px 15px}
+.marketing-polished .marketing-heading{max-width:690px;margin-bottom:26px}
+.marketing-polished .marketing-heading h2,.marketing-polished .safety-section h2,.marketing-polished .join-section h2{font-size:clamp(27px,3vw,36px);letter-spacing:-1.2px;line-height:1.15}
+.marketing-polished .benefit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.marketing-polished .how-section{border-radius:20px}
+.marketing-polished .steps-grid{text-align:left}
+.marketing.marketing-polished .step-number{margin-left:0;margin-right:0}
+.marketing-polished .marketing-response-note{margin:22px 0 0;font-size:12px;line-height:1.7;color:#626a59}
+.marketing-polished .pilot-tools{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:start}
+.marketing-polished .pilot-tools ul{list-style:none;margin:0;padding:0;display:grid;gap:18px}
+.marketing-polished .pilot-tools li{display:flex;align-items:flex-start;gap:12px;font-size:14px;line-height:1.7;color:#465039}
+.marketing-polished .pilot-tools li svg{flex-shrink:0;margin-top:3px;color:#526b22}
+.marketing-polished .safety-section{padding:36px;gap:36px;grid-template-columns:1.3fr 1fr}
+.marketing-polished .safety-section h2{margin-top:16px}
+.marketing-polished .safety-guide-link{display:inline-flex;gap:10px;align-items:center;color:#c5ff28;font-size:13px;font-weight:700;text-decoration:none;margin-top:8px}
+.marketing-polished .launch-section{margin:0;background:none;border-radius:0;padding-top:36px;padding-bottom:0}
+.marketing-roadmap{border-top:1px solid #d3d9c7;border-bottom:1px solid #d3d9c7}
+.marketing-roadmap>summary{display:flex;align-items:center;justify-content:space-between;gap:18px;cursor:pointer;list-style:none;padding:22px 0;color:#27301c;font-weight:750;font-size:17px}
+.marketing-roadmap>summary::-webkit-details-marker{display:none}
+.marketing-roadmap>summary small{display:block;margin-top:7px;font-size:12px;font-weight:400;color:#626a59;line-height:1.5}
+.marketing-roadmap[open]>summary>svg{transform:rotate(180deg)}
+.marketing-roadmap-items{display:grid;grid-template-columns:1fr 1fr;gap:22px 35px;padding:0 0 26px}
+.marketing-roadmap-items h3{font-size:14px;margin:0 0 7px;color:#27301c}
+.marketing-roadmap-items p{font-size:13px;line-height:1.7;margin:0;color:#626a59}
+.marketing-polished .join-section{padding:50px 15px 60px}
+@media(max-width:700px){.marketing-polished .marketing-section{padding:35px 4px}.marketing-polished .benefit-grid,.marketing-polished .pilot-tools{grid-template-columns:1fr}.marketing-polished .how-section{padding:28px 18px}.marketing-polished .pilot-tools{gap:0}.marketing-polished .safety-section{padding:28px 22px}.marketing-polished .launch-section{padding-bottom:0}.marketing-roadmap-items{grid-template-columns:1fr}.marketing-polished .join-section{padding:40px 4px}}
