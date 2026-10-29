@@ -1,4 +1,12 @@
 export default {
+  "Custom pickup": "Prise en charge personnalisée",
+  "Custom drop-off": "Dépose personnalisée",
+  "Extra fee per passenger. Your driver must approve each request.": "Supplément par passager. Chaque demande doit être approuvée par le conducteur.",
+  "This driver offers standard meeting points only.": "Ce conducteur propose seulement les points de rencontre standards.",
+  "Request custom pickup": "Demander une prise en charge personnalisée",
+  "Request custom drop-off": "Demander une dépose personnalisée",
+  "person": "personne",
+
   "More details": "Plus de détails",
   "Route & stops": "Trajet et arrêts",
   "min detour": "min de détour",
@@ -214,7 +222,6 @@ export default {
   "Luggage allowance": "Bagages permis",
   "Small bag / carry-on": "Petit sac ou bagage à main",
   "One medium suitcase": "Une valise moyenne",
-  "Large suitcase": "Grande valise",
   "Anything passengers should know?": "Autres renseignements pour les passagers?",
   "Optional": "Facultatif",
   "Luggage space, pets, accessibility, or other useful details": "Espace pour les bagages, animaux, accessibilité ou autres détails utiles",
@@ -667,7 +674,6 @@ export default {
   "Your custom stops": "Vos arrêts personnalisés",
   "Need a different meeting point? Request a stop within 3 km of the standard point. Driver approval and an extra fee apply.": "Besoin d’un autre point de rencontre? Demandez un arrêt dans un rayon de 3 km du point standard. L’approbation du conducteur et des frais supplémentaires s’appliquent.",
   "Request custom": "Demander un arrêt personnalisé",
-  "This driver offers standard meeting points only.": "Ce conducteur propose seulement des points de rencontre standards.",
   "Everyone sees the route": "Tout le monde voit l’itinéraire",
   "Your exact custom addresses are shared with you and your driver. Other passengers see approximate meeting areas.": "Vos adresses exactes sont partagées avec votre conducteur seulement. Les autres passagers voient des zones de rencontre approximatives.",
   "Pickup & cancellation policy": "Politique d’embarquement et d’annulation",
