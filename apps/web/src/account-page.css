@@ -3,3 +3,54 @@
 @media(max-width:650px){.account-page .account-page-top{height:78px;padding:0 18px;gap:10px}.account-page-top .brand{font-size:29px}.account-page-top>div{gap:12px}.account-back{font-size:10px}.account-back svg{width:14px}.account-page-layout{display:block;padding:5px 18px 35px}.account-sidebar{position:static;margin-bottom:26px}.account-owner{padding:10px 3px 15px;border-bottom:0}.account-owner b{font-size:14px}.account-owner small{font-size:7px}.account-sidebar nav{display:flex;flex-direction:row;overflow-x:auto;scrollbar-width:thin;gap:7px;margin:0;padding:4px 0 10px;position:static}.account-sidebar nav button{padding:10px 12px;flex-shrink:0;font-size:10px;border:1px solid #dce3d0;gap:7px;white-space:nowrap;background:#fff}.account-sidebar nav button[aria-current=page]{background:#e6f0d3}.account-sidebar nav button svg{width:15px}.account-sidebar-bottom{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px;margin-top:6px;border:0}.account-sidebar-bottom button{padding:6px;font-size:9px;gap:5px}.account-sidebar-bottom button svg{width:14px}.account-page-heading h1{font-size:31px;margin-top:9px}.account-page-heading>p{font-size:12px}.account-welcome-card{padding:23px;gap:10px}.account-welcome-card h2{font-size:27px}.account-welcome-art{max-width:100px;width:28%;flex-shrink:0}.account-overview-grid{gap:12px}.account-overview-card{padding:17px}.account-card-status{font-size:16px}.account-overview-card p{font-size:10px}.account-overview-card button{font-size:10px;gap:5px}.account-content-card{padding:22px 18px}.account-content-card .profile-photo-heading{gap:10px}.account-content-card .profile-photo-heading h3{font-size:17px}.account-content-card .profile-photo-heading .trip-avatar{width:45px;height:45px}.account-content-card .profile-photo-heading .trip-avatar[aria-hidden=true]{display:none}.account-content-card .onboarding-card{padding:0}.account-content-card .onboarding-steps{font-size:9px}.account-page .account-page-footer{margin:0 18px;font-size:9px;flex-wrap:wrap}.account-content-card .credit-buy-panel button{white-space:normal}.account-content-card .booking-credit-panel .credit-balance strong{font-size:22px}}
 @media(max-width:370px){.account-overview-grid{grid-template-columns:1fr}.account-back{font-size:9px}.account-page-top>div{gap:6px}.account-page-top .language-switch{font-size:9px;padding:6px}.account-welcome-art{display:none}}
 .account-content-card .bonus-account-panel{margin:0;padding:0;border:0;background:none}
+
+/* Account polish: readable actions and a clear selected section on every screen. */
+.account-page .account-page-layout{gap:36px;padding-top:24px}
+.account-page .account-page-heading{margin-bottom:24px}
+.account-page .account-page-heading h1{font-size:36px;letter-spacing:-1.2px;margin:8px 0 10px}
+.account-page .account-page-heading>p{color:#626d55;line-height:1.7;max-width:620px}
+.account-page .account-eyebrow,.account-page .account-owner small{font-size:10px;letter-spacing:1.2px;color:#657552}
+.account-page .account-sidebar nav button{min-height:46px;font-size:13px;border:1px solid transparent}
+.account-page .account-sidebar nav button[aria-current=page]{background:#e8f6c9;border-color:#cbdcaf;color:#263715}
+.account-page .account-sidebar-bottom button{min-height:44px;font-size:12px;color:#566645}
+.account-page .account-back{min-height:44px;font-size:12px}
+.account-page .account-overview-card h3{font-size:13px;font-weight:600;color:#5f6d50}
+.account-page .account-overview-card p{font-size:12px;color:#626d55;line-height:1.75;margin-bottom:14px}
+.account-page .account-overview-card button{min-height:44px;font-size:12px;text-align:left}
+.account-page .account-overview-card{padding:22px}
+.account-page .account-card-icon{margin-bottom:12px}
+.account-page .account-card-status{font-size:20px}
+.account-page .account-welcome-card{padding:26px;margin-bottom:20px}
+.account-page .account-welcome-card p{font-size:13px;color:#5b6b48;line-height:1.7}
+.account-page .account-welcome-card .primary{min-height:46px;border-radius:12px;font-size:13px}
+.account-page .account-privacy-note p{font-size:12px;color:#667355;line-height:1.7}
+.account-page .account-page-footer{font-size:11px;color:#657552}
+.account-page .account-page-footer button{min-height:44px;font-size:12px}
+.account-page button:focus-visible,.account-page a:focus-visible{outline:3px solid #536d26;outline-offset:3px}
+@media(max-width:900px){.account-page .account-page-layout{gap:24px}.account-page .account-overview-card{padding:20px}}
+@media(max-width:650px){
+ .account-page .account-page-top{height:76px;padding:0 18px}
+ .account-page .account-page-layout{padding:4px 18px 30px}
+ .account-page .account-sidebar{margin-bottom:24px}
+ .account-page .account-owner{padding:8px 2px 14px}
+ .account-page .account-sidebar nav{gap:8px;padding-bottom:8px;scroll-padding-inline:2px;scrollbar-width:thin}
+ .account-page .account-sidebar nav button{font-size:12px;padding:11px 13px;min-height:44px;border-color:#d7dfc9;border-radius:12px}
+ .account-page .account-sidebar nav button[aria-current=page]{background:#c5ff28;border-color:#b0d943;color:#202b13}
+ .account-page .account-sidebar nav button svg{width:17px;height:17px}
+ .account-page .account-sidebar-bottom{margin-top:0;padding-top:2px;gap:4px 14px}
+ .account-page .account-sidebar-bottom button{min-height:44px;padding:8px 2px;font-size:11px;gap:7px}
+ .account-page .account-sidebar-bottom button svg{width:16px;height:16px}
+ .account-page .account-page-heading h1{font-size:30px;margin:7px 0 8px;letter-spacing:-1px}
+ .account-page .account-page-heading>p{font-size:13px}
+ .account-page .account-back{font-size:11px}
+ .account-page .account-welcome-card{padding:22px}
+ .account-page .account-welcome-card h2{font-size:27px}
+ .account-page .account-welcome-art{display:none}
+ .account-page .account-overview-card{padding:20px}
+ .account-page .account-card-status{font-size:19px}
+ .account-page .account-overview-card button{font-size:12px;gap:9px}
+ .account-page .account-content-card{padding:22px 18px}
+ .account-page .account-content-card input:not([type=checkbox]):not([type=radio]),.account-page .account-content-card select,.account-page .account-content-card textarea{font-size:16px}
+ .account-page .account-page-footer{font-size:10px;gap:6px}
+}
+@media(max-width:520px){.account-page .account-overview-grid{grid-template-columns:minmax(0,1fr)}}

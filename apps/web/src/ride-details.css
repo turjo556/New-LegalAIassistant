@@ -50,3 +50,73 @@
 .ride-detail-redesign .detail-booking-total,.ride-detail-redesign .detail-price span,.ride-detail-redesign .detail-hero-meta,.ride-detail-redesign .detail-hero-fare>span,.ride-detail-redesign .detail-hero-fare>small{color:#5f724c}
 .ride-detail-redesign .detail-fact-grid b{font-size:12px;color:#435d30}
 .ride-detail-redesign details[open]>summary>svg:last-child{transform:rotate(180deg)}
+
+/* Shared ride surfaces: clearer typography and comfortable phone controls. */
+.compact-ride-card{border-color:#d9dfcf;box-shadow:0 3px 14px #17200f04}
+.compact-ride-date{font-size:13px;color:#59634f}
+.compact-feature-icons>span{font-size:11px;line-height:1.5;background:#f2f5ed;color:#405032}
+.compact-timeline-row small{font-size:10px;color:#626d58;letter-spacing:.7px}
+.compact-timeline-row b{font-size:14px;color:#35402c}
+.compact-ride-price small,.compact-ride-fare .seat-legend{font-size:11px;color:#59634f}
+.compact-ride-fare .ride-button{min-height:46px;font-size:13px}
+.compact-ride-card .compact-save{min-width:42px;min-height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
+.ride-detail-redesign{--ride-copy:#4e5b43;--ride-quiet:#627153;color:#20261b}
+.ride-detail-redesign .detail-back{min-height:40px;margin-bottom:16px;color:var(--ride-copy);font-size:13px}
+.ride-detail-redesign .detail-hero-meta{font-size:12px;color:var(--ride-copy);line-height:1.7}
+.ride-detail-redesign .detail-hero-eyebrow{color:var(--ride-copy)}
+.ride-detail-redesign .detail-panel-heading{margin-bottom:23px}
+.ride-detail-redesign .detail-section-icon{background:#f0f4e8;color:#4e6633}
+.ride-detail-redesign .detail-stop-time{font-size:14px;color:#3e522e}
+.ride-detail-redesign .detail-stop-body>b{font-size:15px;color:#25311e;line-height:1.55}
+.ride-detail-redesign .detail-stop-body>small{color:var(--ride-quiet);letter-spacing:.5px}
+.ride-detail-redesign .detail-meeting-links{gap:3px;margin-top:7px}
+.ride-detail-redesign .detail-meeting-links>a,.ride-detail-redesign .detail-meeting-links summary{font-size:12px;line-height:1.5;min-height:32px;color:#4c6436;text-decoration:none}
+.ride-detail-redesign .detail-meeting-links summary{padding-block:6px}
+.ride-detail-redesign .detail-meeting-links>a:hover{text-decoration:underline;text-underline-offset:3px}
+.ride-detail-redesign .detail-meeting-links p,.ride-detail-redesign .detail-check-explainer p,.ride-detail-redesign .detail-rules-content p{font-size:13px;line-height:1.75;color:var(--ride-copy)}
+.ride-detail-redesign .detail-colour,.ride-detail-redesign .detail-private-driver,.ride-detail-redesign .detail-confirmed-driver small{font-size:12px;color:var(--ride-copy);line-height:1.6}
+.ride-detail-redesign .detail-fact-grid{background:#f4f6ef;gap:16px}
+.ride-detail-redesign .detail-fact-grid small{font-size:11px;letter-spacing:0;color:var(--ride-quiet)}
+.ride-detail-redesign .detail-fact-grid b{font-size:13px;color:#3d512c}
+.ride-detail-redesign .detail-check-explainer summary{font-size:12px;min-height:32px;color:var(--ride-copy)}
+.ride-detail-redesign .detail-driver-note p{font-size:13px;line-height:1.7;color:var(--ride-copy)}
+.ride-detail-redesign .detail-custom-options>div{font-size:13px;gap:10px;background:#f3f6ec;color:#4f613b;padding:14px}
+.ride-detail-redesign .detail-custom-options b small{font-size:10px;color:var(--ride-quiet)}
+.ride-detail-redesign .detail-custom-panel>p{font-size:12px;line-height:1.65;color:var(--ride-copy)}
+.ride-detail-redesign .detail-rules-panel summary{font-size:14px;min-height:58px;color:#435733}
+.ride-detail-redesign .detail-price span,.ride-detail-redesign .detail-cash-pill{font-size:12px;color:var(--ride-copy)}
+.ride-detail-redesign .detail-cash-pill{padding:7px 9px;background:#f1f5e8;line-height:1.4}
+.ride-detail-redesign .detail-seat-section .seat-legend{font-size:11px;color:var(--ride-copy)}
+.ride-detail-redesign .detail-quantity{font-size:14px;color:var(--ride-copy)}
+.ride-detail-redesign .detail-quantity select{min-height:44px;font-size:16px;color:#28391b;border-color:#cbd5bb;box-shadow:none}
+.ride-detail-redesign .detail-booking-total{font-size:13px;color:var(--ride-copy);gap:12px}
+.ride-detail-redesign .detail-credit-line{font-size:12px;line-height:1.6;color:var(--ride-copy)}
+.ride-detail-redesign .ride-booking-panel .primary{font-size:14px;min-height:48px;font-weight:750}
+.ride-detail-redesign .detail-request-note,.ride-detail-redesign .detail-booking-footer{font-size:11px;color:var(--ride-quiet);line-height:1.65}
+.ride-detail-redesign .detail-booking-status{font-size:13px;line-height:1.6;color:#47652e}
+.ride-detail-redesign .detail-member-actions summary{min-height:40px;font-size:12px}
+.ride-detail-redesign .detail-member-actions button{min-height:40px;font-size:12px}
+.ride-detail-redesign .detail-meeting-links a:focus-visible,.ride-detail-redesign summary:focus-visible,.compact-ride-card a:focus-visible,.compact-ride-card button:focus-visible{outline:3px solid #648132;outline-offset:4px;border-radius:6px}
+@media(max-width:700px){
+ .compact-ride-card{padding:21px;gap:17px}
+ .compact-city-pair{font-size:22px;letter-spacing:-.55px}
+ .compact-timeline-row b,.compact-timeline-row>time{font-size:13px}
+ .compact-ride-card .compact-save{top:10px;right:9px}
+ .compact-feature-icons{gap:6px;margin-top:10px}
+ .compact-feature-icons>span{padding:5px 7px;font-size:11px}
+ .ride-detail-redesign .ride-detail-hero{padding:22px 20px}
+ .ride-detail-redesign .detail-hero-eyebrow>span{display:none}
+ .ride-detail-redesign .ride-detail-hero h1{font-size:29px;line-height:1.3;margin-block:14px}
+ .ride-detail-redesign .detail-hero-meta{gap:8px 13px;font-size:12px}
+ .ride-detail-redesign .ride-detail-panel{padding:22px 19px}
+ .ride-detail-redesign .detail-stop-time{font-size:12px}
+ .ride-detail-redesign .detail-stop-body>b{font-size:14px}
+ .ride-detail-redesign .detail-stop-body>small{font-size:10px;line-height:1.5}
+ .ride-detail-redesign .detail-fact-grid{grid-template-columns:1fr;gap:14px;padding:15px}
+ .ride-detail-redesign .detail-fact-grid>div{gap:11px}
+ .ride-detail-redesign .detail-fact-grid small{font-size:11px}
+ .ride-detail-redesign .detail-fact-grid b{font-size:13px}
+ .ride-detail-redesign .detail-rules-panel{padding:0 19px}
+ .ride-detail-redesign .ride-booking-panel{gap:17px}
+}
+@media(prefers-reduced-motion:reduce){.compact-ride-card,.ride-detail-redesign *{scroll-behavior:auto}}

@@ -1,4 +1,16 @@
 export default {
+  "Back to profile": "Retour au profil",
+  "Your next trip": "Votre prochain trajet",
+  "Choose how you’re travelling.": "Comment souhaitez-vous voyager?",
+  "I’m a passenger": "Je suis passager",
+  "I’m a driver": "Je suis conducteur",
+  "Post or manage your rides": "Publiez ou gérez vos trajets",
+  "Home": "Accueil",
+  "Search": "Recherche",
+  "Post": "Publier",
+  "Cart": "Panier",
+  "Profile": "Profil",
+
   "Trip reviews": "Avis sur les trajets",
   "View trip reviews": "Voir les avis",
   "Feedback from completed trips.": "Les avis laissés après les trajets terminés.",

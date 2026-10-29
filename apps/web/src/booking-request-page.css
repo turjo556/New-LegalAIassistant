@@ -3,3 +3,55 @@
 
 .request-point a{display:inline-flex;align-items:center;gap:4px}
 .request-card{overflow-wrap:anywhere}.request-page .request-kicker{font-size:10px}.request-page .request-trip-date,.request-page .request-point small,.request-page .request-point a,.request-page .request-disclosure summary,.request-page .request-disclosure p,.request-page .request-next p,.request-page .request-cash-note,.request-page .request-credit,.request-page .request-private,.request-page .request-consent,.request-page .request-fare-row{color:#607447}.request-page .request-credit small,.request-page .request-credit>span{font-size:10px}
+
+/* Booking review keeps the fare/action prominent without relying on microtext. */
+.request-page{--request-copy:#4e5b43;--request-quiet:#627153;color:#20291a}
+.request-page .request-back{min-height:40px;margin-bottom:21px;font-size:13px;color:var(--request-copy)}
+.request-page .request-page-heading>p{font-size:14px;line-height:1.65;color:var(--request-copy)}
+.request-page .request-card{border-color:#d9e0cf;box-shadow:0 3px 14px #17200f03}
+.request-page .request-trip-top{margin-bottom:18px}
+.request-page .request-trip-date{font-size:12px;line-height:1.6;color:var(--request-copy);margin-bottom:23px}
+.request-page .request-point small{font-size:11px;color:var(--request-quiet)}
+.request-page .request-point b{font-size:15px;line-height:1.6;color:#29351f}
+.request-page .request-point a{min-height:34px;font-size:12px;line-height:1.5;color:#4c6436;text-underline-offset:3px;margin-top:4px}
+.request-page .request-disclosure summary{min-height:48px;font-size:13px;color:var(--request-copy);padding-block:14px;line-height:1.5}
+.request-page .request-disclosure p{font-size:13px;line-height:1.75;color:var(--request-copy);margin-bottom:14px}
+.request-page .request-disclosure b{font-size:13px;color:#37452b;line-height:1.6}
+.request-page .request-next{margin:21px 5px;color:#657d4a}
+.request-page .request-next h3{font-size:13px;color:#435733}
+.request-page .request-next p{font-size:12px;line-height:1.75;color:var(--request-copy)}
+.request-page .request-summary h2{font-size:21px;margin-bottom:23px}
+.request-page .request-passengers{font-size:14px;color:var(--request-copy)}
+.request-page .request-passengers select{font-size:16px;min-height:44px;border-color:#cbd5bb;color:#28391b}
+.request-page .request-fare-row{font-size:12px;line-height:1.6;color:var(--request-copy)}
+.request-page .request-cash-total>span{font-size:13px;line-height:1.5}
+.request-page .request-cash-total strong{font-size:33px;letter-spacing:-1px}
+.request-page .request-cash-total small{font-size:11px;color:var(--request-quiet)}
+.request-page .request-cash-note{font-size:12px;line-height:1.65;color:var(--request-copy);margin-bottom:21px}
+.request-page .request-credit{gap:10px;background:#f0f5e7;color:#465e32;border:1px solid #e0e7d3;padding:14px 12px}
+.request-page .request-credit b{font-size:12px;line-height:1.5}
+.request-page .request-credit small,.request-page .request-credit>span{font-size:11px;line-height:1.5}
+.request-page .request-consent{font-size:12px;line-height:1.75;color:var(--request-copy);gap:11px}
+.request-page .request-consent input{width:18px;height:18px;margin-top:2px}
+.request-page .request-summary .primary{min-height:48px;font-size:14px;font-weight:750;padding:14px 16px}
+.request-page .request-private{font-size:11px;line-height:1.65;color:var(--request-quiet)}
+.request-page .request-warning{font-size:13px;line-height:1.7;color:#5c613d;background:#f5f3e8;border:1px solid #e6e2cd}
+.request-page .request-result p{font-size:14px;line-height:1.75;color:var(--request-copy)}
+.request-page .request-result .primary{min-height:48px;font-size:14px;border-radius:12px}
+.request-page .request-result .text-button{display:block;min-height:44px;font-size:13px;margin:10px auto 0;color:#4c6436}
+.request-page .request-deadline{font-size:12px;line-height:1.6;color:var(--request-copy)}
+.request-page summary:focus-visible,.request-page a:focus-visible{outline:3px solid #648132;outline-offset:4px;border-radius:5px}
+@media(max-width:750px){
+ .request-page{padding:21px 13px 40px}
+ .request-page .request-card{padding:23px 19px}
+ .request-page .request-page-heading{margin-bottom:25px}
+ .request-page .request-trip h2{font-size:21px;letter-spacing:-.45px}
+ .request-page .request-trip-date{font-size:12px;gap:6px}
+ .request-page .request-point b{font-size:14px}
+ .request-page .request-points{margin-bottom:18px}
+ .request-page .request-credit{flex-wrap:wrap}
+ .request-page .request-credit>span{margin-left:auto;white-space:normal}
+ .request-page .request-cash-total{gap:10px}
+ .request-page .request-cash-total strong{font-size:31px}
+ .request-page .request-result{padding:28px 21px}
+}

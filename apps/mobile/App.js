@@ -1,5 +1,5 @@
 import {customFeeCents} from '../../packages/core/custom-fees';
-import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import React, { useState, useEffect, useCallback, useSyncExternalStore,useRef } from 'react';
 import { View, Text, TextInput, ScrollView, Pressable, StyleSheet, Modal, Alert, Platform, KeyboardAvoidingView, RefreshControl, Switch, AppState, Linking, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -18,7 +18,8 @@ import MeetingPoint from './components/MeetingPoint';
 import TripOverview from './components/TripOverview';
 import CustomStops from './components/CustomStops';
 import TripReviews from './components/TripReviews';
-import BrandHero from './components/BrandHero';
+import UtilityHome from './components/UtilityHome';
+import UtilityIcon from './components/UtilityIcon';
 import {canCancelBooking} from '../../packages/core/cancellation';
 import { seatFareCents } from '../../packages/core/fare-policy';
 import { vehicleColors, plateProvinces } from '../../packages/core/vehicle.js';
@@ -33,6 +34,7 @@ const C = {
   white: '#fff'
 };
 const dateString = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const newOfferForm=draft=>({from:'Montréal',to:'Ottawa',date:dateString(new Date()),time:'09:00',arrival:'11:30',seats:3,price:'25',vehicleColor:'',plateProvince:'QC',licencePlate:'',pickupFee:'5',dropoffFee:'5',allowPickup:false,allowDropoff:false,...draft});
 const confirm = (title, fn) => Alert.alert(t(title), t('This updates your shared trip.'), [{
   text: t('Keep trip'),
   style: 'cancel'
@@ -201,9 +203,10 @@ function AppContent() {
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [error, E] = useState(''),
-    [tab, T] = useState('Explore'),
+    [tab, T] = useState('Home'),
     [role, R] = useState('Riders'),
     [tripRole, setTripRole] = useState(null),
+    [profileSection,setProfileSection]=useState('overview'),
     [modal, M] = useState(null),
     [form, F] = useState({}),
     [messages, SM] = useState([]),
@@ -219,6 +222,8 @@ function AppContent() {
       date: dateString(new Date()),
       seats: 1
     });
+  const pendingPost=useRef(false),postDraft=useRef(null);
+  useEffect(()=>{if(tab==='Post'&&!modal&&form.from)postDraft.current=form},[tab,form,modal]);
   const set = (k, v) => F(f => ({
     ...f,
     [k]: v
@@ -278,8 +283,9 @@ function AppContent() {
     fn();
   }
   function close() {
+    if(modal==='auth')pendingPost.current=false;
     M(null);
-    F({});
+    F(tab==='Post'?(postDraft.current||newOfferForm(data.rideDraft)):{});
     E('');
     SM([]);
   }
@@ -295,23 +301,9 @@ function AppContent() {
     });
   }
   function offer() {
-    signed(() => open('offer', {
-      from: 'Montréal',
-      to: 'Ottawa',
-      date: dateString(new Date()),
-      time: '09:00',
-      arrival: '12:00',
-      seats: 4,
-      price: '25',
-      vehicleColor: '',
-      plateProvince: 'QC',
-      licencePlate: '',
-      pickupFee: '5',
-      dropoffFee: '5',
-      allowPickup: false,
-      allowDropoff: false,
-      ...data.rideDraft
-    }));
+    if(tab==='Post')return;
+    if(!data.user){pendingPost.current=true;AM('login');open('auth');return;}
+    E('');F(postDraft.current||newOfferForm(data.rideDraft));M(null);T('Post');
   }
   function auth() {
     if (authMode === 'register' && !form.terms) {
@@ -323,8 +315,9 @@ function AppContent() {
       email: form.email,
       password: form.password,
       referralCode: authMode==='register'?form.referralCode:undefined
-    }, () => {
-      close();
+    }, d => {
+      const continuePosting=pendingPost.current;close();
+      if(continuePosting){pendingPost.current=false;F(newOfferForm(d.rideDraft));T('Post');Setup(null);return;}
       T('Account');
       Setup(authMode === 'register' ? 'rider' : null);
     });
@@ -361,7 +354,7 @@ function AppContent() {
     }
     action('rides', draft, () => {
       close();
-      T('Explore');
+      postDraft.current=null;T('Trips');setTripRole('Drivers');
       R('Drivers');
     });
   }
@@ -406,6 +399,48 @@ function AppContent() {
       pin: null
     });
   }
+  const offerPanel=<><City label={t("Departure city")} value={form.from} onChange={v => F(f => ({
+                ...f,
+                from: v,
+                pickupPin: null,
+                pickupLocationId: '',
+                pickup: '', pickupLat:null, pickupLng:null
+              }))} /><City label={t("Destination city")} value={form.to} onChange={v => F(f => ({
+                ...f,
+                to: v,
+                dropoffPin: null,
+                dropoffLocationId: '',
+                destination: '', dropoffLat:null, dropoffLng:null
+              }))} /><Field label={t("Date (YYYY-MM-DD)")} value={form.date} onChange={v => set('date', v)} /><View style={s.two}><View style={{
+                  flex: 1
+                }}><TripTime label={t("Departure time")} value={form.time} onChange={v => set('time', v)} /></View><View style={{
+                  flex: 1
+                }}><TripTime label={t("Estimated arrival")} value={form.arrival} onChange={v => set('arrival', v)} /></View></View><Text style={s.small}>{t("Eastern time \xB7 15-minute increments \xB7 same-day arrival")}</Text><Field label={t("Vehicle")} value={form.car} onChange={v => set('car', v)} /><Field label={t("Licence plate number")} value={form.licencePlate} onChange={v => set('licencePlate', v)} autoCapitalize="characters" /><Text style={s.label}>{t("Plate province / territory")}</Text><View style={s.row}>{plateProvinces.map(p => <Button key={p} title={p} secondary={form.plateProvince !== p} onPress={() => set('plateProvince', p)} />)}</View><Text style={s.label}>{t("Car colour")}</Text><View style={s.row}>{vehicleColors.map(c => <Button key={c} title={c} secondary={form.vehicleColor !== c} onPress={() => set('vehicleColor', c)} />)}</View><Text style={s.small}>{t("Your plate is shared with booked passengers. Colour appears in search results. Driver-provided details.")}</Text><Field label={t("Luggage allowance")} value={form.luggage} onChange={v=>set('luggage',v)} maxLength={120}/><Field label={t("Vehicle and travel notes")} value={form.vehicleNotes} onChange={v=>set('vehicleNotes',v)} maxLength={500} multiline/><NumberChoice label={t("Available seats")} value={form.seats} onChange={v => set('seats', v)} /><Field label={t("Price per seat (CAD)")} numeric keyboardType="number-pad" value={form.price} onChange={v => set('price', v)} onBlur={() => {
+                if (form.price !== '' && Number.isFinite(Number(form.price))) set('price', String(Number(form.price)));
+              }} /><Text style={s.small}>{t("Recommended: $25 CAD per seat \xB7 Maximum: $30 CAD per seat. Whole dollars only. Optional custom-stop fees are separate.")}</Text><MeetingPoint label={t("Standard pickup point")} city={form.from} id={form.pickupLocationId} onChange={p => F(f => ({
+                ...f,
+                pickup: p.label,
+                pickupLocationId: p.id,
+                pickupPin: null,
+                pickupLat: null,
+                pickupLng: null
+              }))} /><MeetingPoint label={t("Standard drop-off point")} city={form.to} id={form.dropoffLocationId} onChange={p => F(f => ({
+                ...f,
+                destination: p.label,
+                dropoffLocationId: p.id,
+                dropoffPin: null,
+                dropoffLat: null,
+                dropoffLng: null
+              }))} />{['pickup', 'dropoff'].map(kind => {
+                const key = kind === 'pickup' ? 'allowPickup' : 'allowDropoff',
+                  pin = kind + 'Pin';
+                return <View key={kind} style={s.card}><View style={s.spread}><Text style={[s.driverName, {
+                      flex: 1
+                    }]}>{t("Allow custom ")}{kind === 'pickup' ? t("pickup") : t("drop-off")}</Text><Switch accessibilityLabel={'Allow custom ' + kind} value={form[key]} onValueChange={v => set(key, v)} trackColor={{
+                      true: C.blue
+                    }} /></View>{form[key] && <><NumberChoice label={kind + ' fee per person (CAD)'} min={5} max={10} value={Number(form[kind + 'Fee'])} onChange={v => set(kind + 'Fee',String(v))}/><Text style={s.small}>{t('$5–$10 CAD per option, per passenger. $1 increments.')}</Text><Pin label={'Standard ' + kind + ' pin'} value={form[pin]} onChange={v => set(pin, v)} city={kind === 'pickup' ? form.from : form.to} /></>}</View>;
+              })}{form.allowPickup && !form.allowDropoff && <Pin label={t("Standard dropoff pin")} value={form.dropoffPin} onChange={v => set('dropoffPin', v)} city={form.to} />}{form.allowDropoff && !form.allowPickup && <Pin label={t("Standard pickup pin")} value={form.pickupPin} onChange={v => set('pickupPin', v)} city={form.from} />}<Text style={s.body}>{t("Custom pins must fall within 3 km of their standard point. All approved stops share a 15-minute driver-estimated detour allowance, including stopping. Verify road access and timing before approval.")}</Text><Button title={busy ? t("Saving\u2026") : data.driverVerification?.approved ? t("Publish route") : t("Save ride & continue to verification")} onPress={publish} disabled={busy} /></>;
+  const navTab=['Trips','Saved'].includes(tab)?'Home':tab;
   const driverTrips = (tripRole || (data.hosting.length && !data.bookings.length ? 'Drivers' : 'Riders')) === 'Drivers';
   const shown = tab === 'Trips' ? driverTrips ? data.hosting : data.bookings.map(b => ({
     ...b.ride,
@@ -425,14 +460,14 @@ function AppContent() {
         width: 48,
         height: 48,
         borderRadius: 24
-      }} />}{ride.driverReviews?.count>0&&<Text style={s.caption}>★ {ride.driverReviews.average.toFixed(1)} / 5 · {ride.driverReviews.count} {t('reviews')}</Text>}<Text style={s.caption}>{ride.date} · {ride.car} · {ride.vehicleColor}</Text><View style={s.spread}><Text style={s.time}>{ride.time} — {ride.arrival}</Text><Text style={s.price}>{money(b ? b.total : ride.price)}<Text style={s.small}> {b ? t("total") : t("/ seat")}</Text></Text></View><Text style={s.body}>{t("Pickup \xB7 ")}{ride.pickup}{'\n'}{t("Drop-off \xB7 ")}{ride.destination}</Text><View style={s.row}>{ride.allowPickup && <Text style={s.tag}>{t("Custom pickup allowed")}</Text>}{ride.allowDropoff && <Text style={s.tag}>{t("Custom drop-off allowed")}</Text>}</View><Text style={s.small}>{ride.seats} {t('seats available')} · {t(ride.luggage==='large'?'Large suitcase':ride.luggage==='medium'?'Medium suitcase':'Carry-on bag')}</Text><MoreDetails key={ride.id}><Itinerary ride={ride}/><Text style={s.small}>{t('Identity, licence and insurance checks are separate. Check the person and vehicle at pickup.')}</Text>{!!ride.vehicleNotes&&<Text style={s.body}>{ride.vehicleNotes}</Text>}</MoreDetails>{ride.vehicleDetails && <Text style={s.body}>{t("Vehicle: ")}{ride.vehicleDetails.vehicleColor || 'Colour not provided'}{t(" \xB7 Plate: ")}{ride.vehicleDetails.licencePlate || 'Not provided yet'} {ride.vehicleDetails.plateProvince}</Text>}{b ? <><Text style={s.status}>{ride.cancelled ? t("DRIVER CANCELLED THIS RIDE") : t("STANDARD SEATS RESERVED")}</Text>{ride.completedAt&&<Button title={t('Trip reviews')} secondary onPress={()=>T('Account')}/>}<CustomStops booking={b} ride={ride} onRequest={custom} busy={busy}/>{b.requests?.map(r => <View style={s.request} key={r.id}><Text style={s.driverName}>{r.kind} · {r.status}</Text><Text style={s.body}>{r.address}</Text><Text style={s.small}>{r.status === 'approved' ? `+${r.minutes} min · ${money(r.fee / 100)} supplement` : t("Standard booking stays unchanged until approval.")}</Text></View>)}<Button title={t("Trip details & boarding code")} onPress={() => open('safety', {
+      }} />}{ride.driverReviews?.count>0&&<Text style={s.caption}>★ {ride.driverReviews.average.toFixed(1)} / 5 · {ride.driverReviews.count} {t('reviews')}</Text>}<Text style={s.caption}>{ride.date} · {ride.car} · {ride.vehicleColor}</Text><View style={s.spread}><Text style={s.time}>{ride.time} — {ride.arrival}</Text><Text style={s.price}>{money(b ? b.total : ride.price)}<Text style={s.small}> {b ? t("total") : t("/ seat")}</Text></Text></View><Text style={s.body}>{t("Pickup \xB7 ")}{ride.pickup}{'\n'}{t("Drop-off \xB7 ")}{ride.destination}</Text><View style={s.row}>{ride.allowPickup && <Text style={s.tag}>{t("Custom pickup allowed")}</Text>}{ride.allowDropoff && <Text style={s.tag}>{t("Custom drop-off allowed")}</Text>}</View><Text style={s.small}>{ride.seats} {t('seats available')} · {t(ride.luggage==='large'?'Large suitcase':ride.luggage==='medium'?'Medium suitcase':'Carry-on bag')}</Text><MoreDetails key={ride.id}><Itinerary ride={ride}/><Text style={s.small}>{t('Identity, licence and insurance checks are separate. Check the person and vehicle at pickup.')}</Text>{!!ride.vehicleNotes&&<Text style={s.body}>{ride.vehicleNotes}</Text>}</MoreDetails>{ride.vehicleDetails && <Text style={s.body}>{t("Vehicle: ")}{ride.vehicleDetails.vehicleColor || 'Colour not provided'}{t(" \xB7 Plate: ")}{ride.vehicleDetails.licencePlate || 'Not provided yet'} {ride.vehicleDetails.plateProvince}</Text>}{b ? <><Text style={s.status}>{ride.cancelled ? t("DRIVER CANCELLED THIS RIDE") : t("STANDARD SEATS RESERVED")}</Text>{ride.completedAt&&<Button title={t('Trip reviews')} secondary onPress={()=>{setProfileSection('reviews');T('Account')}}/>}<CustomStops booking={b} ride={ride} onRequest={custom} busy={busy}/>{b.requests?.map(r => <View style={s.request} key={r.id}><Text style={s.driverName}>{r.kind} · {r.status}</Text><Text style={s.body}>{r.address}</Text><Text style={s.small}>{r.status === 'approved' ? `+${r.minutes} min · ${money(r.fee / 100)} supplement` : t("Standard booking stays unchanged until approval.")}</Text></View>)}<Button title={t("Trip details & boarding code")} onPress={() => open('safety', {
           ride,
           booking: b,
           driver: false
         })} /><Button title={t("Message driver")} onPress={() => conversation(b.id)} secondary />{canCancelBooking(ride)?<Button title={t('Cancel reservation')} disabled={busy} onPress={()=>confirm('Cancel this reservation?',()=>action('bookings/cancel',{id:b.id}))} secondary/>:<Button title={t('Request cancellation through support')} secondary onPress={()=>support('Late cancellation request',b.id)}/>}</> : ride.owner === data.user?.id ? <><Text style={s.status}>{ride.cancelled ? t("CANCELLED") : t("YOUR LISTING")}</Text><Button title={t("Manage boarding & trip sharing")} onPress={() => open('safety', {
           ride,
           driver: true
-        })} />{ride.completedAt&&<Button title={t('Trip reviews')} secondary onPress={()=>T('Account')}/>}{ride.passengers?.map(p => <View style={s.request} key={p.id}><Text style={s.driverName}>{p.name} · {p.seats}{t(" passenger(s)")}</Text>{p.passengerReviews?.count>0&&<Text style={s.small}>★ {p.passengerReviews.average.toFixed(1)} / 5 · {p.passengerReviews.count} {t('reviews')}</Text>}<Button title={t("Message passenger")} onPress={() => conversation(p.id)} secondary />{p.requests?.map(request => <View key={request.id}><Text style={s.driverName}>{t("Custom ")}{request.kind} · {request.status}</Text><Text style={s.body}>{request.address}</Text><Text style={s.small}>{request.distance.toFixed(2)}{t(" km from standard \xB7 ")}{money(request.fee / 100)}{t(" extra")}</Text><Button title={t("Inspect address pin \u2197")} secondary onPress={() => Linking.openURL(`https://www.openstreetmap.org/?mlat=${request.lat}&mlon=${request.lng}#map=16/${request.lat}/${request.lng}`).catch(() => E('Unable to open the map.'))} />{request.status === 'pending' && !ride.cancelled && <Button title={t("Review request")} onPress={() => open('decision', {
+        })} />{ride.completedAt&&<Button title={t('Trip reviews')} secondary onPress={()=>{setProfileSection('reviews');T('Account')}}/>}{ride.passengers?.map(p => <View style={s.request} key={p.id}><Text style={s.driverName}>{p.name} · {p.seats}{t(" passenger(s)")}</Text>{p.passengerReviews?.count>0&&<Text style={s.small}>★ {p.passengerReviews.average.toFixed(1)} / 5 · {p.passengerReviews.count} {t('reviews')}</Text>}<Button title={t("Message passenger")} onPress={() => conversation(p.id)} secondary />{p.requests?.map(request => <View key={request.id}><Text style={s.driverName}>{t("Custom ")}{request.kind} · {request.status}</Text><Text style={s.body}>{request.address}</Text><Text style={s.small}>{request.distance.toFixed(2)}{t(" km from standard \xB7 ")}{money(request.fee / 100)}{t(" extra")}</Text><Button title={t("Inspect address pin \u2197")} secondary onPress={() => Linking.openURL(`https://www.openstreetmap.org/?mlat=${request.lat}&mlon=${request.lng}#map=16/${request.lat}/${request.lng}`).catch(() => E('Unable to open the map.'))} />{request.status === 'pending' && !ride.cancelled && <Button title={t("Review request")} onPress={() => open('decision', {
               request,
               ride,
               minutes: ''
@@ -446,11 +481,7 @@ function AppContent() {
         }}>.</Text></Text><Pressable accessibilityRole="button" accessibilityLabel={t("Change language")} onPress={toggleLanguage}><Text style={s.signin}>{language === 'fr' ? t("EN") : t("FR")}</Text></Pressable>{data.user && <Pressable accessibilityRole="button" accessibilityLabel={t('Notifications')+', '+unreadCount} onPress={()=>open('updates')} style={{position:'relative',padding:8}}><Text style={{fontSize:20}}>🔔</Text>{badge(unreadCount)}</Pressable>}<Pressable accessibilityRole="button" onPress={() => data.user ? T('Account') : (AM('login'), open('auth'))}><Text style={s.signin}>{data.user?.name || 'Sign in'}</Text></Pressable></View><ScrollView contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => {
       setLoading(true);
       refresh();
-    }} />} keyboardShouldPersistTaps="handled">{data.testing?.isolated&&<View style={s.notice}><Text style={s.driverName}>{t("Test mode · fictional accounts")}</Text><Text style={s.body}>{t("Trips and approvals are simulated. No real identity checks or payments. Use only your test logins and fictional details.")}</Text></View>}{!configuration.ready && <View style={s.notice}><Text style={s.driverName}>{t("Development build")}</Text><Text style={s.body}>{configuration.message}</Text></View>}{!modal && err}{loading && <ActivityIndicator color={C.blue} />}{tab === 'Explore' && <><View style={s.segments}>{['Riders', 'Drivers'].map(r => <Pressable key={r} accessibilityRole="tab" accessibilityState={{
-            selected: role === r
-          }} onPress={() => R(r)} style={[s.segment, role === r && s.segmentActive]}><Text style={[s.segmentText, role === r && {
-              color: 'white'
-            }]}>{t(r)}</Text></Pressable>)}</View><BrandHero driver={role==='Drivers'} onOffer={offer}/>{role === 'Riders' ? <View style={s.card}><City label={t("Leaving from")} value={from} onChange={From} /><City label={t("Going to")} value={to} onChange={To} /><View style={s.field}><Text style={s.label}>{t("Departure date")}</Text><Pressable accessibilityRole="button" onPress={() => SD(!showDate)} style={s.input}><Text style={s.city}>{date.toLocaleDateString(undefined, {
+    }} />} keyboardShouldPersistTaps="handled">{data.testing?.isolated&&<View style={s.notice}><Text style={s.small}>{t('Test mode · fictional accounts')}</Text></View>}{!configuration.ready && <View style={s.notice}><Text style={s.driverName}>{t("Development build")}</Text><Text style={s.body}>{configuration.message}</Text></View>}{!modal && err}{loading && <ActivityIndicator color={C.blue} />}{tab === 'Explore' && <><Text style={s.heading}>{t('Search rides')}</Text>{role === 'Riders' ? <View style={s.card}><City label={t("Leaving from")} value={from} onChange={From} /><City label={t("Going to")} value={to} onChange={To} /><View style={s.field}><Text style={s.label}>{t("Departure date")}</Text><Pressable accessibilityRole="button" onPress={() => SD(!showDate)} style={s.input}><Text style={s.city}>{date.toLocaleDateString(undefined, {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',
@@ -470,11 +501,11 @@ function AppContent() {
               seats
             });
           }} /></View> : <View style={s.notice}><Text style={s.body}>{t("Custom pickup and drop-off are off by default. Enable either on your listing. Passengers book your standard route first, then request a change.")}</Text></View>}</>}
- {tab === 'Credits' ? <Credits data={data} onAccount={() => {
+ {tab === 'Home' ? <UtilityHome data={data} onPassenger={()=>{R('Riders');T('Explore')}} onDriver={()=>{R('Drivers');setTripRole('Drivers');if(data.hosting.length)T('Trips');else offer()}} onTrips={()=>T('Trips')} onSaved={()=>T('Saved')} onCredits={()=>T('Credits')}/> : tab === 'Post' ? <><Text style={s.heading}>{t('Post a ride')}</Text>{offerPanel}</> : tab === 'Credits' ? <><Text style={s.heading}>{t('Cart')}</Text><Credits data={data} onAccount={() => {
         AM('login');
         open('auth');
-      }} /> : tab === 'Account' ? <>
- {setup && data.user ? <><Button title={t("Back to account")} secondary onPress={() => Setup(null)} /><AccountSetup key={setup} data={data} api={api} refresh={refresh} driver={setup === 'driver'} /></> : <>
+      }} /></> : tab === 'Account' ? <>
+ {setup && data.user ? <><Button title={t("Back to account")} secondary onPress={() => Setup(null)} /><AccountSetup key={setup} data={data} api={api} refresh={refresh} driver={setup === 'driver'} /></> : profileSection==='reviews'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><TripReviews data={data} api={api} refresh={refresh}/></> : profileSection==='photo'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><ProfilePhoto user={data.user} api={api} refresh={refresh}/></> : <>
  <Text style={s.heading}>{t("Your account")}</Text>{data.user ? <><View style={s.card}>{data.user.photoUrl && <Image accessibilityLabel={t("Your profile photo")} source={api.photoSource(data.user.photoUrl)} style={{
                 width: 64,
                 height: 64,
@@ -482,36 +513,17 @@ function AppContent() {
               }} />}<Text style={s.route}>{data.user.name}</Text><Text style={s.body}>{data.user.email}</Text><Text style={s.body}>{t("One account for riding and driving. Your session stays in this device\u2019s secure storage.")}</Text><Button title={data.riderProfile?.ready ? t("Review rider checks") : t("Complete rider setup")} onPress={() => Setup('rider')} /><Button title={t("Become a Ridely driver")} secondary onPress={() => Setup('driver')} /><Button title={t("Booking credits")} secondary onPress={() => T('Credits')} /><Button title={t("Sign out")} secondary disabled={busy} onPress={() => action('logout', {}, () => {
                 close();
                 Setup(null);
-                T('Explore');
+                T('Home');postDraft.current=null;pendingPost.current=false;
                 R('Riders');
               })} /></View>
- <TripReviews data={data} api={api} refresh={refresh}/><ProfilePhoto user={data.user} api={api} refresh={refresh} />{updatesPanel}
+ <Button title={t('Trip reviews')} secondary onPress={()=>setProfileSection('reviews')}/><Button title={t('Profile photo')} secondary onPress={()=>setProfileSection('photo')}/><Button title={t('My trips')} secondary onPress={()=>T('Trips')}/><Button title={t('Saved rides')} secondary onPress={()=>T('Saved')}/><Button title={t('Notifications')} secondary onPress={()=>open('updates')}/>
  </> : <Button title={t("Sign in or create account")} onPress={() => {
             AM('login');
             open('auth');
           }} />}
  <View style={s.notice}><Text style={s.driverName}>{t("Pilot support")}</Text><Text style={s.body}>{data.capabilities?.pilotSupport24_7 ? t("Professional support \xB7 Available 24/7 during the pilot") : t("Contact Ridely support")}</Text><Text style={s.body}>{t("For immediate danger, call 911. Support is not an emergency service or live trip monitoring.")}</Text><Button title={t("Contact support")} secondary onPress={()=>support('Account support')} /><Button title={t("Early-access terms and privacy policy")} secondary onPress={() => Linking.openURL(publicUrl('/policies')).catch(e => E(e.message))} /></View>
  </>}</> : <>{tab === 'Trips' && <View style={s.segments}>{[['Riders','As passenger'],['Drivers','As driver']].map(([value,label])=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:driverTrips === (value==='Drivers')}} onPress={()=>setTripRole(value)} style={[s.segment,driverTrips === (value==='Drivers') && s.segmentActive]}><Text style={[s.segmentText,driverTrips === (value==='Drivers') && {color:'white'}]}>{t(label)}</Text></Pressable>)}</View>}{data.user && (tab === 'Trips' || (role === 'Drivers' && tab === 'Explore')) && (data.seatRequests || []).filter(q => (tab === 'Trips' ? (driverTrips ? q.driverId : q.passengerId) === data.user.id : q.driverId === data.user.id) && q.status !== 'accepted').map(q => <View style={s.card} key={q.id}><Text style={s.route}>{q.origin} → {q.destination}</Text><Text style={s.body}>{q.date} · {q.time} · {q.seats} {t('seat(s)')}</Text><Text style={s.status}>{t(({pending:'Awaiting driver approval',declined:'Not accepted',expired:'Request expired',withdrawn:'Request withdrawn'})[q.status])}</Text>{q.status === 'pending' && <><Text style={s.body}>{t('Respond by')} {new Date(q.expiresAt).toLocaleString(undefined, {timeZone:'America/Toronto'})} ET</Text>{q.driverId === data.user.id ? <><Button title={t('Accept seats')} disabled={busy} onPress={() => confirm('These seats are available across all my listings. I will update my other listings immediately.', () => action('booking-requests/decision', {id:q.id,decision:'accept',availabilityConfirmed:true}))}/><Button title={t('Decline')} secondary disabled={busy} onPress={() => action('booking-requests/decision', {id:q.id,decision:'decline'})}/></> : <Button title={t('Withdraw request')} secondary disabled={busy} onPress={() => action('booking-requests/withdraw', {id:q.id})}/>}</>}<Button title={t('Refresh requests')} secondary onPress={refresh}/></View>)}<View style={s.spread}><Text style={s.heading}>{tab === 'Trips' ? t(driverTrips?"My listings":"My trips") : tab === 'Saved' ? t("Saved rides") : role === 'Drivers' ? t("Your routes") : t("Available rides")}</Text><Text style={s.caption}>{shown.length}{t(" \xB7 CAD")}</Text></View>{shown.length ? shown.map(card) : !loading && <View style={s.card}><Text style={s.route}>{!data.user && tab !== 'Explore' ? t("Sign in to see your trips") : t("Your next journey starts here")}</Text><Text style={s.body}>{(tab === 'Trips' && driverTrips || role === 'Drivers' && tab === 'Explore') ? t("Post a route and choose your standard meeting points.") : t("No matching rides yet. Try another route or date, or offer the first ride.")}</Text><Button title={data.user ? t("Offer a ride") : t("Sign in")} secondary onPress={() => data.user ? offer() : (AM('login'), open('auth'))} /></View>}</>}
- <Text style={s.footnote}>{t("Pull to refresh. Shared data refreshes every 30 seconds while the app is open.")}</Text></ScrollView><View style={s.bottom}>{['Explore', 'Trips', 'Saved', 'Credits', 'Account'].map(tabKey => <Pressable accessibilityRole="tab" accessibilityState={{
-        selected: tab === tabKey
-      }} key={tabKey} onPress={() => T(tabKey)} style={s.bottomTab}>{badge(tabKey==='Account'?unreadCount:tabKey==='Trips'?pendingCount:0)}<Text style={[s.bottomIcon, tab === tabKey && {
-          color: C.blue
-        }]}>{{
-            Explore: '↗',
-            Trips: '⇄',
-            Saved: '♡',
-            Credits: '▣',
-            Account: '○'
-          }[tabKey]}</Text><Text style={[s.bottomText, tab === tabKey && {
-          color: C.blue,
-          fontWeight: '700'
-        }]}>{t({
-            Explore: 'Search',
-            Trips: 'My trips',
-            Saved: 'Saved',
-            Credits: 'Credits',
-            Account: 'Account'
-          }[tabKey])}</Text></Pressable>)}</View>
+ {tab!=='Home'&&<Text style={s.footnote}>{t("Pull to refresh. Shared data refreshes every 30 seconds while the app is open.")}</Text>}</ScrollView><View style={s.bottom}>{[['Home','Home'],['Explore','Search'],['Post','Post'],['Credits','Cart'],['Account','Profile']].map(([tabKey,label])=><Pressable key={tabKey} accessibilityRole="tab" accessibilityLabel={t(label)} accessibilityState={{selected:navTab===tabKey}} onPress={()=>{if(tabKey==='Post'){offer();return;}if(tabKey==='Explore')R('Riders');if(tabKey==='Account'){setProfileSection('overview');Setup(null);}T(tabKey)}} style={s.bottomTab}>{badge(tabKey==='Account'?unreadCount:tabKey==='Home'?pendingCount:0)}<View style={{width:46,height:30,borderRadius:15,alignItems:'center',justifyContent:'center',backgroundColor:navTab===tabKey?C.orange:'transparent'}}><UtilityIcon name={label} color={navTab===tabKey?C.navy:C.muted}/></View><Text style={[s.bottomText,navTab===tabKey&&{color:C.navy,fontWeight:'800'}]}>{t(label)}</Text></Pressable>)}</View>
  <Modal visible={!!modal} animationType="slide" presentationStyle="pageSheet" onRequestClose={close}><SafeAreaView style={s.safe}><KeyboardAvoidingView style={{
           flex: 1
         }} behavior={Platform.OS === 'ios' ? "padding" : undefined}><View style={s.modalHeader}><Text style={s.modalTitle}>{t({
@@ -553,47 +565,6 @@ function AppContent() {
                 T('Trips');
                 Alert.alert(t('Request sent'), t('Waiting for driver approval. No credit used yet. Check My trips for the result.'));
               })} /></>}
- {modal === 'offer' && <><City label={t("Departure city")} value={form.from} onChange={v => F(f => ({
-                ...f,
-                from: v,
-                pickupPin: null,
-                pickupLocationId: '',
-                pickup: '', pickupLat:null, pickupLng:null
-              }))} /><City label={t("Destination city")} value={form.to} onChange={v => F(f => ({
-                ...f,
-                to: v,
-                dropoffPin: null,
-                dropoffLocationId: '',
-                destination: '', dropoffLat:null, dropoffLng:null
-              }))} /><Field label={t("Date (YYYY-MM-DD)")} value={form.date} onChange={v => set('date', v)} /><View style={s.two}><View style={{
-                  flex: 1
-                }}><TripTime label={t("Departure time")} value={form.time} onChange={v => set('time', v)} /></View><View style={{
-                  flex: 1
-                }}><TripTime label={t("Estimated arrival")} value={form.arrival} onChange={v => set('arrival', v)} /></View></View><Text style={s.small}>{t("Eastern time \xB7 15-minute increments \xB7 same-day arrival")}</Text><Field label={t("Vehicle")} value={form.car} onChange={v => set('car', v)} /><Field label={t("Licence plate number")} value={form.licencePlate} onChange={v => set('licencePlate', v)} autoCapitalize="characters" /><Text style={s.label}>{t("Plate province / territory")}</Text><View style={s.row}>{plateProvinces.map(p => <Button key={p} title={p} secondary={form.plateProvince !== p} onPress={() => set('plateProvince', p)} />)}</View><Text style={s.label}>{t("Car colour")}</Text><View style={s.row}>{vehicleColors.map(c => <Button key={c} title={c} secondary={form.vehicleColor !== c} onPress={() => set('vehicleColor', c)} />)}</View><Text style={s.small}>{t("Your plate is shared with booked passengers. Colour appears in search results. Driver-provided details.")}</Text><Field label={t("Luggage allowance")} value={form.luggage} onChange={v=>set('luggage',v)} maxLength={120}/><Field label={t("Vehicle and travel notes")} value={form.vehicleNotes} onChange={v=>set('vehicleNotes',v)} maxLength={500} multiline/><NumberChoice label={t("Available seats")} value={form.seats} onChange={v => set('seats', v)} /><Field label={t("Price per seat (CAD)")} numeric keyboardType="number-pad" value={form.price} onChange={v => set('price', v)} onBlur={() => {
-                if (form.price !== '' && Number.isFinite(Number(form.price))) set('price', String(Number(form.price)));
-              }} /><Text style={s.small}>{t("Recommended: $25 CAD per seat \xB7 Maximum: $30 CAD per seat. Whole dollars only. Optional custom-stop fees are separate.")}</Text><MeetingPoint label={t("Standard pickup point")} city={form.from} id={form.pickupLocationId} onChange={p => F(f => ({
-                ...f,
-                pickup: p.label,
-                pickupLocationId: p.id,
-                pickupPin: null,
-                pickupLat: null,
-                pickupLng: null
-              }))} /><MeetingPoint label={t("Standard drop-off point")} city={form.to} id={form.dropoffLocationId} onChange={p => F(f => ({
-                ...f,
-                destination: p.label,
-                dropoffLocationId: p.id,
-                dropoffPin: null,
-                dropoffLat: null,
-                dropoffLng: null
-              }))} />{['pickup', 'dropoff'].map(kind => {
-                const key = kind === 'pickup' ? 'allowPickup' : 'allowDropoff',
-                  pin = kind + 'Pin';
-                return <View key={kind} style={s.card}><View style={s.spread}><Text style={[s.driverName, {
-                      flex: 1
-                    }]}>{t("Allow custom ")}{kind === 'pickup' ? t("pickup") : t("drop-off")}</Text><Switch accessibilityLabel={'Allow custom ' + kind} value={form[key]} onValueChange={v => set(key, v)} trackColor={{
-                      true: C.blue
-                    }} /></View>{form[key] && <><NumberChoice label={kind + ' fee per person (CAD)'} min={5} max={10} value={Number(form[kind + 'Fee'])} onChange={v => set(kind + 'Fee',String(v))}/><Text style={s.small}>{t('$5–$10 CAD per option, per passenger. $1 increments.')}</Text><Pin label={'Standard ' + kind + ' pin'} value={form[pin]} onChange={v => set(pin, v)} city={kind === 'pickup' ? form.from : form.to} /></>}</View>;
-              })}{form.allowPickup && !form.allowDropoff && <Pin label={t("Standard dropoff pin")} value={form.dropoffPin} onChange={v => set('dropoffPin', v)} city={form.to} />}{form.allowDropoff && !form.allowPickup && <Pin label={t("Standard pickup pin")} value={form.pickupPin} onChange={v => set('pickupPin', v)} city={form.from} />}<Text style={s.body}>{t("Custom pins must fall within 3 km of their standard point. All approved stops share a 15-minute driver-estimated detour allowance, including stopping. Verify road access and timing before approval.")}</Text><Button title={busy ? t("Saving\u2026") : data.driverVerification?.approved ? t("Publish route") : t("Save ride & continue to verification")} onPress={publish} disabled={busy} /></>}
  {modal === 'request' && form.booking && <><Text style={s.heading}>{t("Custom ")}{form.kind === 'pickup' ? t("pickup") : t("drop-off")}</Text><Text style={s.body}>{t("Your standard seats stay booked. Only your driver sees the precise address. The fee is added only after approval.")}</Text><Field label={t("Full address")} value={form.address} onChange={v => set('address', v)} multiline /><Pin label={t("Requested stop")} value={form.pin} onChange={v => set('pin', v)} city={form.kind === 'pickup' ? form.booking.ride.from : form.booking.ride.to} standard={{
                 lat: form.kind === 'pickup' ? form.booking.ride.pickupLat : form.booking.ride.dropoffLat,
                 lng: form.kind === 'pickup' ? form.booking.ride.pickupLng : form.booking.ride.dropoffLng
@@ -732,7 +703,7 @@ const s = StyleSheet.create({
     gap: 8
   },
   label: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: C.muted,
     letterSpacing: .6
@@ -740,12 +711,12 @@ const s = StyleSheet.create({
   input: {
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#cbd6e6',
+    borderColor: C.line,
     padding: 13,
     borderRadius: 8,
-    fontSize: 15,
+    fontSize: 16,
     color: C.text,
-    minHeight: 46
+    minHeight: 48
   },
   city: {
     fontSize: 15,
@@ -806,12 +777,12 @@ const s = StyleSheet.create({
     color: C.muted
   },
   small: {
-    fontSize: 10,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 19,
     color: C.muted
   },
   caption: {
-    fontSize: 10,
+    fontSize: 12,
     color: C.muted
   },
   heart: {
@@ -834,7 +805,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 6,
     borderRadius: 5,
-    fontSize: 9
+    fontSize: 11
   },
   itinerary: {
     padding: 13,
@@ -894,7 +865,7 @@ const s = StyleSheet.create({
     color: C.muted
   },
   bottomText: {
-    fontSize: 10,
+    fontSize: 11,
     color: C.muted
   },
   modalHeader: {
