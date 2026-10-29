@@ -1,4 +1,16 @@
 export default {
+  "More details": "Plus de détails",
+  "Route & stops": "Trajet et arrêts",
+  "min detour": "min de détour",
+  "Times are estimates. Custom addresses stay private.": "Horaires estimés. Les adresses personnalisées restent privées.",
+  "seats available": "places disponibles",
+  "Large suitcase": "Grande valise",
+  "Medium suitcase": "Valise moyenne",
+  "Carry-on bag": "Bagage à main",
+  "Identity, licence and insurance checks are separate. Check the person and vehicle at pickup.": "L’identité, le permis et l’assurance sont vérifiés séparément. Vérifiez la personne et le véhicule au départ.",
+  "Cancel at least 6 hours before departure; later, contact support. Drivers wait 10 minutes at pickup.": "Annulez au moins 6 heures avant le départ; sinon, contactez le soutien. Le conducteur attend 10 minutes au point de départ.",
+  "Driver approval required. One credit is used only after acceptance. Pay the fare to your driver in cash.": "Accord du conducteur requis. Un crédit est utilisé après acceptation. Payez le trajet au conducteur en espèces.",
+
   "As passenger": "Comme passager",
   "As driver": "Comme conducteur",
   "Test mode · fictional accounts": "Mode test · comptes fictifs",
