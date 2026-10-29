@@ -406,6 +406,10 @@ function AppContent() {
     booking: b
   })) : tab === 'Saved' ? data.rides.filter(r => data.saved.includes(r.id)) : role === 'Drivers' ? data.hosting : searchRides(data.rides, query);
   const money = v => '$' + (Number.isInteger(Number(v)) ? Number(v) : Number(v).toFixed(2));
+  const unreadCount = data.user ? (data.notifications||[]).filter(n=>n.read_at==null).length : 0;
+  const pendingCount = data.user ? (data.seatRequests||[]).filter(q=>q.driverId===data.user.id&&q.status==='pending').length : 0;
+  const badge = count => count>0 ? <View style={s.notificationBadge}><Text style={s.notificationBadgeText}>{count>99?'99+':count}</Text></View> : null;
+  const updatesPanel = <View style={s.card}><Text style={s.route}>{t("Trip updates")}</Text><Text style={s.body}>{t("Updates appear here while the app is open. Push notifications are not connected yet.")}</Text>{data.notifications?.length ? data.notifications.map(n => <View key={n.id}><Text style={s.body}>{t(n.title)}</Text><Text style={s.small}>{new Date(n.created).toLocaleString(language === 'fr' ? 'fr-CA' : 'en-CA')}</Text></View>) : <Text style={s.body}>{t("No updates yet.")}</Text>}<Button title={t("Mark updates as read")} secondary disabled={busy} onPress={() => action('notifications/read', {})} /></View>;
   const err = error ? <View accessibilityRole="alert" style={s.error}><Text style={s.errorText}>{error}</Text>{!modal && <Button title={t("Try again")} onPress={refresh} secondary />}</View> : null;
   function card(ride) {
     const b = ride.booking;
@@ -437,7 +441,7 @@ function AppContent() {
   }
   return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar style="dark" /><View style={s.header}><Text style={s.logo}>{t("ridely")}<Text style={{
           color: C.orange
-        }}>.</Text></Text><Pressable accessibilityRole="button" accessibilityLabel={t("Change language")} onPress={toggleLanguage}><Text style={s.signin}>{language === 'fr' ? t("EN") : t("FR")}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => data.user ? T('Account') : (AM('login'), open('auth'))}><Text style={s.signin}>{data.user?.name || 'Sign in'}</Text></Pressable></View><ScrollView contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => {
+        }}>.</Text></Text><Pressable accessibilityRole="button" accessibilityLabel={t("Change language")} onPress={toggleLanguage}><Text style={s.signin}>{language === 'fr' ? t("EN") : t("FR")}</Text></Pressable>{data.user && <Pressable accessibilityRole="button" accessibilityLabel={t('Notifications')+', '+unreadCount} onPress={()=>open('updates')} style={{position:'relative',padding:8}}><Text style={{fontSize:20}}>🔔</Text>{badge(unreadCount)}</Pressable>}<Pressable accessibilityRole="button" onPress={() => data.user ? T('Account') : (AM('login'), open('auth'))}><Text style={s.signin}>{data.user?.name || 'Sign in'}</Text></Pressable></View><ScrollView contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={() => {
       setLoading(true);
       refresh();
     }} />} keyboardShouldPersistTaps="handled">{data.testing?.isolated&&<View style={s.notice}><Text style={s.driverName}>{t("Test mode · fictional accounts")}</Text><Text style={s.body}>{t("Trips and approvals are simulated. No real identity checks or payments. Use only your test logins and fictional details.")}</Text></View>}{!configuration.ready && <View style={s.notice}><Text style={s.driverName}>{t("Development build")}</Text><Text style={s.body}>{configuration.message}</Text></View>}{!modal && err}{loading && <ActivityIndicator color={C.blue} />}{tab === 'Explore' && <><View style={s.segments}>{['Riders', 'Drivers'].map(r => <Pressable key={r} accessibilityRole="tab" accessibilityState={{
@@ -479,7 +483,7 @@ function AppContent() {
                 T('Explore');
                 R('Riders');
               })} /></View>
- <ProfilePhoto user={data.user} api={api} refresh={refresh} /><View style={s.card}><Text style={s.route}>{t("Trip updates")}</Text><Text style={s.body}>{t("Updates appear here while the app is open. Push notifications are not connected yet.")}</Text>{data.notifications?.length ? data.notifications.map(n => <View key={n.id}><Text style={s.body}>{t(n.title)}</Text><Text style={s.small}>{new Date(n.created).toLocaleString(language === 'fr' ? 'fr-CA' : 'en-CA')}</Text></View>) : <Text style={s.body}>{t("No updates yet.")}</Text>}<Button title={t("Mark updates as read")} secondary disabled={busy} onPress={() => action('notifications/read', {})} /></View>
+ <ProfilePhoto user={data.user} api={api} refresh={refresh} />{updatesPanel}
  </> : <Button title={t("Sign in or create account")} onPress={() => {
             AM('login');
             open('auth');
@@ -488,7 +492,7 @@ function AppContent() {
  </>}</> : <>{tab === 'Trips' && <View style={s.segments}>{[['Riders','As passenger'],['Drivers','As driver']].map(([value,label])=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:driverTrips === (value==='Drivers')}} onPress={()=>setTripRole(value)} style={[s.segment,driverTrips === (value==='Drivers') && s.segmentActive]}><Text style={[s.segmentText,driverTrips === (value==='Drivers') && {color:'white'}]}>{t(label)}</Text></Pressable>)}</View>}{data.user && (tab === 'Trips' || (role === 'Drivers' && tab === 'Explore')) && (data.seatRequests || []).filter(q => (tab === 'Trips' ? (driverTrips ? q.driverId : q.passengerId) === data.user.id : q.driverId === data.user.id) && q.status !== 'accepted').map(q => <View style={s.card} key={q.id}><Text style={s.route}>{q.origin} → {q.destination}</Text><Text style={s.body}>{q.date} · {q.time} · {q.seats} {t('seat(s)')}</Text><Text style={s.status}>{t(({pending:'Awaiting driver approval',declined:'Not accepted',expired:'Request expired',withdrawn:'Request withdrawn'})[q.status])}</Text>{q.status === 'pending' && <><Text style={s.body}>{t('Respond by')} {new Date(q.expiresAt).toLocaleString(undefined, {timeZone:'America/Toronto'})} ET</Text>{q.driverId === data.user.id ? <><Button title={t('Accept seats')} disabled={busy} onPress={() => confirm('These seats are available across all my listings. I will update my other listings immediately.', () => action('booking-requests/decision', {id:q.id,decision:'accept',availabilityConfirmed:true}))}/><Button title={t('Decline')} secondary disabled={busy} onPress={() => action('booking-requests/decision', {id:q.id,decision:'decline'})}/></> : <Button title={t('Withdraw request')} secondary disabled={busy} onPress={() => action('booking-requests/withdraw', {id:q.id})}/>}</>}<Button title={t('Refresh requests')} secondary onPress={refresh}/></View>)}<View style={s.spread}><Text style={s.heading}>{tab === 'Trips' ? t(driverTrips?"My listings":"My trips") : tab === 'Saved' ? t("Saved rides") : role === 'Drivers' ? t("Your routes") : t("Available rides")}</Text><Text style={s.caption}>{shown.length}{t(" \xB7 CAD")}</Text></View>{shown.length ? shown.map(card) : !loading && <View style={s.card}><Text style={s.route}>{!data.user && tab !== 'Explore' ? t("Sign in to see your trips") : t("Your next journey starts here")}</Text><Text style={s.body}>{(tab === 'Trips' && driverTrips || role === 'Drivers' && tab === 'Explore') ? t("Post a route and choose your standard meeting points.") : t("No matching rides yet. Try another route or date, or offer the first ride.")}</Text><Button title={data.user ? t("Offer a ride") : t("Sign in")} secondary onPress={() => data.user ? offer() : (AM('login'), open('auth'))} /></View>}</>}
  <Text style={s.footnote}>{t("Pull to refresh. Shared data refreshes every 30 seconds while the app is open.")}</Text></ScrollView><View style={s.bottom}>{['Explore', 'Trips', 'Saved', 'Credits', 'Account'].map(tabKey => <Pressable accessibilityRole="tab" accessibilityState={{
         selected: tab === tabKey
-      }} key={tabKey} onPress={() => T(tabKey)} style={s.bottomTab}><Text style={[s.bottomIcon, tab === tabKey && {
+      }} key={tabKey} onPress={() => T(tabKey)} style={s.bottomTab}>{badge(tabKey==='Account'?unreadCount:tabKey==='Trips'?pendingCount:0)}<Text style={[s.bottomIcon, tab === tabKey && {
           color: C.blue
         }]}>{{
             Explore: '↗',
@@ -514,6 +518,7 @@ function AppContent() {
                 offer: 'Post your route',
                 request: 'Request a custom stop',
                 decision: 'Review custom stop',
+                updates: 'Notifications',
                 messages: 'Trip messages',
                 safety: 'Your trip and safety', support:'Contact support'
               }[modal])}</Text><Pressable accessibilityRole="button" accessibilityLabel={t("Close")} onPress={close} style={s.close}><Text style={{
@@ -602,6 +607,7 @@ function AppContent() {
                 id: form.request.id,
                 decision: 'decline'
               }, close)} /></>}
+ {modal === 'updates' && updatesPanel}
  {modal === 'messages' && <><Text style={s.small}>{t("Private to you and the other member. No push alerts yet\u2014refresh for replies.")}</Text>{messages.map(m => <View key={m.id} style={s.card}><Text style={s.driverName}>{m.sender}</Text><Text style={s.body}>{m.body}</Text><Text style={s.small}>{new Date(m.created).toLocaleString()}</Text></View>)}{!messages.length && <Text style={s.body}>{t("No messages yet.")}</Text>}<Button title={t("Refresh messages")} secondary disabled={busy} onPress={() => action('messages', {
                 id: form.id
               }, d => SM(d.messages))} /><Field label={t("Your message")} value={form.message} onChange={v => set('message', v)} multiline maxLength={2000} /><Button title={busy ? t("Sending\u2026") : t("Send message")} disabled={busy || !form.message?.trim()} onPress={() => action('messages/send', {
@@ -872,6 +878,8 @@ const s = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: C.line
   },
+  notificationBadge: {position:'absolute',top:1,right:8,minWidth:18,height:18,paddingHorizontal:4,borderRadius:9,backgroundColor:'#c62828',alignItems:'center',justifyContent:'center',zIndex:2},
+  notificationBadgeText: {color:'#fff',fontSize:10,fontWeight:'800'},
   bottomTab: {
     flex: 1,
     alignItems: 'center',
