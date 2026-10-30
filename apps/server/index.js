@@ -1,3 +1,4 @@
+import {accountDeletionApi} from '../../packages/core/account-deletion.js';
 import {readMessages} from '../../packages/core/message-inbox.js';
 import {maintainReviews,reviewSummaryIndex} from '../../packages/core/trip-reviews.js';
 import {saveRideEdit} from '../../packages/core/ride-edit.js';
@@ -69,7 +70,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0025_email_only_riders')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0025_email_only_riders.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0025_email_only_riders');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0026_referrals')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0026_referrals.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0026_referrals');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
  if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get('0027_ride_editing')){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/0027_ride_editing.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run('0027_ride_editing');db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}
- for(const name of ['0028_trip_reviews','0029_cancellation_emails','0030_message_reads']){if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get(name)){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/'+name+'.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run(name);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}}
+ for(const name of ['0028_trip_reviews','0029_cancellation_emails','0030_message_reads','0031_account_deletion_requests']){if(!db.prepare('SELECT name FROM local_migrations WHERE name=?').get(name)){db.exec('BEGIN');try{db.exec(readFileSync(resolve(root,'migrations/'+name+'.sql'),'utf8'));db.prepare('INSERT INTO local_migrations VALUES(?)').run(name);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}}
  const adapter={get:async(sql,...a)=>db.prepare(sql).get(...a),all:async(sql,...a)=>db.prepare(sql).all(...a),run:async(sql,...a)=>db.prepare(sql).run(...a)};
  const attempts=new Map();
  function fail(status,message){throw Object.assign(new Error(message),{status})}
@@ -108,6 +109,7 @@ export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/
  if(url.pathname==='/api/logout'){if(raw)db.prepare('DELETE FROM sessions WHERE token=?').run(hash(raw));res.setHeader('Set-Cookie',`rmw_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure?'; Secure':''}`);send(200,await state(null));return}
  if(await memberAction(url.pathname,b,user,adapter)){send(200,await state(user));return;}
  const safetyResult=await safetyApi(url.pathname,b,user,adapter,env);if(safetyResult){send(200,safetyResult);return;}
+ const deletionResult=await accountDeletionApi(url.pathname,b,user,adapter,async password=>{if(password.length<10)return false;const [salt,digest]=user.password.split(':');return timingSafeEqual(scryptSync(password,salt,64),Buffer.from(digest,'hex'))});if(deletionResult){send(200,await state(user));return;}
  const driverResult=await driverApi(url.pathname,b,user,adapter,{...env,LICENCE_SESSION_TOKEN:raw?hash(raw):null,LICENCE_REQUEST_SECURE:!!req.socket.encrypted||(!secure&&['127.0.0.1','::1'].includes(req.socket.remoteAddress))},async password=>{if(password.length<10)return false;const [salt,digest]=user.password.split(':');return timingSafeEqual(scryptSync(password,salt,64),Buffer.from(digest,'hex'))});if(driverResult){send(200,driverResult.refresh?await state(user):driverResult);return;}
  const feature=await community(url.pathname,b,user,adapter,{...env,REQUEST_LOCALE:req.headers['accept-language']?.startsWith('fr')?'fr':'en',REQUEST_IP:req.socket.remoteAddress});if(feature){send(200,feature.refresh?await state(user):feature);return;}
  if(!user)fail(401,'Sign in to continue.'); await guardBlocked(url.pathname,b,user,adapter);if(url.pathname==='/api/stops/quote'){send(200,await quoteStop(b,user,adapter,env));return;}

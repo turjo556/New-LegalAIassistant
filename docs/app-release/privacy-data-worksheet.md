@@ -29,7 +29,7 @@ Draft based on repository inspection, 29 October 2026. **Do not submit these row
 
 ## Deletion gate
 
-Only rider private-detail removal, profile-photo removal and private-draft deletion were found. Full account deletion initiation and a web account-deletion URL were not found. Implement/test the complete flow and document data retained for bookings, disputes, security or legal obligations before submitting the final labels.
+30 October: app/web password-confirmed deletion requests and public `/delete-account` instructions now exist. Requests enter the authenticated operator support queue; the account remains active pending review. Full erasure tooling, an approved retention schedule, provider deletion and an end-to-end completion exercise remain required before this gate is cleared. See `account-deletion-runbook.md`.
 
 ## Inputs still needed from owner
 

@@ -12,8 +12,10 @@ import * as SecureStore from 'expo-secure-store';
 import { getLanguage, setLanguage, subscribeLanguage, t } from './lib/i18n';
 import AccountSetup from './components/AccountSetup';
 import SafetyTools from './components/SafetyTools';
+import BlockedMembers,{MemberBlock} from './components/MemberBlocking';
 import Credits from './components/Credits';
 import ProfilePhoto from './components/ProfilePhoto';
+import AccountDeletion from './components/AccountDeletion';
 import MeetingPoint from './components/MeetingPoint';
 import TripOverview from './components/TripOverview';
 import CustomStops from './components/CustomStops';
@@ -477,7 +479,7 @@ function AppContent() {
             })} />}</View>)}</View>)}{!ride.cancelled&&(ride.passengers?.length?<Button title={t('Request cancellation through support')} secondary onPress={()=>support('Driver cancellation request',ride.id)}/>:<Button title={t('Cancel published ride')} disabled={busy} onPress={()=>confirm('Cancel this empty listing?',()=>action('rides/cancel',{id:ride.id}))} secondary/>)}</> : <Button title={ride.bookable ? t("Review & book \u2192") : t("Driver review pending")} onPress={() => signed(() => open('book', {
         ride,
         seats: Number(query.seats || 1)
-      }))} disabled={!ride.bookable || ride.cancelled || ride.seats < Number(query.seats || 1)} />}</View>;
+      }))} disabled={!ride.bookable || ride.cancelled || ride.seats < Number(query.seats || 1)} />}{data.user&&ride.owner!==data.user.id&&<MemberBlock id={ride.owner} blocked={data.blockedUsers?.some(m=>m.id===ride.owner)} api={api} refresh={refresh}/>}</View>;
   }
   return <SafeAreaView style={s.safe} edges={['top', 'bottom']}><StatusBar style="dark" /><View style={s.header}><Text style={s.logo}>{t("ridely")}<Text style={{
           color: C.orange
@@ -508,7 +510,7 @@ function AppContent() {
         AM('login');
         open('auth');
       }} /></> : tab === 'Account' ? <>
- {setup && data.user ? <><Button title={t("Back to account")} secondary onPress={() => Setup(null)} /><AccountSetup key={setup} data={data} api={api} refresh={refresh} driver={setup === 'driver'} /></> : profileSection==='reviews'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><TripReviews data={data} api={api} refresh={refresh}/></> : profileSection==='photo'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><ProfilePhoto user={data.user} api={api} refresh={refresh}/></> : <>
+ {setup && data.user ? <><Button title={t("Back to account")} secondary onPress={() => Setup(null)} /><AccountSetup key={setup} data={data} api={api} refresh={refresh} driver={setup === 'driver'} /></> : profileSection==='deletion'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><AccountDeletion data={data} api={api} refresh={refresh}/></> : profileSection==='blocked'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><BlockedMembers data={data} api={api} refresh={refresh}/></> : profileSection==='reviews'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><TripReviews data={data} api={api} refresh={refresh}/></> : profileSection==='photo'&&data.user ? <><Button title={t('Back to profile')} secondary onPress={()=>setProfileSection('overview')}/><ProfilePhoto user={data.user} api={api} refresh={refresh}/></> : <>
  <Text style={s.heading}>{t("Your account")}</Text>{data.user ? <><View style={s.card}>{data.user.photoUrl && <Image accessibilityLabel={t("Your profile photo")} source={api.photoSource(data.user.photoUrl)} style={{
                 width: 64,
                 height: 64,
@@ -519,7 +521,7 @@ function AppContent() {
                 T('Home');postDraft.current=null;pendingPost.current=false;
                 R('Riders');
               })} /></View>
- <Button title={t('Trip reviews')} secondary onPress={()=>setProfileSection('reviews')}/><Button title={t('Profile photo')} secondary onPress={()=>setProfileSection('photo')}/><Button title={t('My trips')} secondary onPress={()=>T('Trips')}/><Button title={t('Saved rides')} secondary onPress={()=>T('Saved')}/><Button title={t('Messages')} secondary onPress={()=>T('Messages')}/><Button title={t('Notifications')} secondary onPress={()=>open('updates')}/>
+ <Button title={language==='fr'?'Membres bloqués':'Blocked members'} secondary onPress={()=>setProfileSection('blocked')}/><Button title={t('Delete account')} secondary onPress={()=>setProfileSection('deletion')}/><Button title={t('Trip reviews')} secondary onPress={()=>setProfileSection('reviews')}/><Button title={t('Profile photo')} secondary onPress={()=>setProfileSection('photo')}/><Button title={t('My trips')} secondary onPress={()=>T('Trips')}/><Button title={t('Saved rides')} secondary onPress={()=>T('Saved')}/><Button title={t('Messages')} secondary onPress={()=>T('Messages')}/><Button title={t('Notifications')} secondary onPress={()=>open('updates')}/>
  </> : <Button title={t("Sign in or create account")} onPress={() => {
             AM('login');
             open('auth');
@@ -542,7 +544,7 @@ function AppContent() {
                 fontSize: 24,
                 color: C.text
               }}>×</Text></Pressable></View><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.page}>{err}
- {modal==='safety'&&form.ride&&<><TripOverview ride={form.ride} booking={form.booking} driver={form.driver} onCustom={custom} busy={busy}/><SafetyTools ride={form.ride} booking={form.booking} driver={form.driver} api={api} onSupport={()=>support('Trip support',form.booking?.id||form.ride.id)}/></>}
+ {modal==='safety'&&form.ride&&<><TripOverview ride={form.ride} booking={form.booking} driver={form.driver} onCustom={custom} busy={busy}/><SafetyTools ride={form.ride} booking={form.booking} driver={form.driver} api={api} blockedUsers={data.blockedUsers} onRefresh={refresh} onSupport={()=>support('Trip support',form.booking?.id||form.ride.id)}/></>}
  {modal==='support'&&<><Text style={s.body}>{t('A support request does not automatically cancel your booking. In immediate danger, call 911.')}</Text><Field label={t('Subject')} value={form.subject} onChange={v=>set('subject',v)} maxLength={100}/>{!data.user&&<Field label={t('Email')} value={form.email} onChange={v=>set('email',v)} autoCapitalize="none" keyboardType="email-address"/>}<Field label={t('How can we help?')} value={form.body} onChange={v=>set('body',v)} multiline maxLength={4000}/><Button title={t('Send support request')} disabled={busy||form.subject?.trim().length<3||form.body?.trim().length<10} onPress={()=>action('support/create',{subject:form.subject,body:form.body,email:form.email},r=>{close();Alert.alert(t('Request received'),t('Reference')+': '+r.ticketId);})}/></>}
  {modal === 'auth' && <>{authMode === 'register' && <Field label={t("First name")} value={form.name} onChange={v => set('name', v)} autoComplete="given-name" />}<Field label={t("Email")} value={form.email} onChange={v => set('email', v)} keyboardType="email-address" autoCapitalize="none" autoComplete="email" /><Field label={t("Password")} value={form.password} onChange={v => set('password', v)} secure autoCapitalize="none" autoComplete={authMode === 'login' ? "current-password" : "new-password"} /><Text style={s.small}>{t("At least 10 characters. Use your password manager to create and save a strong password.")}</Text>{authMode === 'register' && <><Field label={t('Referral code (optional)')} value={form.referralCode} onChange={v=>set('referralCode',v.toUpperCase().replace(/[^A-Z0-9-]/g,''))} autoCapitalize="characters" autoCorrect={false} maxLength={20}/><View style={s.spread}><Text style={[s.body, {
                     flex: 1

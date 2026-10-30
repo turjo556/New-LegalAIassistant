@@ -1637,5 +1637,9 @@
   "Reservation cancelled": "Réservation annulée",
   "Passenger cancelled": "Annulation par le passager",
   "Your ride cancelled": "Votre trajet est annulé",
-  "Seat requests close 10 minutes before departure.": "Les demandes ferment 10 minutes avant le départ."
+  "Seat requests close 10 minutes before departure.": "Les demandes ferment 10 minutes avant le départ.",
+  "Account deletion": "Suppression du compte",
+  "Manage your account deletion request.": "Gérez votre demande de suppression du compte.",
+  "Your current password is incorrect.": "Votre mot de passe actuel est incorrect.",
+  "Type DELETE to confirm your request.": "Tapez DELETE pour confirmer votre demande."
 }

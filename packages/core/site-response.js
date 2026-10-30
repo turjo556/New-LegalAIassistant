@@ -1,3 +1,4 @@
+import {deletionPage} from './account-deletion.js';
 import {sitePage} from './site-pages.js';
 export const appPaths=new Set(['/search','/my-trips','/my-listings','/saved','/cart','/join','/login','/trip-share','/offer-a-ride','/driver-verification','/account','/profile','/help','/policies','/notifications','/messages','/operator']);
 const prod=host=>['ridely.ca','www.ridely.ca'].includes(host);
@@ -11,6 +12,7 @@ export async function siteResponse(req,assets){
  if(url.pathname==='/sitemap.xml'&&!production)return new Response('Not found',{status:404,headers:{'X-Robots-Tag':'noindex'}});
  if(['/','/fr'].includes(url.pathname)&&['en','fr'].includes(url.searchParams.get('lang'))){const next=url.searchParams.get('lang')==='fr'?'/fr':'/';url.searchParams.delete('lang');return redirect(next+(url.searchParams.size?'?'+url.searchParams:''));}
  const path=url.pathname;
+ if(['/delete-account','/fr/supprimer-compte'].includes(path))return new Response(req.method==='HEAD'?null:deletionPage(path.startsWith('/fr/')),{headers:{'Content-Type':'text/html; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'no-store','X-Robots-Tag':'noindex, follow'}});
  if(path.endsWith('/')&&path!=='/'&&(sitePage(path.slice(0,-1))||appPaths.has(path.slice(0,-1))))return redirect(path.slice(0,-1)+url.search);
  if(path.endsWith('.html')&&sitePage(path.slice(0,-5)))return redirect(path.slice(0,-5)+url.search);
  const page=sitePage(path),app=appPaths.has(path)||/^\/ride\/[a-zA-Z0-9_-]{1,80}(?:\/request)?$/.test(path),file=/\.[a-zA-Z0-9]+$/.test(path);

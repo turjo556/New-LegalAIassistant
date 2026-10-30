@@ -1,4 +1,13 @@
 export default {
+  "Delete account": "Supprimer le compte",
+  "Your account deletion request has been received.": "Votre demande de suppression du compte a été reçue.",
+  "Your account remains active while the request is reviewed. Support will confirm the processing timeline and any required retention.": "Votre compte reste actif pendant l’examen de la demande. Le soutien confirmera le délai de traitement et les données à conserver.",
+  "Request deletion of your Ridely account and personal data. Support will confirm the processing timeline and any required retention.": "Demandez la suppression de votre compte Ridely et de vos données personnelles. Le soutien confirmera le délai de traitement et les données à conserver.",
+  "Limited trip, payment, safety and legal records may need to be retained. This does not automatically cancel bookings.": "Certaines données de trajet, de paiement, de sécurité ou exigées par la loi peuvent être conservées. Cette demande n’annule pas automatiquement vos réservations.",
+  "Current password": "Mot de passe actuel",
+  "Type DELETE to confirm": "Saisissez DELETE pour confirmer",
+  "Request account deletion": "Demander la suppression du compte",
+
   "Seat requests close 10 minutes before departure.": "Les demandes ferment 10 minutes avant le départ.",
   "Messages": "Messages",
   "Open trip messages": "Ouvrir les messages du trajet",

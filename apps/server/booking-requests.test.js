@@ -57,3 +57,22 @@ test('a passenger can request and driver can accept within the former final-hour
  const result=await req('booking-requests/decision',{id:q.id,decision:'accept',availabilityConfirmed:true},'driver');
  assert.equal(result.hosting[0].passengers.length,1);
 });
+
+test('a pending request expires at the ten-minute cutoff without reserving seats or spending credit',async t=>{
+ const {req,db,ride}=await fixture(t);
+ const parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Toronto',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(Date.now()+30*60000)).split(' ');
+ db.prepare('UPDATE rides SET date=?,time=? WHERE id=?').run(parts[0],parts[1],ride.id);
+ const cutoff=departureTime(parts[0],parts[1])-10*60000;
+ // Keep the real API and acceptance trigger; freeze only the policy clock.
+ const clock=t.mock.method(Date,'now',()=>cutoff-1);
+ const q=(await req('bookings',{rideId:ride.id,seats:1},'rider',201)).seatRequests[0];
+ assert.equal(q.expiresAt,cutoff);
+ assert.equal((await req('state',null,'rider')).bookingCredits.balance,2);
+ clock.mock.mockImplementation(()=>cutoff);
+ await req('booking-requests/decision',{id:q.id,decision:'accept',availabilityConfirmed:true},'driver',409);
+ assert.equal(db.prepare('SELECT status FROM booking_requests WHERE id=?').get(q.id).status,'expired');
+ assert.equal(db.prepare('SELECT COUNT(*) n FROM bookings WHERE cancelled=0').get().n,0);
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM promo_credit_ledger WHERE kind='booking'").get().n,0);
+ await req('bookings',{rideId:ride.id,seats:1},'other',409);
+ assert.equal((await req('state',null,'rider')).bookingCredits.balance,2);
+});
